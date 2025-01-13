@@ -1,0 +1,89 @@
+.navigation {
+  padding: 1.2rem 5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba($color-yellow, 0.8);
+
+  @media screen and (max-width: 700px) {
+    padding: 1rem 3rem;
+  }
+
+  &-text {
+    font-size: 4rem;
+    font-weight: bolder;
+    letter-spacing: 0.2rem;
+    flex-basis: 60%;
+    text-align: center;
+    font-family: "Source Serif Pro", sans-serif;
+    background: linear-gradient(
+      90deg,
+      rgba($color-white, 0.7) 3%,
+      $color-white-dark 90%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+
+    @media screen and (max-width: 700px) {
+      font-size: 2.5rem;
+    }
+  }
+
+  &-logout {
+    background-color: rgba($color-yellow, 0.3);
+    color: $color-white-dark;
+    position: relative;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-block;
+    border: 2px solid whitesmoke;
+    transition: all 0.3s;
+
+    &:hover {
+      background-color: rgba($color-yellow, 1);
+    }
+    &:hover > .icon {
+      color: $color-white;
+    }
+
+    & .icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      height: 3rem;
+      width: 3rem;
+      transition: all 0.3s;
+    }
+  }
+
+  &-title {
+    clip-path: polygon(
+      0% 10%,
+      3% 6%,
+      81% 6%,
+      83% 0%,
+      85% 6%,
+      97% 6%,
+      100% 10%,
+      100% 96%,
+      97% 100%,
+      3% 100%,
+      0% 96%
+    );
+    background-color: rgba($color-yellow, 0.7);
+    box-shadow: 0 1rem 2rem $color-yellow;
+    padding: 1.5rem 2rem 2rem;
+    color: $color-white;
+    font-size: 1.4rem;
+    letter-spacing: 0.1rem;
+    position: absolute;
+    bottom: -165%;
+    left: 10%;
+    transform: translate(-50%, -50%);
+  }
+}

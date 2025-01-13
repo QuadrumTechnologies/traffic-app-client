@@ -1,0 +1,98 @@
+.addDeviceOverlay {
+  width: 40vw;
+  background-color: rgba($color-white, 0.8);
+  padding: 5rem;
+  position: relative;
+  @media screen and (max-width: 1400px) {
+    width: 50vw;
+  }
+  @media screen and (max-width: 1200px) {
+    width: 60vw;
+  }
+  @media screen and (max-width: 700px) {
+    width: 70vw;
+  }
+  @media screen and (max-width: 500px) {
+    width: 85vw;
+  }
+  &-icon {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    font-size: 3rem;
+    color: $color-black;
+    transition: all 0.3s;
+
+    &:hover {
+      color: rgba($color-black, 0.5);
+      cursor: pointer;
+    }
+  }
+
+  &-text {
+    font-size: 2rem;
+    margin: 2rem 0 1.4rem;
+  }
+
+  &__device--options {
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    background-color: rgba($color-black, 0.3);
+    padding: 0.3rem;
+
+    li {
+      padding: 1rem 0;
+      flex-basis: 27%;
+      letter-spacing: 0.1rem;
+      font-size: 1.6rem;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 0.2rem;
+      transition: background-color 0.3s ease;
+
+      &.active {
+        background-color: rgba($color-black, 0.5);
+        color: $color-white;
+      }
+      &:hover {
+        background-color: $color-white-light;
+        color: $color-black;
+      }
+    }
+  }
+  &__firstrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: first baseline;
+    column-gap: 1rem;
+  }
+  &__verify {
+    flex-basis: 25%;
+    background-color: $color-yellow;
+    color: $color-white;
+    letter-spacing: 0.3rem;
+    font-weight: 400;
+    border-radius: 0.5rem;
+    font-size: 1.4rem;
+    padding: 1rem 0;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: no-drop;
+    }
+
+    &:hover {
+      background-color: rgba($color-yellow, 0.5);
+    }
+  }
+  &__status {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+}

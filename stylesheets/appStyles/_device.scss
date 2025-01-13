@@ -1,0 +1,237 @@
+.device {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  @media screen and (max-width: 1000px) {
+    flex-direction: column;
+    margin-bottom: 8rem;
+  }
+  &__left {
+    flex-basis: 50%;
+    @media screen and (max-width: 1300px) {
+      flex-basis: 58%;
+    }
+    @media screen and (max-width: 1000px) {
+      width: 100%;
+    }
+  }
+
+  &__right {
+    flex-basis: 45%;
+    @media screen and (max-width: 1300px) {
+      flex-basis: 40%;
+    }
+    @media screen and (max-width: 1000px) {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    @media screen and (max-width: 600px) {
+      flex-direction: column;
+    }
+    &--top,
+    &--bottom {
+      box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+        rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+      padding: 0.6rem;
+      @media screen and (max-width: 1000px) {
+        flex-basis: 47%;
+      }
+      @media screen and (max-width: 600px) {
+        width: 100%;
+      }
+    }
+    &--top {
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+.deviceConfiguration {
+  padding: 1rem 1rem 0;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+
+    & h2 {
+      font-size: 1.7rem;
+
+      color: $color-black-dark;
+    }
+    & button {
+      all: unset;
+      font-size: 1.4rem;
+      color: $color-yellow-light;
+      background-color: $color-white-dark;
+      font-weight: bold;
+      padding: 0.7rem 1.3rem;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      &:hover {
+        color: $color-white;
+        background-color: $color-yellow-light;
+      }
+    }
+  }
+
+  &__list {
+    list-style: none;
+  }
+
+  &__item {
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &--icon {
+      flex-basis: 10%;
+      & svg {
+        font-size: 2.3rem;
+        color: $color-yellow-light;
+      }
+    }
+    &--label {
+      flex-basis: 40%;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: $color-black;
+    }
+    &--value {
+      text-align: right;
+      flex-basis: 43%;
+      font-size: 1.4rem;
+      color: $color-black-light;
+    }
+  }
+}
+
+.intersectionConfiguration {
+  padding: 1rem;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+
+    & h2 {
+      font-size: 1.7rem;
+      color: $color-black-dark;
+    }
+    & button {
+      all: unset;
+      font-size: 1.4rem;
+      color: $color-yellow-light;
+      background-color: $color-white-dark;
+      font-weight: bold;
+      padding: 0.7rem 1.3rem;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+      &:hover {
+        color: $color-white;
+        background-color: $color-yellow-light;
+      }
+    }
+  }
+
+  &__list {
+    list-style: none;
+  }
+  &__item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+
+    &--label {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: $color-black;
+      margin: 0.4rem;
+    }
+
+    &--value {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      background-color: $color-white-dark;
+      font-size: 1.3rem;
+      font-weight: 500;
+      letter-spacing: 0.1rem;
+      color: $color-yellow-dark;
+
+      &:focus {
+        cursor: no-drop;
+      }
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+  &__commands {
+    margin-top: 0.7rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    column-gap: 0.2rem;
+    row-gap: 0.6rem;
+    & button {
+      color: $color-black-light;
+      border-radius: 0.5rem;
+      font-size: 1.2rem;
+      letter-spacing: 0.08rem;
+      padding: 0.6rem 0.8rem;
+      margin-left: 0.7rem;
+      border: none;
+      cursor: pointer;
+      box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px,
+        rgba(0, 0, 0, 0.3) 0px 7px 13px -3px,
+        rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+      transition: all 0.3s;
+
+      &:hover {
+        background-color: rgba($color-yellow, 0.8);
+        color: $color-white;
+      }
+      &:active {
+        background-color: rgba($color-yellow, 0.8);
+        box-shadow: rgba(0, 0, 0, 0.45) 0px 25px 20px -20px;
+        color: $color-white;
+      }
+    }
+  }
+}
+
+.device-table {
+  table {
+    margin-top: 0.5rem;
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+      border: 1px solid grey;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: $color-yellow;
+      color: white;
+      font-weight: bold;
+      font-size: 1.4rem;
+    }
+    td {
+      font-size: 1.2rem;
+    }
+  }
+}

@@ -1,0 +1,55 @@
+.logout {
+  backdrop-filter: blur(0.9rem);
+  background-color: rgba($color-white, 1);
+  text-align: center;
+  padding: 8rem 10rem;
+  width: 55vw;
+
+  @media screen and (max-width: 1200px) {
+    width: 60vw;
+  }
+  @media screen and (max-width: 700px) {
+    width: 70vw;
+  }
+  @media screen and (max-width: 500px) {
+    width: 85vw;
+  }
+
+  &-text {
+    font-size: 2.5rem;
+    text-align: center;
+    color: $color-yellow;
+  }
+
+  &-buttons {
+    margin-top: 4rem;
+    display: flex;
+    justify-content: space-between;
+
+    & button {
+      flex-basis: 43%;
+      padding: 2rem 0;
+      cursor: pointer;
+      font-size: 2rem;
+      letter-spacing: 0.1rem;
+      font-weight: bold;
+      box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.5);
+      transition: all 0.3s;
+
+      &:hover {
+        transform: translateY(2px);
+        box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.2);
+      }
+    }
+
+    &__button1 {
+      background-color: $color-yellow;
+      color: $color-white;
+    }
+    &__button2 {
+      background-color: rgba($color-white, 0.8);
+      border: 0.2rem solid $color-yellow;
+      color: $color-yellow;
+    }
+  }
+}

@@ -1,0 +1,39 @@
+.tabs {
+  &__container {
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+      rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+    padding: 1rem;
+  }
+
+  &__list {
+    list-style: none;
+    display: flex;
+    // justify-content: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: $color-white-light;
+  }
+  &__item {
+    flex-basis: 32%;
+    cursor: pointer;
+    padding: 0.8rem 1rem;
+    font-size: 1.4rem;
+    text-align: center;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px,
+      rgb(209, 213, 219) 0px 0px 0px 1px inset;
+
+    & p {
+      color: $color-yellow;
+      font-weight: 600;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+    }
+    & span {
+      letter-spacing: 0.1rem;
+    }
+    &--active {
+      box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 36px -28px inset !important;
+      color: $color-white;
+    }
+  }
+}

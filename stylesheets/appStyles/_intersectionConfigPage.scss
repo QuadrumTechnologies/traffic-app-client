@@ -1,0 +1,43 @@
+.intersectionConfigPage {
+  &__header {
+    font-size: 2.5rem;
+    padding: 0.5rem;
+    letter-spacing: 0.2rem;
+    margin-bottom: 1rem;
+    font-family: "Pacifico", Courier, monospace;
+    border-bottom: 1px solid $color-yellow;
+    border-left: 1px solid $color-yellow;
+    border-radius: 0.7rem;
+    width: fit-content;
+  }
+  &__box {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    @media screen and (max-width: 1000px) {
+      flex-direction: column;
+      margin-bottom: 8rem;
+    }
+    &--left {
+      flex-basis: 50%;
+      @media screen and (max-width: 1300px) {
+        flex-basis: 58%;
+      }
+      @media screen and (max-width: 1000px) {
+        width: 100%;
+      }
+    }
+
+    &--right {
+      flex-basis: 45%;
+      @media screen and (max-width: 1300px) {
+        flex-basis: 40%;
+      }
+      @media screen and (max-width: 1000px) {
+        width: 100%;
+        margin-bottom: 8rem;
+      }
+    }
+  }
+}

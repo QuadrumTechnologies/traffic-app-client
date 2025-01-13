@@ -1,0 +1,37 @@
+.spinner {
+  &-box {
+    width: 100%;
+    @include flex-center;
+  }
+  &-icon {
+    animation: spinner 2s linear infinite;
+  }
+  &-icon__blue {
+    height: 3rem;
+    width: 3rem;
+    fill: $color-yellow;
+  }
+  &-icon__white {
+    height: 3rem;
+    width: 3rem;
+    fill: $color-white;
+  }
+  &-box__big {
+    width: 100%;
+    height: 50vh;
+    @include flex-center;
+  }
+  &-icon__big {
+    height: 10rem;
+    width: 10rem;
+  }
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

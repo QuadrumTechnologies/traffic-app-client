@@ -1,0 +1,40 @@
+.normalInput {
+  width: 100%;
+  position: relative;
+
+  &__label {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: $color-yellow-light;
+    pointer-events: none;
+    transition: all 0.1s ease;
+  }
+
+  & input {
+    padding: 0.8rem 1.2rem;
+    margin-top: 0.5rem;
+    width: 100%;
+    border: 1px solid $color-white-dark;
+    font-size: 1.5rem;
+
+    &:focus {
+      outline: none;
+    }
+    &::placeholder {
+      font-size: 1.4rem;
+      color: $color-black-light;
+    }
+    &:read-only {
+      cursor: no-drop;
+    }
+  }
+  &__icon {
+    position: absolute;
+    right: 5%;
+    bottom: 10%;
+
+    & svg {
+      font-size: 1.8rem;
+    }
+  }
+}

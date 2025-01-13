@@ -1,0 +1,106 @@
+.dashboard {
+  display: flex;
+  &-back__button {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    border: 0.2rem solid rgba($color-yellow, 0.4);
+    border-radius: 1rem;
+    color: $color-yellow;
+    background-color: transparent;
+    transition: all 0.3s;
+    cursor: pointer;
+    margin-bottom: 2rem;
+
+    &:hover {
+      background-color: rgba($color-yellow, 0.3);
+      color: $color-white;
+    }
+
+    & span {
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 0.1rem;
+    }
+
+    & svg {
+      font-size: 2rem;
+    }
+  }
+  &-left {
+    flex-basis: 20%;
+    background-color: rgba($color-yellow, 0.25);
+    min-height: 90vh;
+
+    @media screen and (max-width: 900px) {
+      display: none;
+    }
+  }
+  &-left__mobile {
+    display: none;
+    width: 100%;
+    background-color: $color-white;
+    padding: 0 0.4rem;
+
+    @media screen and (max-width: 900px) {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      display: block;
+      margin-top: 4rem;
+    }
+  }
+
+  &-right {
+    flex-basis: 80%;
+    padding: 4rem;
+
+    @media screen and (max-width: 1200px) {
+      padding: 2rem;
+    }
+    @media screen and (max-width: 900px) {
+      flex: 1;
+    }
+  }
+}
+
+.page-header {
+  font-size: 2.5rem;
+  color: $color-yellow;
+  letter-spacing: 0.2rem;
+  border-bottom: 0.2rem solid rgba($color-yellow, 0.7);
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.5rem;
+  width: fit-content;
+  @media screen and (max-width: 1200px) {
+    font-size: 2rem;
+  }
+}
+.page-button {
+  margin-top: 2rem;
+  background-color: rgba($color-yellow, 0.8);
+  border: 0.2rem solid $color-yellow;
+  color: $color-white;
+  letter-spacing: 0.2rem;
+  font-weight: 400;
+  border-radius: 0.5rem;
+  font-size: 2rem;
+  width: fit-content;
+  padding: 1.7rem 5rem;
+  cursor: pointer;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px,
+    rgb(209, 213, 219) 0px 0px 0px 1px inset;
+  transition: all 0.3s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: no-drop;
+  }
+  &:hover {
+    box-shadow: none;
+  }
+  @media screen and (max-width: 1200px) {
+    font-size: 1.5rem;
+    letter-spacing: 0.1rem;
+  }
+}

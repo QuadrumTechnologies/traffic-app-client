@@ -1,0 +1,113 @@
+.sidebar {
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  @media screen and (max-width: 1200px) {
+    padding: 3rem 1rem;
+  }
+  @media screen and (max-width: 900px) {
+    padding: 0;
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    @media screen and (max-width: 900px) {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+  }
+
+  &-item {
+    padding: 1.5rem 1rem;
+    width: 100%;
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    font-size: 1.6rem;
+    font-weight: bold;
+    letter-spacing: 0.2rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    color: $color-yellow;
+    margin: 1rem 0;
+
+    @media screen and (max-width: 1200px) {
+      font-size: 1.4rem;
+      letter-spacing: 0.1rem;
+    }
+
+    &__active {
+      margin: 1rem 0;
+      padding: 1.5rem 1rem;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      font-size: 1.6rem;
+      font-weight: bold;
+      letter-spacing: 0.2rem;
+      text-decoration: none;
+      text-transform: uppercase;
+      color: $color-white;
+      background-color: rgba($color-yellow, 0.9);
+
+      @media screen and (max-width: 1200px) {
+        font-size: 1.4rem;
+        letter-spacing: 0.1rem;
+      }
+    }
+  }
+  &-icon {
+    color: $color-yellow;
+    font-size: 3rem;
+    &__active {
+      color: $color-white;
+      font-size: 3rem;
+    }
+  }
+
+  &-logout {
+    width: 100%;
+    box-shadow: 0 0.1rem 0.1rem 0.2rem rgba($color-yellow, 0.5);
+    padding: 1.4rem 0;
+    color: rgba($color-yellow, 0.7);
+    letter-spacing: 0.2rem;
+    border-radius: 0.1rem;
+    font-size: 2rem;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    position: relative;
+
+    @media screen and (max-width: 900px) {
+      // margin-top: 0 !important;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0.5rem;
+      color: $color-white;
+      background-color: rgba($color-yellow, 0.5);
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.2s, width 0.4s cubic-bezier(1, 0, 0, 1) 0.2s,
+        background-color 0.2s, color 0.2s;
+    }
+
+    &:hover::after {
+      transform: scaleY(1);
+      background-color: rgba($color-yellow, 0.5);
+      color: $color-white;
+      width: 100%;
+    }
+  }
+}

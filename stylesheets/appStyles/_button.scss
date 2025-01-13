@@ -1,0 +1,22 @@
+.button {
+  background-color: $color-yellow;
+  color: $color-white;
+  letter-spacing: 0.3rem;
+  font-weight: 400;
+  border-radius: 0.5rem;
+  font-size: 2rem;
+  width: 100%;
+  padding: 1rem 0;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: no-drop;
+  }
+
+  &:hover {
+    background-color: rgba($color-yellow, 0.8);
+  }
+}

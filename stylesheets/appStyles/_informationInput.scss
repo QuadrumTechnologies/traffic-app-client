@@ -1,0 +1,67 @@
+.information-group {
+  width: 100%;
+  position: relative;
+  margin-bottom: 3.5rem;
+
+  .floating-label {
+    font-size: 1.6rem;
+    color: $color-yellow-light;
+    position: absolute;
+    pointer-events: none;
+    top: 1.5rem;
+    left: 1.5rem;
+    transition: all 0.1s ease;
+  }
+
+  input {
+    padding: 1.3rem 1.5rem;
+    margin-top: 0.4rem;
+    width: 100%;
+    border: none;
+    font-size: 1.6rem;
+
+    &:focus {
+      outline: none;
+    }
+    &::placeholder {
+      font-size: 1.4rem;
+      color: $color-black-light;
+    }
+    &:read-only {
+      cursor: no-drop;
+    }
+  }
+
+  input:focus ~ .floating-label,
+  input:not(:focus):valid ~ .floating-label {
+    top: -25px;
+    bottom: 0px;
+    left: 0px;
+    font-size: 1.5rem;
+    opacity: 1;
+    color: $color-yellow;
+  }
+
+  &__icon {
+    position: absolute;
+    top: 40%;
+    right: 0.7rem;
+    transform: translateY(-30%);
+    cursor: pointer;
+    color: $color-yellow-light;
+    font-size: 2.5rem;
+  }
+
+  &__icon2 {
+    position: absolute;
+    top: 30%;
+    right: 0.7rem;
+    transform: translateY(-30%);
+    cursor: pointer;
+    color: $color-yellow-light;
+    font-size: 2.5rem;
+  }
+  & .date {
+    padding: 1.1rem 1.5rem !important;
+  }
+}

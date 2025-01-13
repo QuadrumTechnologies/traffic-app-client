@@ -1,0 +1,93 @@
+.deviceConfigPage {
+  &__header {
+    font-size: 2.5rem;
+    padding: 0.5rem;
+    letter-spacing: 0.2rem;
+    margin-bottom: 1rem;
+    font-family: "Pacifico", Courier, monospace;
+    border-bottom: 1px solid $color-yellow;
+    border-left: 1px solid $color-yellow;
+    border-radius: 0.7rem;
+    width: fit-content;
+  }
+  &__firstRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  &__firstBox {
+    flex-basis: 48%;
+
+    &--top,
+    &--middle,
+    &--bottom {
+      background-color: $color-white-light;
+      padding: 1.5rem 2rem 2rem;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    &--inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    &--header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1.3rem;
+      line-height: 2.5rem;
+    }
+  }
+
+  &__secondBox {
+    flex-basis: 48%;
+
+    &--top,
+    &--bottom {
+      background-color: $color-white-light;
+      padding: 1.5rem 2rem 2rem;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    &--inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    &--header {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1.3rem;
+      line-height: 2.5rem;
+    }
+  }
+  &__button--box {
+    display: flex;
+    gap: 2rem;
+
+    & button {
+      background-color: $color-yellow;
+      color: $color-white;
+      letter-spacing: 0.1rem;
+      font-weight: 400;
+      border-radius: 0.5rem;
+      font-size: 1.5rem;
+      width: 100%;
+      padding: 1.3rem 0;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: no-drop;
+      }
+
+      &:hover {
+        background-color: rgba($color-yellow, 0.8);
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+.signup {
+  width: 40%;
+  margin: 6rem auto;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset,
+    rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+  padding: 4rem;
+  border-radius: 1rem;
+
+  @media screen and (max-width: 1200px) {
+    width: 50%;
+  }
+  @media screen and (max-width: 900px) {
+    width: 65%;
+  }
+  @media screen and (max-width: 768px) {
+    width: 70%;
+  }
+  @media screen and (max-width: 500px) {
+    width: 90%;
+  }
+  &-title {
+    all: unset;
+    font-size: 2rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: $color-yellow;
+    letter-spacing: 0.2rem;
+    text-align: right;
+  }
+  &-other {
+    margin: 1rem 0 0;
+    font-size: 1.5rem;
+    color: $color-black-light;
+    & a {
+      text-decoration: none;
+      color: $color-yellow-dark;
+      font-weight: 600;
+      transition: color 0.3s;
+
+      &:hover {
+        color: $color-yellow-light;
+      }
+    }
+  }
+  &-success {
+    color: $text-success-color;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: bold;
+    letter-spacing: 0.1rem;
+    text-align: center;
+    margin: -2rem 0 2rem;
+  }
+  &-error {
+    color: $text-error-color;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: bold;
+    letter-spacing: 0.1rem;
+    text-align: center;
+    margin: -2rem 0 2rem;
+  }
+}
