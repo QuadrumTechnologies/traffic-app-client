@@ -10,13 +10,13 @@ class Email {
     this.to = user.email;
     this.role = user.title ? user.title : "";
     this.firstName = user.name.split(" ")[0];
-    this.from = `Joel Ojerinde <${process.env.NEXT_PUBLIC_EMAIL_USERNAME}>`;
+    this.from = `Traffic Signal <${process.env.NEXT_PUBLIC_EMAIL_USERNAME}>`;
   }
 
   newTransport() {
     if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
       return nodemailer.createTransport({
-        host: "smtp.gmail.com",
+        host: "smtp.zoho.com",
         port: 465,
         secure: true,
         auth: {
@@ -52,9 +52,6 @@ class Email {
   async sendWelcome() {
     await this.send("Welcome to the Attendance System Website");
   }
-
-
-  
 }
 
 export default Email;
