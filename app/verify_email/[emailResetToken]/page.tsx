@@ -33,11 +33,11 @@ const VerifyEmail: React.FC<VerifyEmailProps> = ({ params }) => {
           {}
         );
         console.log("verify response", response);
-        setMessage(() => response.data.message);
+        setMessage(() => response?.data?.message);
         setRequestFailed(() => false);
       } catch (error: any) {
         console.log("verify error", error);
-        setMessage(() => error?.response.data.message);
+        setMessage(() => error?.response?.data.message);
         setRequestFailed(() => true);
       } finally {
         setIsLoading(() => false);
