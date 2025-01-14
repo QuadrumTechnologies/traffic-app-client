@@ -33,6 +33,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
   const [successMessage, setSuccessMessage] = useState("");
 
   const adminUser = GetItemFromLocalStorage("adminUser");
+
   const deviceType = deviceTypes.find(
     (dev) => dev.department === adminUser.department
   );

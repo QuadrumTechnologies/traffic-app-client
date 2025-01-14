@@ -7,7 +7,6 @@ import { useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
-
 import { useAppSelector } from "@/hooks/reduxHook";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
@@ -16,8 +15,8 @@ const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
     (state) => state.adminDevice
   );
+
   const statuses = useDeviceStatus();
-  console.log("Statuses", statuses);
 
   const pathname = usePathname();
   const router = useRouter();
