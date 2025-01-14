@@ -12,6 +12,11 @@ const nextConfig = {
         destination: "/admin/dashboard/devices",
         permanent: true,
       },
+      {
+        source: "/admin",
+        destination: "/admin/login",
+        permanent: true,
+      },
     ];
   },
   images: {

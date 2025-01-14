@@ -1,3 +1,3 @@
 export const deviceTypes: { department: string; type: string }[] = [
-  { department: "quadrumtechnologies", type: "QT-TSLC" },
+  { department: "traffic.signal", type: "QT-TSLC" },
 ];

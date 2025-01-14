@@ -18,6 +18,8 @@ export interface UserData {
 const AdminSignUpForm = () => {
   const router = useRouter();
 
+  const allowedEmail = process.env.NEXT_PUBLIC_EMAIL_USERNAME;
+
   // State managements
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>("");
@@ -74,7 +76,14 @@ const AdminSignUpForm = () => {
           return value.trim().split(" ").length >= 2;
         }
       ),
-    email: Yup.string().required("Email is required").email("Email is invalid"),
+    email: Yup.string()
+      .required("Email is required")
+      .email("Email is invalid")
+      .test(
+        "specific-email",
+        `Only ${allowedEmail} is allowed`,
+        (value) => value === allowedEmail
+      ),
     password: Yup.string()
       .required("Password is required")
       .min(6, "Password must be at least 6 characters")
@@ -102,10 +111,7 @@ const AdminSignUpForm = () => {
     validateOnMount: true,
     async onSubmit(values, actions) {
       const { confirmPassword, password, email, name } = values;
-      // TODO: Get the department from the admin email
-      const start = email.lastIndexOf("@") + 1;
-      const end = email.indexOf(".", start);
-      const department = email.slice(start, end);
+      const department = email.slice(0, email.indexOf("@"));
 
       try {
         const response = await HttpRequest.post("/auth/admin/signup", {
