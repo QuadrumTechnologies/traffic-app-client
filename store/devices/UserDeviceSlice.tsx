@@ -266,6 +266,7 @@ const UserDeviceSlice = createSlice({
         state.isFetchingPlans = false;
       })
       .addCase(getUserDeviceInfoData.fulfilled, (state, action) => {
+        console.log("Current Device Info", action);
         state.currentDeviceInfoData = action.payload;
       })
       .addCase(getUserDeviceStateData.fulfilled, (state, action) => {
