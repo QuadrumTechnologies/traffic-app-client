@@ -99,8 +99,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const dispatch = useAppDispatch();
   const email = GetItemFromLocalStorage("user")?.email;
 
-  console.log(plans);
-
   const patternsOptions: Option[] =
     patterns
       ?.map((pattern) => ({

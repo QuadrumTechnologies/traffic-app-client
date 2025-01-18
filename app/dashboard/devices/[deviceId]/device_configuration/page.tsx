@@ -64,8 +64,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     notifications: Yup.string().required("Notifications is required"),
     date: Yup.date().required("Date is required"),
     time: Yup.string().required("Time is required"),
-    batteryStatus: Yup.string().required("Battery Status is required"),
-    wifiStatus: Yup.string().required("WiFi Status is required"),
     wifiPassword: Yup.string().required("WiFi Password is required"),
     wifiName: Yup.string().required("Wifi Name is required"),
     intersectionId: Yup.string().required("Intersection ID is required"),
@@ -86,20 +84,21 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     initialValues: {
       signalBrighness: "",
       notifications: "",
+      minimumBatteryLevel: "",
+      wirelessApproach: null,
+      moduleType: null,
+      communicationChannel: null,
+      energyManagement: null,
+
+      // read only fields
       date: "",
       time: "",
-      batteryStatus: "",
-      wifiStatus: "",
       wifiPassword: "",
       wifiName: "",
       intersectionId: "",
       intersectionPassword: "",
       intersectionType: null,
       controlType: null,
-      wirelessApproach: null,
-      moduleType: null,
-      communicationChannel: null,
-      energyManagement: null,
     },
     validationSchema,
     validateOnChange: true,
@@ -308,32 +307,19 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   inputErrorMessage={formik.errors.time}
                 />
                 <NormalInput
-                  id="batteryStatus"
+                  id="minimumBatteryLevel"
                   type="text"
-                  name="batteryStatus"
+                  name="minimumBatteryLevel"
                   label="Battery Status"
                   invalid={
-                    formik.errors.batteryStatus && formik.touched.batteryStatus
+                    formik.errors.minimumBatteryLevel &&
+                    formik.touched.minimumBatteryLevel
                   }
                   placeholder=""
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.batteryStatus}
-                  inputErrorMessage={formik.errors.batteryStatus}
-                />
-                <NormalInput
-                  id="wifiStatus"
-                  type="text"
-                  name="wifiStatus"
-                  label="WiFi Status"
-                  invalid={
-                    formik.errors.wifiStatus && formik.touched.wifiStatus
-                  }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.wifiStatus}
-                  inputErrorMessage={formik.errors.wifiStatus}
+                  value={formik.values.minimumBatteryLevel}
+                  inputErrorMessage={formik.errors.minimumBatteryLevel}
                 />
               </div>
             </div>

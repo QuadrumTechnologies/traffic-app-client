@@ -1,9 +1,7 @@
-// components/SelectField.tsx
-
 "use client";
 
-import React, { useState } from "react";
-import Select, { StylesConfig, ActionMeta } from "react-select";
+import React, { useEffect, useState } from "react";
+import Select, { StylesConfig } from "react-select";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 export interface Option {
@@ -29,38 +27,56 @@ const SelectField: React.FC<SelectFieldProps> = ({
   const [optionsIsShown, setOptionsIsShown] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<Option | null>(value);
 
-  const customStyles: StylesConfig<Option, false> = {
-    control: (provided, state) => ({
+  useEffect(() => {
+    setSelectedOption(value);
+  }, [value]);
+
+  const customStyles: StylesConfig<Option, boolean> = {
+    container: (provided) => ({
       ...provided,
-      fontSize: "1.4rem",
-      marginBottom: "1.4rem",
-      borderColor: state.isFocused ? "#514604" : "#2a2a29",
-      borderWidth: state.isFocused ? "1.5px" : "1px",
+      position: "relative",
+    }),
+    control: (provided: any, state: any) => ({
+      ...provided,
+      padding: selectedOption ? "7px 0px 0px" : "0px",
+      fontSize: "14px",
+      borderColor: "#C6CDE6",
+      borderWidth: "1px",
+      borderRadius: "8px",
+      height: "44px",
+      minHeight: "44px",
+      backgroundColor: "#C6CDE6",
+      transition: "all 0.3s",
       "&:hover": {
         cursor: "pointer",
-        borderColor: state.isFocused ? " #3b3302" : "#6c6128",
+        borderColor: state.isFocused ? "#C6CDE6" : "#adb2b9",
       },
     }),
-    dropdownIndicator: (provided) => ({
+    valueContainer: (provided) => ({
       ...provided,
-      paddingLeft: "10px",
-      paddingRight: "10px",
+      position: "relative",
+      paddingTop: selectedOption ? "12px" : "0px",
     }),
-    option: (provided, state) => ({
+    option: (provided: any) => ({
       ...provided,
-      fontSize: "1.4rem",
-      color: "#f2f2f2",
-      backgroundColor: state.isSelected ? "#2a2a29" : "#010100",
+      fontSize: "14px",
+      color: "#101828",
+      backgroundColor: "white",
+      fontWeight: "500",
       "&:hover": {
         cursor: "pointer",
-        backgroundColor: "#F2F2F2",
-        color: "#1a1a1a",
+        backgroundColor: "#F9FAFB",
+        color: "#101828",
       },
     }),
-    menu: (provided) => ({
+    menu: (provided: any) => ({
       ...provided,
-      background: "#6c6128",
-      boxShadow: "0px 0px 24px 0px rgba(0, 0, 0, 0.20)",
+      background: "#fff",
+      zIndex: "20",
+      border: "1px solid #EAECF0",
+      borderRadius: "8px",
+      boxShadow:
+        "0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03)",
     }),
   };
 
@@ -68,10 +84,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
     setOptionsIsShown((prevState) => !prevState);
   };
 
-  const handleInputChange = (
-    selectedOption: Option | null,
-    actionMeta: ActionMeta<Option>
-  ) => {
+  const handleInputChange = (selectedOption: any) => {
     setSelectedOption(selectedOption);
     setOptionsIsShown(false);
     onChange(selectedOption);
