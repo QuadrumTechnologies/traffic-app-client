@@ -99,6 +99,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const dispatch = useAppDispatch();
   const email = GetItemFromLocalStorage("user")?.email;
 
+  console.log(patterns, phases, plans, configuredPhases, currentDeviceInfoData);
+
   const patternsOptions: Option[] =
     patterns
       ?.map((pattern) => ({
@@ -154,7 +156,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       return;
     }
 
-    const pattern = patterns.find(
+    const pattern = patterns?.find(
       (pattern) => pattern?.name.toLowerCase() === patternName
     );
 
@@ -218,7 +220,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases.find((p) => p?.id === phaseToConfigure?.id)
+        ? configuredPhases?.find((p) => p?.id === phaseToConfigure?.id)
             ?.duration || ""
         : "",
     },
@@ -312,8 +314,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
   useEffect(() => {
     handlePlanChange({
-      value: dayType.value.toUpperCase(),
-      label: dayType.label.toUpperCase(),
+      value: dayType?.value.toUpperCase(),
+      label: dayType?.label.toUpperCase(),
     });
   }, []);
 
@@ -662,9 +664,9 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           5: "SATURDAY",
           6: "SUNDAY",
         };
-        const Plan = numToDay[feedback.payload.Plan];
+        const Plan = numToDay[feedback?.payload?.Plan];
 
-        const patterns = feedback.payload.Program.map((prog: any) => ({
+        const patterns = feedback?.payload.Program.map((prog: any) => ({
           period: prog.period.slice(0, 5),
           ...parsePattern(prog.pattern),
         }));
@@ -842,13 +844,13 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                       </>
                                     ) : (
                                       <>
-                                        {configuredPhases.find(
+                                        {configuredPhases?.find(
                                           (p) => p?.id === phaseInstance?.id
                                         )?.duration ? (
                                           <span>
                                             Dur:{" "}
                                             {
-                                              configuredPhases.find(
+                                              configuredPhases?.find(
                                                 (p) =>
                                                   p?.id === phaseInstance?.id
                                               )?.duration
@@ -864,7 +866,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                             )
                                           }
                                         >
-                                          {configuredPhases.find(
+                                          {configuredPhases?.find(
                                             (p) => p?.id === phaseInstance?.id
                                           )?.duration
                                             ? "Edit Duration"

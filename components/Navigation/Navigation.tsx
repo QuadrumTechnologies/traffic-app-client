@@ -34,7 +34,7 @@ const Navigation = () => {
           overflow: "hidden",
           cursor: "pointer",
         }}
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/dashboard")}
       >
         <Image
           src="/images/logo.png"
