@@ -99,7 +99,7 @@ export const getUserDevice = createAsyncThunk(
       // emitToastMessage("Your device(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get user device error");
     }
   }
 );
@@ -114,7 +114,7 @@ export const getUserPhase = createAsyncThunk(
       // emitToastMessage("Your phase(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get user phase error");
     }
   }
 );
@@ -128,7 +128,7 @@ export const getUserPattern = createAsyncThunk(
       // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get user pattern error");
     }
   }
 );
@@ -142,7 +142,7 @@ export const getUserPlan = createAsyncThunk(
       // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get user plan error");
     }
   }
 );
@@ -155,7 +155,7 @@ export const getUserDeviceInfoData = createAsyncThunk(
       } = await HttpRequest.get(`/info/${deviceId}`);
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get info error");
     }
   }
 );
@@ -168,7 +168,7 @@ export const getUserDeviceStateData = createAsyncThunk(
       } = await HttpRequest.get(`/state/${deviceId}`);
       return data;
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      console.log(error?.response.data.message, "Get user state error");
     }
   }
 );
@@ -266,7 +266,6 @@ const UserDeviceSlice = createSlice({
         state.isFetchingPlans = false;
       })
       .addCase(getUserDeviceInfoData.fulfilled, (state, action) => {
-        console.log("Current Device Info", action);
         state.currentDeviceInfoData = action.payload;
       })
       .addCase(getUserDeviceStateData.fulfilled, (state, action) => {
