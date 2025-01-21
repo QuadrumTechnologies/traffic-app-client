@@ -202,14 +202,14 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       if (!confirmSwitch) return;
     }
 
-    const foundPhase = phases.find((p) => p?.name === phaseName);
+    const foundPhase = phases?.find((p) => p?.name === phaseName);
 
     if (foundPhase) {
       setPhaseToConfigure({ ...foundPhase, id: phaseId });
       phaseFormik.resetForm({
         values: {
           duration:
-            configuredPhases.find((p) => p?.id === foundPhase?.id)?.duration ||
+            configuredPhases?.find((p) => p?.id === foundPhase?.id)?.duration ||
             "",
         },
       });
@@ -276,7 +276,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const handleChange = useCallback(
     (time: string, selectedValue: string) => {
       const selectedOption =
-        patternsOptions.find((option) => option.value === selectedValue) ||
+        patternsOptions?.find((option) => option.value === selectedValue) ||
         null;
       setSchedule((prevSchedule) => ({
         ...prevSchedule,
@@ -290,7 +290,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     console.log("New Value", newValue);
     if (newValue) {
       setSelectedPlan(newValue);
-      const plan = plans.find(
+      const plan = plans?.find(
         (plan) => plan?.name.toLowerCase() === newValue.value.toLowerCase()
       );
 
@@ -323,7 +323,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     if (newValue) {
       setDayType(newValue);
 
-      const plan = plans.find(
+      const plan = plans?.find(
         (plan) => plan?.name.toLowerCase() === newValue.value.toLowerCase()
       );
 
@@ -414,7 +414,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     //
 
     try {
-      const plan = plans.find(
+      const plan = plans?.find(
         (plan) => plan.name.toLowerCase() === dayType.value.toLowerCase()
       );
       console.log(
