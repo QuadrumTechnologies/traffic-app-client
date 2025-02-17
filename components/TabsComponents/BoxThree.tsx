@@ -34,6 +34,22 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
     setSearchedResult(matchedPhases);
   };
   const plansToShow = showSearchedResult ? searchedResult : plans;
+  const dayOrder = [
+    "SUNDAY",
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+  ];
+
+  const sortedPlans = [...plansToShow].sort((a, b) => {
+    if (a.name === "CUSTOM") return 1; // 'CUSTOM' should always go last
+    if (b.name === "CUSTOM") return -1;
+
+    return dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name);
+  });
 
   useEffect(() => {
     dispatch(getUserPlan(email));
@@ -207,7 +223,7 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
               </form>
             </div>
             <ul className="plans">
-              {plansToShow?.map((plan, index) => (
+              {sortedPlans?.map((plan, index) => (
                 <li className="plans__list" key={index}>
                   <div className="plans__list--item">
                     <h3>{plan.name}</h3>
