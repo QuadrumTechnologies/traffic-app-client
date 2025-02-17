@@ -147,12 +147,16 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
           invalid={!!formik.errors.deviceId && formik.touched.deviceId}
           placeholder="Enter the Device ID"
         />
-        <SelectField
-          onChange={(option) => formik.setFieldValue("deviceStatus", option)}
-          value={formik.values.deviceStatus}
-          options={options}
-          placeholder="Has the device been purchased?"
-        />
+
+        <div style={{ marginBottom: "1rem" }}>
+          <SelectField
+            onChange={(option) => formik.setFieldValue("deviceStatus", option)}
+            value={formik.values.deviceStatus}
+            options={options}
+            placeholder="Has the device been purchased?"
+          />
+        </div>
+
         {formik.values.deviceStatus?.value === "purchased" && (
           <div className="addDeviceOverlay__status">
             <InformationInput
@@ -164,7 +168,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
               onBlur={formik.handleBlur}
               inputErrorMessage={formik.errors.ownerEmail}
               invalid={!!formik.errors.ownerEmail && formik.touched.ownerEmail}
-              placeholder="Enter Onwer's Email"
+              placeholder="Enter Owner's Email"
             />
             <InformationInput
               id="purchasedDate"
