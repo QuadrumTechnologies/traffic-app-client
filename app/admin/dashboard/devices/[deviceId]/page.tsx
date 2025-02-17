@@ -12,7 +12,6 @@ import {
   setSignalString,
 } from "@/store/signals/SignalConfigSlice";
 import { useEffect, useState } from "react";
-import { getWebSocket } from "../../websocket";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { formatRtcDate, formatRtcTime, getDeviceStatus } from "@/utils/misc";
@@ -24,6 +23,7 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
+import { getWebSocket } from "@/app/dashboard/websocket";
 
 interface DeviceDetailsProps {
   params: any;
