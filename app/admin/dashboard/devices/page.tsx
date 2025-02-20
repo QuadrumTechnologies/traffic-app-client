@@ -23,6 +23,19 @@ const AdminDevices = () => {
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
+    const device = devices.find((device) => device.deviceId === deviceId);
+    console.log(device);
+
+    if (!device) {
+      alert("Device not found.");
+      return;
+    }
+
+    if (!device.userDevice?.allowAdminSupport) {
+      alert("Admin support is not enabled for this device.");
+      return;
+    }
+
     router.push(`${pathname}/${deviceId}`);
   };
 

@@ -39,7 +39,7 @@ const Settings = () => {
       )}
       {clearAllDevices && (
         <OverlayModal onClose={() => setClearAllDevices(false)}>
-          <div>Deactivate user</div>
+          <div>Clear all devices</div>
         </OverlayModal>
       )}
     </div>

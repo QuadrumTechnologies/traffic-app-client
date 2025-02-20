@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import HttpRequest from "../services/HttpRequest";
 import { emitToastMessage } from "@/utils/toastFunc";
+import { setItemToCookie } from "@/utils/cookiesFunc";
 
 interface InitialStateTypes {
   devices: any[];
@@ -22,6 +23,21 @@ export const getAdminDevice = createAsyncThunk(
         return emitToastMessage("You have not added any device yet", "success");
       }
       emitToastMessage("All devices fetched successfully", "success");
+      const filteredDevices = data.devices.map((device: any) => ({
+        deviceId: device.deviceId,
+        email: device.userDevice?.email,
+        status: device.userDevice?.status,
+        allowAdminSupport: device.userDevice?.allowAdminSupport,
+        isTrash: device.userDevice?.isTrash,
+        deletedAt: device.userDevice?.deletedAt,
+      }));
+
+      // Store devices in cookies (as JSON string)
+      setItemToCookie(
+        "adminDevices",
+        JSON.stringify(filteredDevices),
+        60 * 60 * 24 // 1 day expiration
+      );
       return data;
     } catch (error: any) {
       emitToastMessage("Could not fetch your device(s)", "error");

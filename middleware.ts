@@ -18,6 +18,33 @@ export function middleware(request: NextRequest) {
   )
     return NextResponse.redirect(new URL("/admin/login", request.url));
 
+  if (request.nextUrl.pathname.startsWith("/admin/dashboard/devices/")) {
+    const deviceId = request.nextUrl.pathname.split("/").pop();
+    const storedDevices = request.cookies.get("adminDevices")?.value;
+
+    if (storedDevices) {
+      try {
+        const devices = JSON.parse(storedDevices);
+        const device = devices.find((d: any) => d.deviceId === deviceId);
+
+        // Redirect if no device or admin support is not enabled
+        if (!device || !device.allowAdminSupport) {
+          return NextResponse.redirect(
+            new URL("/admin/dashboard/devices", request.url)
+          );
+        }
+      } catch {
+        return NextResponse.redirect(
+          new URL("/admin/dashboard/devices", request.url)
+        );
+      }
+    } else {
+      return NextResponse.redirect(
+        new URL("/admin/dashboard/devices", request.url)
+      );
+    }
+  }
+
   return NextResponse.next();
 }
 
