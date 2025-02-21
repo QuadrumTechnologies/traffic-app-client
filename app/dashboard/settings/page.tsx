@@ -17,14 +17,14 @@ const Settings = () => {
       <Link className="settings_url" href="/dashboard/settings/change_password">
         Change Password
       </Link>
-      <div>
+      {/* <div>
         <button
           onClick={() => setClearAllDevices(true)}
           className="page-button"
         >
           Clear All Devices
         </button>
-      </div>
+      </div> */}
       <div>
         <button onClick={() => setDeactivateUser(true)} className="page-button">
           Deactivate Account
@@ -37,11 +37,11 @@ const Settings = () => {
           <div>Deactivate user</div>
         </OverlayModal>
       )}
-      {clearAllDevices && (
+      {/* {clearAllDevices && (
         <OverlayModal onClose={() => setClearAllDevices(false)}>
           <div>Clear all devices</div>
         </OverlayModal>
-      )}
+      )} */}
     </div>
   );
 };

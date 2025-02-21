@@ -1,5 +1,6 @@
 .deviceConfigPage {
   margin-bottom: 3rem;
+
   &__header {
     font-size: 2.5rem;
     padding: 0.5rem;
@@ -17,23 +18,28 @@
       align-items: center;
     }
   }
+
   &__toggle {
     display: flex;
     align-items: center;
+
     & span {
       font-size: 1.5rem;
       font-weight: bold;
       margin-right: 1rem;
     }
+
     & button {
       all: unset;
     }
   }
+
   &__firstRow {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
   }
+
   &__firstBox {
     flex-basis: 48%;
 
@@ -51,6 +57,7 @@
       flex-direction: column;
       gap: 2rem;
     }
+
     &--header {
       font-size: 1.5rem;
       font-weight: bold;
@@ -75,6 +82,7 @@
       flex-direction: column;
       gap: 2rem;
     }
+
     &--header {
       font-size: 1.5rem;
       font-weight: bold;
@@ -82,6 +90,7 @@
       line-height: 2.5rem;
     }
   }
+
   &__button--box {
     display: flex;
     gap: 2rem;
@@ -106,6 +115,40 @@
 
       &:hover {
         background-color: rgba($color-yellow, 0.8);
+      }
+    }
+  }
+
+  &__menu {
+    position: relative;
+
+    &-icon {
+      cursor: pointer;
+    }
+
+    &-dropdown {
+      position: absolute;
+      right: 0;
+      margin-top: 0.5rem;
+      width: 10rem;
+      background-color: $color-white;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      z-index: 10;
+
+      &-button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+
+        &:hover {
+          background-color: $color-white-light;
+        }
       }
     }
   }
