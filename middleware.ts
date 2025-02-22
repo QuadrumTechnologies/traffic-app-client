@@ -18,7 +18,11 @@ export function middleware(request: NextRequest) {
   )
     return NextResponse.redirect(new URL("/admin/login", request.url));
 
-  if (request.nextUrl.pathname.startsWith("/admin/dashboard/devices/")) {
+  if (
+    /^\/admin\/dashboard\/devices\/[^/]+\/(intersection_configuration|device_configuration)$/.test(
+      request.nextUrl.pathname
+    )
+  ) {
     const deviceId = request.nextUrl.pathname.split("/").pop();
     const storedDevices = request.cookies.get("adminDevices")?.value;
 
