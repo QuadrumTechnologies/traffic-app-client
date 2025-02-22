@@ -38,17 +38,6 @@ const AdminDevices = () => {
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
-    const device = devices.find((device) => device.deviceId === deviceId);
-    if (!device) {
-      alert("Device not found.");
-      return;
-    }
-
-    if (!device.userDevice?.allowAdminSupport) {
-      alert("Admin support is not enabled for this device.");
-      return;
-    }
-
     router.push(`${pathname}/${deviceId}`);
   };
 

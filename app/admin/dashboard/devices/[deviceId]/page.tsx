@@ -344,7 +344,10 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
       </div>
       <div className="device__right">
         <div className="device__right--top">
-          <DeviceConfiguration deviceConfigItems={deviceConfigItems} />
+          <DeviceConfiguration
+            deviceConfigItems={deviceConfigItems}
+            deviceId={deviceId}
+          />
           <div className="device-table">
             <table>
               <thead>
@@ -365,7 +368,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                         <td
                           key={`${dir}-battery`}
                           className={
-                            currentDeviceInfoData[dir].Bat === "0" ? "red" : ""
+                            currentDeviceInfoData[dir]?.Bat === "0" ? "red" : ""
                           }
                         >
                           {currentDeviceInfoData[dir]?.Bat ?? "0"}

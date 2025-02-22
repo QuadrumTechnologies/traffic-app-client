@@ -32,6 +32,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   intersectionConfigItems,
   deviceId,
 }) => {
+  const { devices } = useAppSelector((state) => state.adminDevice);
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -50,6 +51,17 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   }, [deviceActiveStateData]);
 
   const handleRequest = async (action: string) => {
+    const device = devices.find((device) => device.deviceId === deviceId);
+    if (!device) {
+      alert("Device not found.");
+      return;
+    }
+
+    if (!device.userDevice?.allowAdminSupport) {
+      alert("Admin support is not enabled for this device.");
+      return;
+    }
+
     const isPasswordVerified = GetItemFromLocalStorage("isPasswordVerified");
     if (!isPasswordVerified || Date.now() - isPasswordVerified.time > 180000) {
       const password = prompt("Please enter your password to proceed");
@@ -168,6 +180,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     const initialStrings = encodeSignals();
     setInitialSignlStrings(initialStrings);
   }, []);
+
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -253,18 +266,29 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       }
     },
   });
+
+  const handleRedirectionToDevicePage = () => {
+    const device = devices.find((device) => device.deviceId === deviceId);
+    if (!device) {
+      alert("Device not found.");
+      return;
+    }
+
+    if (!device.userDevice?.allowAdminSupport) {
+      alert("Admin support is not enabled for this device.");
+      return;
+    }
+
+    router.push(`${pathname}/intersection_configuration`);
+    dispatch(setManualMode(false));
+    dispatch(setIsIntersectionConfigurable(true));
+  };
+
   return (
     <section className="intersectionConfiguration">
       <div className="intersectionConfiguration__header">
         <h2>Intersection Configuration</h2>
-        <button
-          type="button"
-          onClick={() => {
-            router.push(`${pathname}/intersection_configuration`);
-            dispatch(setManualMode(false));
-            dispatch(setIsIntersectionConfigurable(true));
-          }}
-        >
+        <button type="button" onClick={handleRedirectionToDevicePage}>
           Configure
         </button>
       </div>
