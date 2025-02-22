@@ -1,12 +1,9 @@
 "use client";
 
 import NormalInput from "@/components/UI/Input/NormalInput";
-import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import SelectField, { Option } from "@/components/UI/SelectField/SelectField";
-import HttpRequest from "@/store/services/HttpRequest";
 import { useFormik } from "formik";
-import { useEffect, useState } from "react";
-import { FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { useState } from "react";
 import * as Yup from "yup";
 
 interface DeviceConfigurationPageProps {
@@ -59,57 +56,8 @@ const energyManagementOptions: Option[] = [
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   params,
 }) => {
+  console.log("Device ID Config Page", params);
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [adminSupport, setAdminSupport] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const fetchDeviceStatus = async () => {
-    try {
-      const response = await HttpRequest.get(
-        `/user-devices/${params.deviceId}`
-      );
-
-      setAdminSupport(response.data.data.allowAdminSupport);
-    } catch (error) {
-      console.error("Error fetching device status", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeviceStatus();
-  }, [params.deviceId]);
-
-  const handleToggle = async () => {
-    const newStatus = !adminSupport;
-
-    const confirmUpdate = confirm(
-      `Are you sure you want to ${
-        newStatus ? "enable" : "disable"
-      } admin support?`
-    );
-
-    if (!confirmUpdate) return;
-
-    setAdminSupport(newStatus);
-    try {
-      setIsSubmitting(true);
-      const response = await HttpRequest.patch(
-        `/user-devices/${params.deviceId}`,
-        {
-          allowAdminSupport: newStatus,
-        }
-      );
-      setAdminSupport(response.data.data.allowAdminSupport);
-    } catch (error) {
-      console.error("Error updating toggle", error);
-      alert("Failed to update admin support status.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const validationSchema = Yup.object({
     signalBrighness: Yup.string().required("Signal Brighness is required"),
@@ -166,29 +114,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     },
   });
 
-  if (isLoading) return <LoadingSpinner color="blue" height="big" />;
-
   return (
     <section className="deviceConfigPage">
-      <div className="deviceConfigPage__header--box">
-        <h2 className="deviceConfigPage__header">Device Configurations</h2>
-
-        <div className="deviceConfigPage__toggle">
-          <span>Allow Admin Support:</span>
-          <button
-            onClick={handleToggle}
-            disabled={isSubmitting}
-            className="deviceConfigPage__toggle-button"
-          >
-            {adminSupport ? (
-              <FaToggleOn size={40} />
-            ) : (
-              <FaToggleOff size={40} />
-            )}
-          </button>
-        </div>
-      </div>
-
+      <h2 className="deviceConfigPage__header">Device Configurations</h2>
       <form onSubmit={formik.handleSubmit}>
         <div className="deviceConfigPage__firstRow">
           <div className="deviceConfigPage__firstBox">
