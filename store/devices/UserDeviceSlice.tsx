@@ -93,7 +93,7 @@ const initialState: InitialStateTypes = {
 
 export const getUserDevice = createAsyncThunk(
   "userDevice/getUserDevice",
-  async () => {
+  async (email?: string) => {
     try {
       const { data } = await HttpRequest.get(`/devices`);
       // emitToastMessage("Your device(s) are fetched successfully", "success");
@@ -106,7 +106,7 @@ export const getUserDevice = createAsyncThunk(
 
 export const getUserPhase = createAsyncThunk(
   "userDevice/getUserPhase",
-  async () => {
+  async (email?: string) => {
     try {
       const {
         data: { data },
@@ -122,7 +122,7 @@ export const getUserPhase = createAsyncThunk(
 
 export const getUserPattern = createAsyncThunk(
   "userDevice/getUserPattern",
-  async () => {
+  async (email?: string) => {
     try {
       const {
         data: { data },
@@ -137,7 +137,7 @@ export const getUserPattern = createAsyncThunk(
 
 export const getUserPlan = createAsyncThunk(
   "userDevice/getUserPlan",
-  async () => {
+  async (email?: string) => {
     try {
       const {
         data: { data },
