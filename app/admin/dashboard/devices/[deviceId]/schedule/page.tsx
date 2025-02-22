@@ -256,7 +256,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       });
 
       emitToastMessage(data.message, "success");
-      dispatch(getUserPattern(email));
+      dispatch(getUserPattern());
       dispatch(clearPhaseConfig());
       setSelectedPattern(null);
     } catch (error: any) {
@@ -378,7 +378,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           dayType.value === "custom" ? customDate || undefined : undefined,
       });
       emitToastMessage(data.message, "success");
-      dispatch(getUserPlan(email));
+      dispatch(getUserPlan());
       // setSchedule({});
       setSelectedPattern(null);
       handlePlanChange({
@@ -394,7 +394,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   };
 
   useEffect(() => {
-    dispatch(getUserPlan(email));
+    dispatch(getUserPlan());
     if (!currentDeviceInfoData?.JunctionId) {
       dispatch(getUserDeviceInfoData(params.deviceId));
     }
@@ -680,8 +680,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           const {
             data: { message, plan },
           } = await HttpRequest.put("/plans", newPlan);
-          dispatch(getUserPlan(email));
-          dispatch(getUserPattern(email));
+          dispatch(getUserPlan());
+          dispatch(getUserPattern());
           handlePlanChange({
             value: plan.dayType.toUpperCase(),
             label: plan.dayType.toUpperCase(),
