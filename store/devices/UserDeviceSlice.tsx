@@ -93,9 +93,9 @@ const initialState: InitialStateTypes = {
 
 export const getUserDevice = createAsyncThunk(
   "userDevice/getUserDevice",
-  async (email: string) => {
+  async () => {
     try {
-      const { data } = await HttpRequest.get(`/devices/${email}`);
+      const { data } = await HttpRequest.get(`/devices`);
       // emitToastMessage("Your device(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
@@ -103,13 +103,14 @@ export const getUserDevice = createAsyncThunk(
     }
   }
 );
+
 export const getUserPhase = createAsyncThunk(
   "userDevice/getUserPhase",
-  async (email: string) => {
+  async () => {
     try {
       const {
         data: { data },
-      } = await HttpRequest.get(`/phases/${email}`);
+      } = await HttpRequest.get(`/phases`);
 
       // emitToastMessage("Your phase(s) are fetched successfully", "success");
       return data;
@@ -118,13 +119,14 @@ export const getUserPhase = createAsyncThunk(
     }
   }
 );
+
 export const getUserPattern = createAsyncThunk(
   "userDevice/getUserPattern",
-  async (email: string) => {
+  async () => {
     try {
       const {
         data: { data },
-      } = await HttpRequest.get(`/patterns/${email}`);
+      } = await HttpRequest.get(`/patterns`);
       // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
@@ -132,13 +134,14 @@ export const getUserPattern = createAsyncThunk(
     }
   }
 );
+
 export const getUserPlan = createAsyncThunk(
   "userDevice/getUserPlan",
-  async (email: string) => {
+  async () => {
     try {
       const {
         data: { data },
-      } = await HttpRequest.get(`/plans/${email}`);
+      } = await HttpRequest.get(`/plans`);
       // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {

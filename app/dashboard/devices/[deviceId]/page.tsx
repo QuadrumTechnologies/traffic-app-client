@@ -101,13 +101,13 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           ? parseInt(initialDuration, 10)
           : initialDuration;
       let isBlink = timeLeft === 0 || initialDuration === "X";
-      console.log(
-        "Starting Countdown",
-        initialDuration,
-        timeLeft,
-        signalString,
-        isBlink
-      );
+      // console.log(
+      //   "Starting Countdown",
+      //   initialDuration,
+      //   timeLeft,
+      //   signalString,
+      //   isBlink
+      // );
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -207,11 +207,11 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             );
             emitToastMessage("Could not fetch device signal data", "error");
           } else {
-            console.log(
-              "Current Phase and Countdown",
-              feedback.payload.Countdown,
-              feedback.payload.Phase
-            );
+            // console.log(
+            //   "Current Phase and Countdown",
+            //   feedback.payload.Countdown,
+            //   feedback.payload.Phase
+            // );
 
             startCountdown(feedback.payload.Countdown, feedback.payload.Phase);
             dispatch(addCurrentDeviceSignalData(feedback.payload));

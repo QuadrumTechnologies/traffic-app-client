@@ -51,15 +51,12 @@ const AdminLoginForm = () => {
     };
     try {
       const response = await HttpRequest.post("/auth/admin/signin", reqObj);
-      console.log("login response", response);
-      // Destructuring the response.data
       const {
         data: { adminUser },
         adminToken,
         tokenExpiresIn,
       } = response.data;
 
-      // Setting item to local strorage and cookies
       setItemToCookie("adminToken", adminToken, +tokenExpiresIn / 24);
       SetItemToLocalStorage("adminUser", adminUser);
 

@@ -61,7 +61,7 @@ const AdminDeviceSlice = createSlice({
         state.isFetchingDevices = true;
       })
       .addCase(getAdminDevice.fulfilled, (state, action) => {
-        state.devices = action.payload.devices;
+        state.devices = action?.payload?.devices;
         state.isFetchingDevices = false;
       })
       .addCase(getAdminDevice.rejected, (state) => {

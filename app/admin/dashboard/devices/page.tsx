@@ -3,7 +3,7 @@
 import AdminAddDeviceModal from "@/components/Modals/AdminAddDeviceModal";
 import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FaPlus } from "react-icons/fa";
 import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
@@ -15,6 +15,7 @@ import HttpRequest from "@/store/services/HttpRequest";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
 
 const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
@@ -29,6 +30,12 @@ const AdminDevices = () => {
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
+
+  const deviceActionModal = useRef<HTMLDivElement>(null);
+  const closeDeviceActionModal = () => {
+    setShowOptions(false);
+  };
+  useOutsideClick(deviceActionModal, closeDeviceActionModal);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     const device = devices.find((device) => device.deviceId === deviceId);
@@ -110,9 +117,9 @@ const AdminDevices = () => {
         </div>
       )}
 
-      <ul className="devices-list">
+      <div className="devices-list">
         {devices?.map((device) => (
-          <li key={device.deviceId} className="devices-item">
+          <div key={device.deviceId} className="devices-item">
             <BsDeviceSsd className="devices-item__icon" />
             <div className="devices-item__details">
               <h3
@@ -136,7 +143,7 @@ const AdminDevices = () => {
             </div>
             <div className="deviceConfigPage__menu">
               <CiMenuKebab
-                size={20}
+                size={24}
                 className="deviceConfigPage__menu-icon"
                 onClick={() => {
                   setSelectedDeviceId(device.deviceId);
@@ -144,31 +151,34 @@ const AdminDevices = () => {
                 }}
               />
               {showOptions && selectedDeviceId === device.deviceId && (
-                <div className="deviceConfigPage__menu-dropdown">
+                <div
+                  className="deviceConfigPage__menu-dropdown"
+                  ref={deviceActionModal}
+                >
                   <button
                     className="deviceConfigPage__menu-dropdown-button"
                     onClick={() => confirmAction("deleted")}
                   >
                     Delete
                   </button>
-                  {/* <button
+                  <button
                     className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => confirmAction("recalled")}
+                    // onClick={() => confirmAction("recalled")}
                   >
                     Recall
                   </button>
                   <button
                     className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => confirmAction("disabled")}
+                    // onClick={() => confirmAction("disabled")}
                   >
                     Disable
-                  </button> */}
+                  </button>
                 </div>
               )}
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </aside>
   );
 };

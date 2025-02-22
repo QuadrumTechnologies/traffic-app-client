@@ -6,7 +6,6 @@ import {
   getUserPattern,
   getUserPhase,
 } from "@/store/devices/UserDeviceSlice";
-import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import React, { useEffect } from "react";
 import { initializeWebSocket } from "../websocket";
 
@@ -19,13 +18,11 @@ const SendUserDeviceRequests: React.FC<SendUserDeviceRequestsProps> = ({
 }) => {
   const dispatch = useAppDispatch();
 
-  const user = GetItemFromLocalStorage("user");
-
   useEffect(() => {
     (async () => {
-      dispatch(getUserDevice(user.email));
-      dispatch(getUserPhase(user.email));
-      dispatch(getUserPattern(user.email));
+      dispatch(getUserDevice());
+      dispatch(getUserPhase());
+      dispatch(getUserPattern());
     })();
   }, [dispatch]);
 
