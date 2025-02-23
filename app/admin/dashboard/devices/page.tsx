@@ -23,12 +23,15 @@ const AdminDevices = () => {
     (state) => state.adminDevice
   );
 
+  console.log(devices);
+
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
   const pathname = usePathname();
   const router = useRouter();
 
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
+  const [showAssignDeviceModal, setShowAssignDeviceModal] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -40,6 +43,32 @@ const AdminDevices = () => {
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
+  };
+
+  const adminUser = GetItemFromLocalStorage("adminUser");
+  const deviceType = deviceTypes.find(
+    (dev) => dev.department === adminUser?.department
+  );
+
+  const assignDeviceHandler = async () => {
+    const ownerEmail = prompt("Enter the email of the new device owner:");
+
+    if (!ownerEmail || !/^\S+@\S+\.\S+$/.test(ownerEmail)) {
+      emitToastMessage("Invalid email address. Please try again.", "error");
+      return;
+    }
+    try {
+      await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/assign`, {
+        deviceId: selectedDeviceId,
+        deviceStatus: "purchased",
+        ownerEmail,
+        purchasedDate: new Date().toISOString(),
+      });
+      emitToastMessage("Device successfully assigned!", "success");
+      dispatch(getAdminDevice(deviceType));
+    } catch (error: any) {
+      emitToastMessage(error?.response.data.message, "error");
+    }
   };
 
   const toggleDeviceStatus = async (action: string) => {
@@ -58,17 +87,11 @@ const AdminDevices = () => {
     );
     if (!password) return;
 
-    const adminUser = GetItemFromLocalStorage("adminUser");
-
     try {
       await HttpRequest.post("/admin/confirm-password", {
         email: adminUser?.email,
         password,
       });
-
-      const deviceType = deviceTypes.find(
-        (dev) => dev.department === adminUser?.department
-      );
 
       if (action === "delete") {
         await HttpRequest.delete(`/admin/devices/${selectedDeviceId}`);
@@ -154,9 +177,10 @@ const AdminDevices = () => {
               <p>{device.deviceId}</p>
             </div>
             <div className="devices-item__status">
-              {device?.userDevice
-                ? device?.userDevice?.status.toUpperCase()
-                : "NOT ASSIGNED"}
+              {device?.deviceStatus?.status === "purchased"
+                ? device?.userDevice?.status.toUpperCase() ||
+                  "PURCHASED BUT NOT ACTIVATED"
+                : "NOT PURCHASED"}
               {device?.userDevice &&
               device?.userDevice?.status !== "disabled" &&
               getDeviceStatus(device.deviceId) ? (
@@ -198,9 +222,9 @@ const AdminDevices = () => {
                     className="deviceConfigPage__menu-dropdown-button"
                     onClick={() => {
                       const action =
-                        device.userDevice.status === "recalled"
+                        device?.userDevice?.status === "recalled"
                           ? "unrecalled"
-                          : device.userDevice
+                          : device?.userDevice
                           ? "recall"
                           : "assign";
 
@@ -210,9 +234,15 @@ const AdminDevices = () => {
                       } else if (action === "unrecalled") {
                         confirmAction("unrecalled");
                         setShowOptions(false);
+                      } else {
+                        assignDeviceHandler();
+                        setShowOptions(false);
                       }
-                      // Perform assign logic here if needed
                     }}
+                    disabled={
+                      device?.deviceStatus?.status === "purchased" &&
+                      !device?.userDevice
+                    }
                   >
                     {device?.userDevice?.status === "recalled"
                       ? "Unrecalled"
