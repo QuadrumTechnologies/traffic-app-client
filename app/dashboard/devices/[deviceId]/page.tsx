@@ -12,6 +12,7 @@ import {
   setSignalString,
 } from "@/store/signals/SignalConfigSlice";
 import { useEffect, useState } from "react";
+import { getWebSocket } from "../../websocket";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { formatRtcDate, formatRtcTime, getDeviceStatus } from "@/utils/misc";
@@ -23,7 +24,6 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
 
 interface DeviceDetailsProps {
   params: any;
@@ -101,13 +101,13 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           ? parseInt(initialDuration, 10)
           : initialDuration;
       let isBlink = timeLeft === 0 || initialDuration === "X";
-      console.log(
-        "Starting Countdown",
-        initialDuration,
-        timeLeft,
-        signalString,
-        isBlink
-      );
+      // console.log(
+      //   "Starting Countdown",
+      //   initialDuration,
+      //   timeLeft,
+      //   signalString,
+      //   isBlink
+      // );
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -207,11 +207,11 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             );
             emitToastMessage("Could not fetch device signal data", "error");
           } else {
-            console.log(
-              "Current Phase and Countdown",
-              feedback.payload.Countdown,
-              feedback.payload.Phase
-            );
+            // console.log(
+            //   "Current Phase and Countdown",
+            //   feedback.payload.Countdown,
+            //   feedback.payload.Phase
+            // );
 
             startCountdown(feedback.payload.Countdown, feedback.payload.Phase);
             dispatch(addCurrentDeviceSignalData(feedback.payload));
@@ -346,7 +346,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         <div className="device__right--top">
           <DeviceConfiguration
             deviceConfigItems={deviceConfigItems}
-            deviceId={deviceId}
+            deviceId={params.deviceId}
           />
           <div className="device-table">
             <table>
@@ -368,7 +368,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                         <td
                           key={`${dir}-battery`}
                           className={
-                            currentDeviceInfoData[dir]?.Bat === "0" ? "red" : ""
+                            currentDeviceInfoData[dir].Bat === "0" ? "red" : ""
                           }
                         >
                           {currentDeviceInfoData[dir]?.Bat ?? "0"}

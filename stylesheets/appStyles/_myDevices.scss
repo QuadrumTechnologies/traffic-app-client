@@ -90,8 +90,9 @@
   }
   &_off,
   &_on {
-    border-radius: 50%;
-    width: 5rem;
+    margin: 0 0 0 1rem;
+    border-radius: 1rem;
+    width: 8rem;
     height: 5rem;
     display: flex;
     justify-content: center;
@@ -101,11 +102,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 3.8rem;
-      height: 3.8rem;
-      border-radius: 50%;
+      width: 7rem;
+      height: 4rem;
+      border-radius: 1rem;
       background-color: rgba(rgb(242, 234, 234), 0.9);
-      font-size: 1.2rem;
+      font-size: 1.6rem;
+      letter-spacing: "1rem";
       box-shadow: rgba(50, 50, 93, 0.5) 0px 2px 5px -1px,
         rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
     }
@@ -126,6 +128,26 @@
     border: 0.1rem solid rgba($color-yellow, 0.2);
     border-radius: 0.5rem;
     box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.5);
+
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      background-color: rgba($color-yellow, 0.1);
+      border-color: rgba($color-yellow, 0.3);
+
+      &__details h3 {
+        color: rgba($color-yellow, 0.5);
+        cursor: not-allowed;
+      }
+
+      &__status {
+        color: rgba($color-yellow, 0.5);
+      }
+
+      &__icon {
+        color: rgba($color-yellow, 0.5);
+      }
+    }
 
     &__status {
       font-size: 1.7rem;

@@ -3,31 +3,70 @@
 import AddDeviceModal from "@/components/Modals/AddDeviceModal";
 import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { FaPlus } from "react-icons/fa";
 import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
-
-import { useAppSelector } from "@/hooks/reduxHook";
+import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { getDeviceStatus } from "@/utils/misc";
 import { getWebSocket } from "../websocket";
+import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
+import HttpRequest from "@/store/services/HttpRequest";
+import { emitToastMessage } from "@/utils/toastFunc";
+import { CiMenuKebab } from "react-icons/ci";
+import { useOutsideClick } from "@/hooks/useOutsideClick";
+import { getUserDevice } from "@/store/devices/UserDeviceSlice";
 
 const UserDevices = () => {
   const { devices, isFetchingDevices, deviceAvailability } = useAppSelector(
     (state) => state.userDevice
   );
   getWebSocket();
-
+  const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
 
   const pathname = usePathname();
   const router = useRouter();
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [showOptions, setShowOptions] = useState(false);
+
+  const deviceActionModal = useRef<HTMLDivElement>(null);
+  const closeDeviceActionModal = () => {
+    setShowOptions(false);
+  };
+  useOutsideClick(deviceActionModal, closeDeviceActionModal);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
+  };
+
+  const confirmAction = async () => {
+    const password = prompt(
+      `Device ${selectedDeviceId} will be moved to trash for 30 days. After this period, it will be permanently deleted. Admins can delete it permanently at any time. Enter your password to continue.`
+    );
+
+    if (!password) return;
+
+    const user = GetItemFromLocalStorage("user");
+
+    try {
+      await HttpRequest.post("/confirm-password", {
+        email: user?.email,
+        password,
+      });
+
+      await HttpRequest.patch(`/devices/${selectedDeviceId}/availability`, {
+        restore: false,
+      });
+
+      dispatch(getUserDevice());
+      emitToastMessage(`Device moved to trash successfully`, "success");
+    } catch (error: any) {
+      emitToastMessage(error?.response.data.message, "error");
+    }
   };
 
   if (isFetchingDevices) return <LoadingSpinner color="blue" height="big" />;
@@ -59,9 +98,14 @@ const UserDevices = () => {
           </button>
         </div>
       )}
-      <ul className="devices-list">
+      <div className="devices-list">
         {devices?.map((device: any, index) => (
-          <li key={index} className="devices-item">
+          <div
+            key={index}
+            className={`devices-item ${
+              device?.status === "disabled" ? "disabled" : ""
+            }`}
+          >
             <BsDeviceSsd className="devices-item__icon" />
             <div className="devices-item__details">
               <h3
@@ -72,22 +116,46 @@ const UserDevices = () => {
               <p>{device.deviceId}</p>
             </div>
             <p className="devices-item__status">
-              Status:
+              {device?.status.toUpperCase()}
               {getDeviceStatus(statuses, device.deviceId) ||
               (deviceAvailability.Status &&
                 deviceAvailability.DeviceID === device.deviceId) ? (
                 <div className="devices_on">
-                  <p>ON</p>
+                  <p>Online</p>
                 </div>
               ) : (
                 <div className="devices_off">
-                  <p>OFF</p>
+                  <p>Offline</p>
                 </div>
               )}
             </p>
-          </li>
+            <div className="deviceConfigPage__menu">
+              <CiMenuKebab
+                size={24}
+                className="deviceConfigPage__menu-icon"
+                onClick={() => {
+                  setSelectedDeviceId(device.deviceId);
+                  setShowOptions((prev) => !prev);
+                }}
+              />
+              {showOptions && selectedDeviceId === device.deviceId && (
+                <div
+                  className="deviceConfigPage__menu-dropdown"
+                  ref={deviceActionModal}
+                >
+                  <button
+                    className="deviceConfigPage__menu-dropdown-button"
+                    onClick={confirmAction}
+                    disabled={device?.isTrash}
+                  >
+                    {device?.isTrash ? "In Trash" : "Move to Trash"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </aside>
   );
 };

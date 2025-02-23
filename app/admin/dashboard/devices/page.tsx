@@ -16,6 +16,7 @@ import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
+import { deviceTypes } from "@/utils/deviceTypes";
 
 const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
@@ -41,27 +42,61 @@ const AdminDevices = () => {
     router.push(`${pathname}/${deviceId}`);
   };
 
+  const toggleDeviceStatus = async (action: string) => {
+    const newStatus = action === "disable" ? "disabled" : "active";
+
+    await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/status`, {
+      status: newStatus,
+    });
+
+    emitToastMessage(`Device ${newStatus} successfully`, "success");
+  };
+
   const confirmAction = async (action: string) => {
-    const password = prompt("Please enter your password to proceed");
+    const password = prompt(
+      `Device ${selectedDeviceId} will be ${action}. Please enter your password to proceed`
+    );
     if (!password) return;
+
+    const adminUser = GetItemFromLocalStorage("adminUser");
+
     try {
-      const response = await HttpRequest.post("/admin/confirm-password", {
-        email: GetItemFromLocalStorage("adminUser").email,
+      await HttpRequest.post("/admin/confirm-password", {
+        email: adminUser?.email,
         password,
       });
 
-      alert(`Device ${selectedDeviceId} will be ${action}`);
+      const deviceType = deviceTypes.find(
+        (dev) => dev.department === adminUser?.department
+      );
 
-      if (action === "deleted") {
+      if (action === "delete") {
         await HttpRequest.delete(`/admin/devices/${selectedDeviceId}`);
-        dispatch(getAdminDevice(GetItemFromLocalStorage("adminUser").email));
+        dispatch(getAdminDevice(deviceType));
         emitToastMessage("Device deleted successfully", "success");
-        // } else if (action === "recalled") {
-        //   await HttpRequest.get(`/devices/${selectedDeviceId}/recall`);
-        //   emitToastMessage("Device recalled successfully", "success");
-        // } else if (action === "disabled") {
-        //   await HttpRequest.get(`/devices/${selectedDeviceId}/disable`);
-        //   emitToastMessage("Device disabled successfully", "success");
+      } else if (action === "recall" || action === "unrecalled") {
+        await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/recall`, {
+          recall: action === "recall",
+        });
+        dispatch(getAdminDevice(deviceType));
+        emitToastMessage(
+          `Device ${
+            action === "recall" ? "recalled" : "unrecalled"
+          } successfully`,
+          "success"
+        );
+      } else if (action === "disable" || action === "enable") {
+        await toggleDeviceStatus(action);
+        dispatch(getAdminDevice(deviceType));
+      } else if (action === "restore") {
+        await HttpRequest.patch(
+          `/admin/devices/${selectedDeviceId}/availability`,
+          {
+            restore: true,
+          }
+        );
+        dispatch(getAdminDevice(deviceType));
+        emitToastMessage("Device restored successfully", "success");
       }
     } catch (error: any) {
       emitToastMessage(error?.response.data.message, "error");
@@ -119,14 +154,18 @@ const AdminDevices = () => {
               <p>{device.deviceId}</p>
             </div>
             <div className="devices-item__status">
-              Status:
-              {getDeviceStatus(device.deviceId) ? (
+              {device?.userDevice
+                ? device?.userDevice?.status.toUpperCase()
+                : "NOT ASSIGNED"}
+              {device?.userDevice &&
+              device?.userDevice?.status !== "disabled" &&
+              getDeviceStatus(device.deviceId) ? (
                 <div className="devices_on">
-                  <p>ON</p>
+                  <p>Online</p>
                 </div>
               ) : (
                 <div className="devices_off">
-                  <p>OFF</p>
+                  <p>Offline</p>
                 </div>
               )}
             </div>
@@ -144,23 +183,73 @@ const AdminDevices = () => {
                   className="deviceConfigPage__menu-dropdown"
                   ref={deviceActionModal}
                 >
+                  {device?.userDevice?.isTrash && (
+                    <button
+                      className="deviceConfigPage__menu-dropdown-button"
+                      onClick={() => {
+                        confirmAction("restore");
+                        setShowOptions(false);
+                      }}
+                    >
+                      Restore
+                    </button>
+                  )}
                   <button
                     className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => confirmAction("deleted")}
+                    onClick={() => {
+                      const action =
+                        device.userDevice.status === "recalled"
+                          ? "unrecalled"
+                          : device.userDevice
+                          ? "recall"
+                          : "assign";
+
+                      if (action === "recall") {
+                        confirmAction("recall");
+                        setShowOptions(false);
+                      } else if (action === "unrecalled") {
+                        confirmAction("unrecalled");
+                        setShowOptions(false);
+                      }
+                      // Perform assign logic here if needed
+                    }}
+                  >
+                    {device?.userDevice?.status === "recalled"
+                      ? "Unrecalled"
+                      : !device?.userDevice
+                      ? "Assign"
+                      : "Recall"}
+                  </button>
+
+                  <button
+                    disabled={!device.userDevice}
+                    className="deviceConfigPage__menu-dropdown-button"
+                    onClick={() => {
+                      const action =
+                        device?.userDevice?.status === "active"
+                          ? "disable"
+                          : "enable";
+                      confirmAction(action);
+                      setShowOptions(false);
+                    }}
+                  >
+                    {device?.userDevice
+                      ? device?.userDevice?.status === "active"
+                        ? "Disable"
+                        : "Enable"
+                      : "Disable/Enable"}
+                  </button>
+                  <button
+                    className="deviceConfigPage__menu-dropdown-button"
+                    onClick={() => {
+                      if (device?.userDevice && !device?.userDevice?.isRecalled)
+                        return alert("Please recall device before deleting.");
+                      confirmAction("delete");
+                      setShowOptions(false);
+                    }}
+                    // disabled={device.userDevice}
                   >
                     Delete
-                  </button>
-                  <button
-                    className="deviceConfigPage__menu-dropdown-button"
-                    // onClick={() => confirmAction("recalled")}
-                  >
-                    Recall
-                  </button>
-                  <button
-                    className="deviceConfigPage__menu-dropdown-button"
-                    // onClick={() => confirmAction("disabled")}
-                  >
-                    Disable
                   </button>
                 </div>
               )}

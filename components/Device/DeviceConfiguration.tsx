@@ -20,12 +20,12 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   const handleRedirectionToDevicePage = () => {
     const device = devices.find((device) => device.deviceId === deviceId);
-    if (!device) {
+    if (!device && pathname.includes("admin")) {
       alert("Device not found.");
       return;
     }
 
-    if (!device.userDevice?.allowAdminSupport) {
+    if (!device?.userDevice?.allowAdminSupport && pathname.includes("admin")) {
       alert("Admin support is not enabled for this device.");
       return;
     }
