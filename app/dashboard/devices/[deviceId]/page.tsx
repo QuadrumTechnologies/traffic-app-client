@@ -12,7 +12,6 @@ import {
   setSignalString,
 } from "@/store/signals/SignalConfigSlice";
 import { useEffect, useState } from "react";
-import { getWebSocket } from "../../websocket";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { formatRtcDate, formatRtcTime, getDeviceStatus } from "@/utils/misc";
@@ -24,6 +23,7 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
+import { getWebSocket } from "@/app/dashboard/websocket";
 
 interface DeviceDetailsProps {
   params: any;
@@ -101,13 +101,13 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           ? parseInt(initialDuration, 10)
           : initialDuration;
       let isBlink = timeLeft === 0 || initialDuration === "X";
-      // console.log(
-      //   "Starting Countdown",
-      //   initialDuration,
-      //   timeLeft,
-      //   signalString,
-      //   isBlink
-      // );
+      console.log(
+        "Starting Countdown",
+        initialDuration,
+        timeLeft,
+        signalString,
+        isBlink
+      );
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -207,11 +207,11 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             );
             emitToastMessage("Could not fetch device signal data", "error");
           } else {
-            // console.log(
-            //   "Current Phase and Countdown",
-            //   feedback.payload.Countdown,
-            //   feedback.payload.Phase
-            // );
+            console.log(
+              "Current Phase and Countdown",
+              feedback.payload.Countdown,
+              feedback.payload.Phase
+            );
 
             startCountdown(feedback.payload.Countdown, feedback.payload.Phase);
             dispatch(addCurrentDeviceSignalData(feedback.payload));
@@ -256,9 +256,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
 
   // Fetch Intersection Config Data
   useEffect(() => {
-    if (!currentDeviceInfoData?.Rtc) {
-      dispatch(getUserDeviceInfoData(params.deviceId));
-    }
+    dispatch(getUserDeviceInfoData(params.deviceId));
 
     // Fetch Device State Data
     const socket = getWebSocket();
@@ -346,7 +344,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         <div className="device__right--top">
           <DeviceConfiguration
             deviceConfigItems={deviceConfigItems}
-            deviceId={params.deviceId}
+            deviceId={deviceId}
           />
           <div className="device-table">
             <table>
@@ -355,7 +353,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                   <th>Parameters/Device ID</th>
                   {directions.map(
                     (dir) =>
-                      currentDeviceInfoData[dir] && <th key={dir}>{dir}</th>
+                      currentDeviceInfoData?.[dir] && <th key={dir}>{dir}</th>
                   )}
                 </tr>
               </thead>
@@ -364,14 +362,16 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                   <td>Battery [V]</td>
                   {directions.map(
                     (dir) =>
-                      currentDeviceInfoData[dir] && (
+                      currentDeviceInfoData?.[dir] && (
                         <td
                           key={`${dir}-battery`}
                           className={
-                            currentDeviceInfoData[dir].Bat === "0" ? "red" : ""
+                            currentDeviceInfoData?.[dir]?.Bat === "0"
+                              ? "red"
+                              : ""
                           }
                         >
-                          {currentDeviceInfoData[dir]?.Bat ?? "0"}
+                          {currentDeviceInfoData?.[dir]?.Bat ?? "0"}
                         </td>
                       )
                   )}
@@ -380,16 +380,16 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                   <td>Temperature [°C]</td>
                   {directions.map(
                     (dir) =>
-                      currentDeviceInfoData[dir] && (
+                      currentDeviceInfoData?.[dir] && (
                         <td
                           key={`${dir}-temperature`}
                           className={
-                            currentDeviceInfoData[dir].Temp === "0"
+                            currentDeviceInfoData?.[dir].Temp === "0"
                               ? "blue"
                               : ""
                           }
                         >
-                          {currentDeviceInfoData[dir]?.Temp ?? "0"}
+                          {currentDeviceInfoData?.[dir]?.Temp ?? "0"}
                         </td>
                       )
                   )}
