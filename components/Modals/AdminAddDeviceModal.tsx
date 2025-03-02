@@ -148,8 +148,9 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
           placeholder="Enter the Device ID"
         />
 
-        <div style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
           <SelectField
+            label="Select Device Status"
             onChange={(option) => formik.setFieldValue("deviceStatus", option)}
             value={formik.values.deviceStatus}
             options={options}

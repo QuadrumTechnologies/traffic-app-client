@@ -2,6 +2,7 @@
   @media screen and (max-width: 1000px) {
     margin-bottom: 8rem;
   }
+
   &-header {
     display: flex;
     justify-content: space-between;
@@ -129,6 +130,36 @@
     border-radius: 0.5rem;
     box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.5);
 
+    &__icon-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    &__modal {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: white;
+      box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2);
+      border: 0.1rem solid #ccc;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      z-index: 10;
+      font-size: 0.9rem;
+      white-space: nowrap;
+
+      & P {
+        font-size: 1.5rem;
+        letter-spacing: 0.1rem;
+
+        & span {
+          font-size: 1.3rem;
+          font-weight: bold;
+        }
+      }
+    }
+
     &.disabled {
       opacity: 0.5;
       pointer-events: none;
@@ -206,6 +237,10 @@
           }
         }
       }
+    }
+    &-profile {
+      cursor: pointer;
+      font-size: 4.5rem;
     }
     &__actions {
       flex-basis: 35%;

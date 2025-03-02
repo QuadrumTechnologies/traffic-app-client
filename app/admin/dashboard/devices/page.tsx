@@ -17,13 +17,14 @@ import { emitToastMessage } from "@/utils/toastFunc";
 import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { deviceTypes } from "@/utils/deviceTypes";
+import { CgProfile } from "react-icons/cg";
 
 const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
     (state) => state.adminDevice
   );
 
-  console.log(devices);
+  console.log("Devices", devices);
 
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
@@ -31,7 +32,8 @@ const AdminDevices = () => {
   const router = useRouter();
 
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
-  const [showAssignDeviceModal, setShowAssignDeviceModal] = useState(false);
+  const [hoveredDeviceId, setHoveredDeviceId] = useState(null);
+
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -167,7 +169,30 @@ const AdminDevices = () => {
       <div className="devices-list">
         {devices?.map((device) => (
           <div key={device.deviceId} className="devices-item">
-            <BsDeviceSsd className="devices-item__icon" />
+            <div className="devices-item__icon-wrapper">
+              <CgProfile
+                className="devices-item__icon devices-item-profile"
+                onMouseEnter={() => {
+                  setHoveredDeviceId(device.deviceId);
+                }}
+                onMouseLeave={() => {
+                  setHoveredDeviceId(null);
+                }}
+              />
+              {hoveredDeviceId === device.deviceId && device?.deviceStatus && (
+                <div className="devices-item__modal">
+                  <p>
+                    <span>Owner's Email:</span> {device.deviceStatus.ownerEmail}
+                  </p>
+                  <p>
+                    <span> Purchased Date: </span>
+                    {new Date(
+                      device.deviceStatus.purchaseDate
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </div>
             <div className="devices-item__details">
               <h3
                 onClick={() => handleRedirectionToDevicePage(device.deviceId)}
@@ -193,6 +218,7 @@ const AdminDevices = () => {
                 </div>
               )}
             </div>
+
             <div className="deviceConfigPage__menu">
               <CiMenuKebab
                 size={24}

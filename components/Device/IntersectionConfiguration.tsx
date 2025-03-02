@@ -159,6 +159,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
     return adjacentSignal ? adjacentSignal.pedestrian : "X";
   };
+
   const encodeSignals = () => {
     return (
       "*" +

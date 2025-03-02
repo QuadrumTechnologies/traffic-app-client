@@ -38,7 +38,7 @@ export interface IntersectionConfigItem {
   value: string;
 }
 
-function formatUnixTimestamp(unixTimestamp: number) {
+export const formatUnixTimestamp = (unixTimestamp: number) => {
   const date = new Date(unixTimestamp * 1000);
 
   date.setHours(date.getHours() - 1);
@@ -52,7 +52,7 @@ function formatUnixTimestamp(unixTimestamp: number) {
   const seconds = String(date.getSeconds()).padStart(2, "0");
 
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-}
+};
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =

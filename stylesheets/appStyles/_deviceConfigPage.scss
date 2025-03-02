@@ -18,19 +18,31 @@
       align-items: center;
     }
   }
-
   &__toggle {
     display: flex;
     align-items: center;
+    gap: 1rem;
 
     & span {
       font-size: 1.5rem;
       font-weight: bold;
-      margin-right: 1rem;
+      display: flex;
+      align-items: center;
     }
 
     & button {
       all: unset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &.on {
+        color: $text-success-color;
+      }
+
+      &.off {
+        color: $text-error-color;
+      }
     }
   }
 

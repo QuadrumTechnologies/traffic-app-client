@@ -1,28 +1,45 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
-import Select, { StylesConfig } from "react-select";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
+import Select from "react-select";
 
 export interface Option {
-  value: string | null;
+  value: string | number;
   label: string;
 }
 
 interface SelectFieldProps {
   label?: string;
   onChange: (selectedOption: Option | null) => void;
-  value: Option | null;
+  status?: "success" | "error" | "warning" | null;
+  helper?: string | null;
+  value: any;
   options: Option[];
   placeholder?: string;
+  name?: string;
+  disabled?: boolean;
+  width?: string;
+  style?: React.CSSProperties;
+  isSearchable?: boolean;
+  isClearable?: boolean;
+  height?: string;
 }
 
+const SelectComponent = Select as unknown as React.FC<any>;
 const SelectField: React.FC<SelectFieldProps> = ({
   onChange,
   value,
   options,
   label,
   placeholder = "",
+  name,
+  status,
+  helper,
+  disabled,
+  width,
+  isSearchable = true,
+  isClearable,
+  style,
+  height,
 }) => {
   const [optionsIsShown, setOptionsIsShown] = useState<boolean>(false);
   const [selectedOption, setSelectedOption] = useState<Option | null>(value);
@@ -31,57 +48,18 @@ const SelectField: React.FC<SelectFieldProps> = ({
     setSelectedOption(value);
   }, [value]);
 
-  const customStyles: StylesConfig<Option, boolean> = {
-    container: (provided) => ({
-      ...provided,
-      position: "relative",
-    }),
-    control: (provided: any, state: any) => ({
-      ...provided,
-      padding: selectedOption ? "7px 0px 0px" : "0px",
-      fontSize: "14px",
-      borderColor: "#C6CDE6",
-      borderWidth: "1px",
-      borderRadius: "8px",
-      height: "44px",
-      minHeight: "44px",
-      backgroundColor: "#C6CDE6",
-      transition: "all 0.3s",
-      "&:hover": {
-        cursor: "pointer",
-        borderColor: state.isFocused ? "#C6CDE6" : "#adb2b9",
-      },
-    }),
-    valueContainer: (provided) => ({
-      ...provided,
-      position: "relative",
-      paddingTop: selectedOption ? "12px" : "0px",
-    }),
-    option: (provided: any) => ({
-      ...provided,
-      fontSize: "14px",
-      color: "#101828",
-      backgroundColor: "white",
-      fontWeight: "500",
-      "&:hover": {
-        cursor: "pointer",
-        backgroundColor: "#F9FAFB",
-        color: "#101828",
-      },
-    }),
-    menu: (provided: any) => ({
-      ...provided,
-      background: "#fff",
-      zIndex: "20",
-      border: "1px solid #EAECF0",
-      borderRadius: "8px",
-      boxShadow:
-        "0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03)",
-    }),
+  const getBorderColor = (isFocused: boolean) => {
+    if (status === "success") return "#2BAC47";
+    if (status === "error") return "#C83532";
+    if (status === "warning") return "#EF8943";
+    return isFocused ? "#C6CDE6" : "#D0D5DD";
   };
 
-  const toggleOptions = () => {
-    setOptionsIsShown((prevState) => !prevState);
+  const getBackgroundColor = () => {
+    if (status === "success") return "#F1F8F2";
+    if (status === "error") return "#FBEFEF";
+    if (status === "warning") return "#FDF3EC";
+    return "white";
   };
 
   const handleInputChange = (selectedOption: any) => {
@@ -90,42 +68,134 @@ const SelectField: React.FC<SelectFieldProps> = ({
     onChange(selectedOption);
   };
 
-  const handleBlur = () => {
-    setOptionsIsShown(false);
-  };
-
-  const handleInputClick = () => {
-    setOptionsIsShown(true);
-  };
-
   return (
-    <div>
-      {label && <label>{label}: </label>}
-      <Select
-        styles={customStyles}
+    <div
+      style={{
+        ...style,
+        width: width || "100%",
+        position: "relative",
+      }}
+    >
+      {label && selectedOption && (
+        <label
+          style={{
+            position: "absolute",
+            fontSize: "12px",
+            color: "#736A85",
+            fontWeight: "normal",
+            left: "10px",
+            top: "-21px",
+            zIndex: 10,
+          }}
+        >
+          {label}
+        </label>
+      )}
+
+      <SelectComponent
+        styles={{}}
         components={{
           DropdownIndicator: () => (
             <div
-              onClick={toggleOptions}
-              role="button"
-              tabIndex={0}
-              onKeyDown={() => {}}
+              style={{
+                paddingRight: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              {optionsIsShown ? <IoMdArrowDropup /> : <IoMdArrowDropdown />}
+              {optionsIsShown ? <IoIosArrowDown /> : <IoIosArrowUp />}
             </div>
           ),
           IndicatorSeparator: () => null,
         }}
         onChange={handleInputChange}
-        onBlur={handleBlur}
-        onFocus={handleInputClick}
         value={selectedOption}
         options={options}
-        placeholder={placeholder}
+        placeholder={placeholder || label}
         menuIsOpen={optionsIsShown}
+        name={name}
+        isDisabled={disabled}
+        isSearchable={isSearchable}
+        onMenuOpen={() => setOptionsIsShown(true)}
+        onMenuClose={() => setOptionsIsShown(false)}
+        isClearable={isClearable}
       />
+      {helper && (
+        <p
+          style={{
+            marginTop: "8px",
+            fontSize: "14px",
+            display: "flex",
+            gap: "4px",
+            alignItems: "start",
+            color:
+              status === "success"
+                ? "#2BAC47"
+                : status === "error"
+                ? "#C83532"
+                : status === "warning"
+                ? "#EF8943"
+                : "#736A85",
+          }}
+        >
+          {helper}
+        </p>
+      )}
     </div>
   );
+};
+
+const StatusIcon = ({ status }: { status: string }) => {
+  if (status === "success") {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M7 13.6666C3.318 13.6666 0.333328 10.682 0.333328 6.99998C0.333328 3.31798 3.318 0.333313 7 0.333313C10.682 0.333313 13.6667 3.31798 13.6667 6.99998C13.6667 10.682 10.682 13.6666 7 13.6666ZM6.22933 9.98998L10.9427 5.27598L10 4.33331L6.22933 8.10465L4.34333 6.21865L3.40066 7.16131L6.22933 9.98998Z"
+          fill="#2BAC47"
+        />
+      </svg>
+    );
+  }
+  if (status === "error") {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M8 14.6667C4.318 14.6667 1.33333 11.682 1.33333 8.00001C1.33333 4.31801 4.318 1.33334 8 1.33334C11.682 1.33334 14.6667 4.31801 14.6667 8.00001C14.6667 11.682 11.682 14.6667 8 14.6667ZM7.33333 10V11.3333H8.66666V10H7.33333ZM7.33333 4.66668V8.66668H8.66666V4.66668H7.33333Z"
+          fill="#C83532"
+        />
+      </svg>
+    );
+  }
+  if (status === "warning") {
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M8 14.6667C4.318 14.6667 1.33333 11.682 1.33333 8.00001C1.33333 4.31801 4.318 1.33334 8 1.33334C11.682 1.33334 14.6667 4.31801 14.6667 8.00001C14.6667 11.682 11.682 14.6667 8 14.6667ZM7.33333 10V11.3333H8.66666V10H7.33333ZM7.33333 4.66668V8.66668H8.66666V4.66668H7.33333Z"
+          fill="#EF8943"
+        />
+      </svg>
+    );
+  }
+  return null;
 };
 
 export default SelectField;
