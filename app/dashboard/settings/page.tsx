@@ -11,9 +11,9 @@ const Settings = () => {
   return (
     <div>
       <h2 className="page-header">Settings </h2>
-      <Link className="settings_url" href="/dashboard/settings/update_profile">
+      {/* <Link className="settings_url" href="/dashboard/settings/update_profile">
         Update Profile
-      </Link>
+      </Link> */}
       <Link className="settings_url" href="/dashboard/settings/change_password">
         Change Password
       </Link>

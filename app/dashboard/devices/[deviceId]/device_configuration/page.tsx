@@ -343,9 +343,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
               <div className="deviceConfigPage__secondBox--inputs">
                 <div className="deviceConfigPage__slider-container">
-                  <h3 htmlFor="signalBrightness">
-                    Signal Brightness: {formik.values.signalBrightness}%
-                  </h3>
+                  <h3>Signal Brightness: {formik.values.signalBrightness}%</h3>
                   <Slider
                     id="signalBrightness"
                     min={10}
