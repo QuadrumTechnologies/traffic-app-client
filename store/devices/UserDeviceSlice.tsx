@@ -97,6 +97,7 @@ export const getUserDevice = createAsyncThunk(
     try {
       const { data } = await HttpRequest.get(`/devices`);
       // emitToastMessage("Your device(s) are fetched successfully", "success");
+      console.log("Devices", data);
       return data;
     } catch (error: any) {
       console.log(error?.response.data.message, "Get user device error");

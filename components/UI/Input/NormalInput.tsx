@@ -20,6 +20,9 @@ interface Props {
   onBlur?: (e: any) => void;
   multiple?: boolean | undefined;
   readOnly?: boolean;
+  step?: string;
+  min?: string;
+  max?: string;
 }
 
 const NormalInput: React.FC<Props> = ({

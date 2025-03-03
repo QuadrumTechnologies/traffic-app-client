@@ -320,7 +320,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           <button onClick={() => handleRequest("Next")}>Next</button>
           <button onClick={() => handleRequest("Restart")}>Restart</button>
           <button onClick={() => handleRequest("Power")}>Power</button>
-          <button onClick={() => handleRequest("Reset")}>Reset</button>
+          {/* <button onClick={() => handleRequest("Reset")}>Reset</button> */}
         </div>
         {showManualMoreConfig && (
           <form

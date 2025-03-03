@@ -5,47 +5,43 @@ import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import HttpRequest from "@/store/services/HttpRequest";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
-import { FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { FaToggleOn, FaToggleOff, FaPowerOff } from "react-icons/fa";
 import * as Yup from "yup";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-import { useAppSelector } from "@/hooks/reduxHook";
+import { useAppSelector, useAppDispatch } from "@/hooks/reduxHook";
 import { formatRtcDate, formatRtcTime } from "@/utils/misc";
 import { formatUnixTimestamp } from "@/utils/misc";
+import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
+import { getWebSocket } from "@/app/dashboard/websocket";
 
 interface DeviceConfigurationPageProps {
   params: any;
 }
 
-interface DirectionData {
-  // Define the structure of DirectionData
-  // Add properties as needed
-}
-
-const intersectionTypeOptions = [
-  { label: "Cross Intersection (Four-way)", value: "four_way" },
-  { label: "T Intersection (Three-way)", value: "three_way" },
-];
-
-const controlTypeOptions = [
-  { label: "Traffic Lights", value: "traffic_lights" },
-  { label: "Stop Signs", value: "stop_signs" },
-  { label: "Yield Signs", value: "yield_signs" },
-  { label: "No Control", value: "no_control" },
-];
-
-const BRIGHTNESS_LEVELS = [10, 20, 30, 40, 50];
+// const BRIGHTNESS_LEVELS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+const BRIGHTNESS_LEVELS = [20, 40, 60, 80, 100];
 
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   params,
 }) => {
+  const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [adminSupport, setAdminSupport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [signalConfig, setSignalConfig] = useState<string>("active_low_cp");
 
-  const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =
-    useAppSelector((state) => state.userDevice);
+  const {
+    devices,
+    deviceAvailability,
+    currentDeviceInfoData,
+    deviceActiveStateData,
+  } = useAppSelector((state) => state.userDevice);
+
+  const device = devices.find(
+    (device) => device?.deviceId === params?.deviceId
+  );
 
   const fetchDeviceAdminSupportStatus = async () => {
     try {
@@ -94,26 +90,49 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     }
   };
 
+  const handleResetToDefault = () => {
+    const confirmReset = confirm(
+      "Are you sure you want to reset to default settings?"
+    );
+
+    if (!confirmReset) return;
+
+    const socket = getWebSocket();
+    const deviceId = params.deviceId;
+
+    const sendMessage = () => {
+      socket.send(
+        JSON.stringify({
+          event: "intersection_control_request",
+          payload: { action: "reset_defaults", DeviceID: deviceId },
+        })
+      );
+    };
+
+    if (socket.readyState === WebSocket.OPEN) {
+      sendMessage();
+      setTimeout(() => {
+        dispatch(getUserDeviceStateData(deviceId));
+      }, 500);
+    } else {
+      socket.onopen = () => {
+        sendMessage();
+        setTimeout(() => {
+          dispatch(getUserDeviceStateData(deviceId));
+        }, 500);
+      };
+    }
+  };
+
   const validationSchema = Yup.object({
     signalBrightness: Yup.number()
       .required("Signal Brightness is required")
       .oneOf(BRIGHTNESS_LEVELS, "Invalid brightness level"),
     signalPower: Yup.boolean().required("Signal Power is required"),
-    signalLevel: Yup.string()
-      .required("Signal Level is required")
-      .oneOf(["active_high", "active_low"], "Invalid signal level"),
-    notifications: Yup.string().required("Notifications is required"),
-    minimumBatteryLevel: Yup.string().required(
-      "Minimum Battery Level is required"
-    ),
-    intersectionId: Yup.string().required("Intersection ID is required"),
-    intersectionPassword: Yup.string().required(
-      "Intersection Password is required"
-    ),
-    intersectionLocation: Yup.string().required(
-      "Intersection Location is required"
-    ),
-    intersectionType: Yup.string().required("Intersection Type is required"),
+    minimumBatteryLevel: Yup.number()
+      .required("Minimum Battery Level is required")
+      .min(9, "Minimum battery level must be at least 9V")
+      .max(36, "Maximum battery level is 36V"),
   });
 
   // Get date and time from RTC
@@ -127,19 +146,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
   const formik = useFormik({
     initialValues: {
-      signalBrightness: 30, // Default brightness
+      signalBrightness: 20,
       signalPower: deviceActiveStateData?.Power || false,
-      signalLevel: "active_high", // Default signal level
-      notifications: "",
-      minimumBatteryLevel: "",
-
-      // read only fields
-      date: rtcDate,
-      time: rtcTime,
-      intersectionId: currentDeviceInfoData?.JunctionId || "",
-      intersectionPassword: "",
-      intersectionLocation: "",
-      intersectionType: "",
+      minimumBatteryLevel: 12.0,
     },
     validationSchema,
     validateOnChange: true,
@@ -148,19 +157,12 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     async onSubmit(values, actions) {
       try {
         setIsSubmitting(true);
-        // Send updated configuration to the backend
         const response = await HttpRequest.patch(
           `/user-devices/${params.deviceId}/configuration`,
           {
             signalBrightness: values.signalBrightness,
             signalPower: values.signalPower,
-            signalLevel: values.signalLevel,
-            notifications: values.notifications,
             minimumBatteryLevel: values.minimumBatteryLevel,
-            intersectionId: values.intersectionId,
-            intersectionPassword: values.intersectionPassword,
-            intersectionLocation: values.intersectionLocation,
-            intersectionType: values.intersectionType,
           }
         );
         alert("Configuration updated successfully!");
@@ -184,10 +186,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   // Handler for brightness slider after release
   const handleBrightnessAfterChange = (value: number | number[]) => {
     if (typeof value === "number") {
-      // You could send this value to the backend immediately upon release
       console.log("Sending brightness value to backend:", value);
-      // Uncomment to send to backend immediately:
-      // HttpRequest.patch(`/user-devices/${params.deviceId}/brightness`, { brightness: value });
     }
   };
 
@@ -196,22 +195,12 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     formik.setFieldValue("signalPower", !formik.values.signalPower);
   };
 
-  const handleSignalLevelToggle = () => {
-    formik.setFieldValue(
-      "signalLevel",
-      formik.values.signalLevel === "active_high" ? "active_low" : "active_high"
-    );
-  };
-
   // Update form with Redux data when it changes
   useEffect(() => {
     if (currentDeviceInfoData && deviceActiveStateData) {
       formik.setValues({
         ...formik.values,
         signalPower: deviceActiveStateData.Power,
-        date: rtcDate,
-        time: rtcTime,
-        intersectionId: currentDeviceInfoData.JunctionId,
       });
     }
   }, [currentDeviceInfoData, deviceActiveStateData]);
@@ -223,26 +212,44 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       <div className="deviceConfigPage__header--box">
         <h2 className="deviceConfigPage__header">Device Configurations</h2>
 
-        <div className="deviceConfigPage__toggle">
-          <span>Allow Admin Support:</span>
-          <button
-            onClick={handleAdminSupportToggle}
-            disabled={isSubmitting}
-            className={`deviceConfigPage__toggle-button ${
-              adminSupport ? "on" : "off"
-            }`}
-          >
-            {adminSupport ? (
-              <FaToggleOn size={36} />
-            ) : (
-              <FaToggleOff size={36} />
-            )}
-          </button>
+        <div className="deviceConfigPage__controls">
+          <div className="deviceConfigPage__toggle">
+            <span>Signal Power:</span>
+            <button
+              onClick={handleSignalPowerToggle}
+              className={`deviceConfigPage__toggle-button ${
+                formik.values.signalPower ? "on" : "off"
+              }`}
+            >
+              <FaPowerOff
+                size={24}
+                color={formik.values.signalPower ? "red" : "grey"}
+              />
+            </button>
+          </div>
+
+          <div className="deviceConfigPage__toggle">
+            <span>Allow Admin Support:</span>
+            <button
+              onClick={handleAdminSupportToggle}
+              disabled={isSubmitting}
+              className={`deviceConfigPage__toggle-button ${
+                adminSupport ? "on" : "off"
+              }`}
+            >
+              {adminSupport ? (
+                <FaToggleOn size={36} />
+              ) : (
+                <FaToggleOff size={36} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       <form onSubmit={formik.handleSubmit}>
         <div className="deviceConfigPage__firstRow">
+          {/* Left Side - Read Only Fields */}
           <div className="deviceConfigPage__firstBox">
             <div className="deviceConfigPage__firstBox--top">
               <p className="deviceConfigPage__firstBox--header">
@@ -263,7 +270,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   name="deviceKey"
                   label="Secret Key"
                   type={showPassword ? "text" : "password"}
-                  value="12345678"
+                  value={device?.secretKey}
                   passwordIcon={true}
                   showPassword={showPassword}
                   updatePasswordVisibility={() => {
@@ -271,76 +278,79 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   }}
                   readOnly
                 />
-              </div>
-            </div>
-
-            <div className="deviceConfigPage__secondBox--bottom">
-              <p className="deviceConfigPage__secondBox--header">
-                Intersection Configuration
-              </p>
-              <div className="deviceConfigPage__secondBox--inputs">
+                <NormalInput
+                  id="date"
+                  type="text"
+                  name="date"
+                  label="Date"
+                  value={rtcDate}
+                  readOnly
+                />
+                <NormalInput
+                  id="time"
+                  type="text"
+                  name="time"
+                  label="Time"
+                  value={rtcTime}
+                  readOnly
+                />
                 <NormalInput
                   id="intersectionId"
                   type="text"
                   name="intersectionId"
                   label="Intersection ID"
-                  invalid={
-                    formik.errors.intersectionId &&
-                    formik.touched.intersectionId
-                  }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.intersectionId}
-                  inputErrorMessage={formik.errors.intersectionId}
+                  value={currentDeviceInfoData?.JunctionId || ""}
                   readOnly
                 />
+
                 <NormalInput
                   id="intersectionPassword"
                   type={showPassword ? "text" : "password"}
                   name="intersectionPassword"
                   label="Intersection Password"
-                  invalid={
-                    formik.errors.intersectionPassword &&
-                    formik.touched.intersectionPassword
-                  }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.intersectionPassword}
-                  inputErrorMessage={formik.errors.intersectionPassword}
+                  value={currentDeviceInfoData?.JunctionId || ""}
                   passwordIcon={true}
                   showPassword={showPassword}
                   updatePasswordVisibility={() => {
                     setShowPassword((prev) => !prev);
                   }}
+                  readOnly
                 />
+
                 <NormalInput
                   id="intersectionLocation"
                   type="text"
                   name="intersectionLocation"
                   label="Intersection Location"
+                  value={currentDeviceInfoData?.JunctionId || ""}
+                  readOnly
+                />
+
+                {/* <NormalInput
+                  id="intersectionType"
+                  type="text"
+                  name="intersectionType"
+                  label="Intersection Type"
                   invalid={
-                    formik.errors.intersectionLocation &&
-                    formik.touched.intersectionLocation
+                    formik.errors.intersectionType &&
+                    formik.touched.intersectionType
                   }
                   placeholder=""
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  value={formik.values.intersectionLocation}
-                  inputErrorMessage={formik.errors.intersectionLocation}
-                />
+                  value={formik.values.intersectionType}
+                  inputErrorMessage={formik.errors.intersectionType}
+                /> */}
               </div>
             </div>
           </div>
 
+          {/* Right Side - Editable Fields */}
           <div className="deviceConfigPage__secondBox">
             <div className="deviceConfigPage__firstBox--top">
               <p className="deviceConfigPage__secondBox--header">
-                Ensure your device is connected to a stable Wi-Fi network for
-                optimal performance.
+                Configure your device settings
               </p>
-
               <div className="deviceConfigPage__secondBox--inputs">
                 <div className="deviceConfigPage__slider-container">
                   <h3>Signal Brightness: {formik.values.signalBrightness}%</h3>
@@ -353,15 +363,15 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                     onChange={handleBrightnessChange}
                     onAfterChange={handleBrightnessAfterChange}
                     marks={{
-                      10: "10%",
+                      // 10: "10%",
                       20: "20%",
-                      30: "30%",
+                      // 30: "30%",
                       40: "40%",
-                      50: "50%",
+                      // 50: "50%",
                       60: "60%",
-                      70: "70%",
+                      // 70: "70%",
                       80: "80%",
-                      90: "90%",
+                      // 90: "90%",
                       100: "100%",
                     }}
                   />
@@ -373,49 +383,52 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                     )}
                 </div>
 
-                {/* Signal Power Toggle */}
-                <div
-                  className="deviceConfigPage__toggle"
-                  style={{ marginTop: "1rem" }}
-                >
-                  <span>Signal Power:</span>
-                  <button
-                    onClick={handleSignalPowerToggle}
-                    className={`deviceConfigPage__toggle-button ${
-                      formik.values.signalPower ? "on" : "off"
-                    }`}
-                  >
-                    {formik.values.signalPower ? (
-                      <FaToggleOn size={30} />
-                    ) : (
-                      <FaToggleOff size={30} />
-                    )}
-                  </button>
-                </div>
-
-                {/* Signal Level Toggle (Active High/Low) */}
-                <div className="deviceConfigPage__toggle">
-                  <span>
-                    Signal Level:{" "}
-                    {formik.values.signalLevel === "active_high"
-                      ? "Active High"
-                      : "Active Low"}
-                  </span>
-                  <button
-                    onClick={handleSignalLevelToggle}
-                    className={`deviceConfigPage__toggle-button ${
-                      formik.values.signalLevel === "active_high" ? "on" : "off"
-                    }`}
-                  >
-                    {formik.values.signalLevel === "active_high" ? (
-                      <FaToggleOn size={30} />
-                    ) : (
-                      <FaToggleOff size={30} />
-                    )}
-                  </button>
+                <div className="deviceConfigPage__radio-group">
+                  <h3>Signal Configuration:</h3>
+                  <div className="deviceConfigPage__radio-options">
+                    <label className="deviceConfigPage__radio-label">
+                      <input
+                        type="radio"
+                        name="signalConfig"
+                        value="active_low_cp"
+                        checked={signalConfig === "active_low_cp"}
+                        onChange={() => setSignalConfig("active_low_cp")}
+                      />
+                      Active Low with Common Positive
+                    </label>
+                    <label className="deviceConfigPage__radio-label">
+                      <input
+                        type="radio"
+                        name="signalConfig"
+                        value="active_high_cp"
+                        checked={signalConfig === "active_high_cp"}
+                        onChange={() => setSignalConfig("active_high_cp")}
+                      />
+                      Active High with Common Positive
+                    </label>
+                  </div>
                 </div>
 
                 <NormalInput
+                  id="minimumBatteryLevel"
+                  type="number"
+                  name="minimumBatteryLevel"
+                  label="Configure Minimum Battery Level (V)"
+                  invalid={
+                    formik.errors.minimumBatteryLevel &&
+                    formik.touched.minimumBatteryLevel
+                  }
+                  placeholder="Min: 9V, Max: 36V"
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={String(formik.values.minimumBatteryLevel)}
+                  inputErrorMessage={formik.errors.minimumBatteryLevel}
+                  step="0.1"
+                  min="9"
+                  max="36"
+                />
+
+                {/* <NormalInput
                   id="notifications"
                   type="text"
                   name="notifications"
@@ -428,41 +441,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   onBlur={formik.handleBlur}
                   value={formik.values.notifications}
                   inputErrorMessage={formik.errors.notifications}
-                />
-
-                <NormalInput
-                  id="date"
-                  type="text"
-                  name="date"
-                  label="Date"
-                  value={formik.values.date}
-                  readOnly
-                />
-
-                <NormalInput
-                  id="time"
-                  type="text"
-                  name="time"
-                  label="Time"
-                  value={formik.values.time}
-                  readOnly
-                />
-
-                <NormalInput
-                  id="minimumBatteryLevel"
-                  type="text"
-                  name="minimumBatteryLevel"
-                  label="Battery Status"
-                  invalid={
-                    formik.errors.minimumBatteryLevel &&
-                    formik.touched.minimumBatteryLevel
-                  }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.minimumBatteryLevel}
-                  inputErrorMessage={formik.errors.minimumBatteryLevel}
-                />
+                /> */}
               </div>
             </div>
 
@@ -475,6 +454,13 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
               </button>
               <button type="submit" disabled={!formik.isValid || isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save Configuration"}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetToDefault}
+                className="deviceConfigPage__reset-button"
+              >
+                Reset to Default
               </button>
             </div>
           </div>
