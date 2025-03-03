@@ -11,7 +11,7 @@ import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 import { useAppSelector } from "@/hooks/reduxHook";
 import { formatRtcDate, formatRtcTime } from "@/utils/misc";
-import { formatUnixTimestamp } from "../page";
+import { formatUnixTimestamp } from "@/utils/misc";
 
 interface DeviceConfigurationPageProps {
   params: any;

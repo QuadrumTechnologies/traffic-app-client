@@ -14,7 +14,12 @@ import {
 import { useEffect, useState } from "react";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
-import { formatRtcDate, formatRtcTime, getDeviceStatus } from "@/utils/misc";
+import {
+  formatRtcDate,
+  formatRtcTime,
+  formatUnixTimestamp,
+  getDeviceStatus,
+} from "@/utils/misc";
 import {
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
@@ -37,22 +42,6 @@ export interface IntersectionConfigItem {
   label: string;
   value: string;
 }
-
-export const formatUnixTimestamp = (unixTimestamp: number) => {
-  const date = new Date(unixTimestamp * 1000);
-
-  date.setHours(date.getHours() - 1);
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-
-  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
-};
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =
