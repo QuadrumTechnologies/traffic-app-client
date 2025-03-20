@@ -402,6 +402,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           <IntersectionConfiguration
             intersectionConfigItems={intersectionConfigItems}
             deviceId={params.deviceId}
+            userType="admin"
           />
         </div>
       </div>

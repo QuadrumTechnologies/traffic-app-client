@@ -115,7 +115,7 @@ const UserDevices = () => {
               </h3>
               <p>{device.deviceId}</p>
             </div>
-            <p className="devices-item__status">
+            <div className="devices-item__status">
               {device?.status.toUpperCase()}
               {getDeviceStatus(statuses, device.deviceId) ||
               (deviceAvailability.Status &&
@@ -128,7 +128,7 @@ const UserDevices = () => {
                   <p>Offline</p>
                 </div>
               )}
-            </p>
+            </div>
             <div className="deviceConfigPage__menu">
               <CiMenuKebab
                 size={24}

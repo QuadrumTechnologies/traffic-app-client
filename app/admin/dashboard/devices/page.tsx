@@ -24,8 +24,6 @@ const AdminDevices = () => {
     (state) => state.adminDevice
   );
 
-  console.log("Devices", devices);
-
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
   const pathname = usePathname();

@@ -26,13 +26,28 @@ import Button from "../UI/Button/Button";
 interface DeviceConfigurationProps {
   intersectionConfigItems: IntersectionConfigItem[];
   deviceId: string;
+  userType?: string;
 }
 
 const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   intersectionConfigItems,
   deviceId,
+  userType,
 }) => {
-  const { devices } = useAppSelector((state) => state.adminDevice);
+  let devices: any[] | null = [];
+
+  if (userType === "admin") {
+    const { devices: adminDevices } = useAppSelector(
+      (state) => state.adminDevice
+    );
+    devices = devices.concat(adminDevices);
+  } else {
+    const { devices: userDevices } = useAppSelector(
+      (state) => state.userDevice
+    );
+    devices = devices.concat(userDevices);
+  }
+
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -51,13 +66,14 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   }, [deviceActiveStateData]);
 
   const handleRequest = async (action: string) => {
-    const device = devices.find((device) => device.deviceId === deviceId);
-    if (!device && pathname.includes("admin")) {
+    const device = devices?.find((device) => device.deviceId === deviceId);
+
+    if (!device) {
       alert("Device not found.");
       return;
     }
 
-    if (!device?.userDevice?.allowAdminSupport && pathname.includes("admin")) {
+    if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
       alert("Admin support is not enabled for this device.");
       return;
     }
@@ -270,12 +286,13 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   const handleRedirectionToDevicePage = () => {
     const device = devices.find((device) => device.deviceId === deviceId);
+
     if (!device) {
       alert("Device not found.");
       return;
     }
 
-    if (!device.userDevice?.allowAdminSupport) {
+    if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
       alert("Admin support is not enabled for this device.");
       return;
     }

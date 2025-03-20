@@ -11,6 +11,9 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/dashboard") && !token)
     return NextResponse.redirect(new URL("/login", request.url));
 
+  if (request.nextUrl.pathname.startsWith("/login") && token)
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+
   if (
     request.nextUrl.pathname.startsWith("/admin") &&
     request.nextUrl.pathname.includes("/dashboard") &&
@@ -23,7 +26,8 @@ export function middleware(request: NextRequest) {
       request.nextUrl.pathname
     )
   ) {
-    const deviceId = request.nextUrl.pathname.split("/").pop();
+    const segments = request.nextUrl.pathname.split("/");
+    const deviceId = segments[segments.length - 2];
     const storedDevices = request.cookies.get("adminDevices")?.value;
 
     if (storedDevices) {
