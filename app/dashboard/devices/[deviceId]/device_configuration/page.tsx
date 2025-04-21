@@ -10,16 +10,19 @@ import * as Yup from "yup";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 import { useAppSelector, useAppDispatch } from "@/hooks/reduxHook";
-import { formatRtcDate, formatRtcTime } from "@/utils/misc";
-import { formatUnixTimestamp } from "@/utils/misc";
+import {
+  formatRtcDate,
+  formatRtcTime,
+  formatUnixTimestamp,
+} from "@/utils/misc";
 import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
+import SelectField, { Option } from "@/components/UI/SelectField/SelectField";
 
 interface DeviceConfigurationPageProps {
   params: any;
 }
 
-// const BRIGHTNESS_LEVELS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const BRIGHTNESS_LEVELS = [20, 40, 60, 80, 100];
 
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
@@ -27,10 +30,19 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showIntersectionPassword, setShowIntersectionPassword] =
+    useState<boolean>(false);
   const [adminSupport, setAdminSupport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [signalConfig, setSignalConfig] = useState<string>("active_low_cp");
+
+  const rfModuleOptions: Option[] = [
+    { value: "custom", label: "Custom" },
+    { value: "2.4ghz_nrf24", label: "2.4GHz nRF24" },
+    { value: "433mhz_lora", label: "433MHz LoRa" },
+    { value: "hybrid_lora_nrf24", label: "Hybrid (LoRa+nRF24)" },
+  ];
 
   const {
     devices,
@@ -39,16 +51,14 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     deviceActiveStateData,
   } = useAppSelector((state) => state.userDevice);
 
-  const device = devices.find(
-    (device) => device?.deviceId === params?.deviceId
-  );
+  const device =
+    devices?.find((device) => device?.deviceId === params?.deviceId) || null;
 
   const fetchDeviceAdminSupportStatus = async () => {
     try {
       const response = await HttpRequest.get(
         `/user-devices/${params.deviceId}`
       );
-
       setAdminSupport(response.data.data.allowAdminSupport);
     } catch (error) {
       console.error("Error fetching device status", error);
@@ -58,12 +68,38 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   };
 
   useEffect(() => {
+    if (!params?.deviceId) return;
     fetchDeviceAdminSupportStatus();
-  }, [params.deviceId]);
+  }, [params.deviceId, dispatch]);
+
+  const handleSignalPowerToggle = () => {
+    formik.setFieldValue("signalPower", !formik.values.signalPower);
+  };
+
+  const handleSignalConfigChange = (value: string) => {
+    setSignalConfig(value);
+    formik.setFieldValue("signalConfig", value);
+  };
+
+  const handleFlashOnPoorSignalChange = () => {
+    formik.setFieldValue("flashOnPoorSignal", !formik.values.flashOnPoorSignal);
+  };
+
+  const handleRfModuleVersionChange = (selectedOption: Option | null) => {
+    formik.setFieldValue("rfModuleVersion", selectedOption?.value || "custom");
+  };
+
+  useEffect(() => {
+    if (currentDeviceInfoData && deviceActiveStateData) {
+      formik.setValues({
+        ...formik.values,
+        signalPower: deviceActiveStateData.Power,
+      });
+    }
+  }, [currentDeviceInfoData, deviceActiveStateData]);
 
   const handleAdminSupportToggle = async () => {
     const newStatus = !adminSupport;
-
     const confirmUpdate = confirm(
       `Are you sure you want to ${
         newStatus ? "enable" : "disable"
@@ -88,6 +124,11 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // TODO: Add a function to send the signal power value to the backend
+  const handleSignalPowerChange = (value: boolean) => {
+    console.log("Sending signal power value to backend:", value);
   };
 
   const handleResetToDefault = () => {
@@ -133,9 +174,23 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       .required("Minimum Battery Level is required")
       .min(9, "Minimum battery level must be at least 9V")
       .max(36, "Maximum battery level is 36V"),
+    signalConfig: Yup.string()
+      .required("Signal Configuration is required")
+      .oneOf(
+        ["active_low_cp", "active_high_cp"],
+        "Invalid signal configuration"
+      ),
+    flashOnPoorSignal: Yup.boolean().required(
+      "Flash on Poor Signal is required"
+    ),
+    rfModuleVersion: Yup.string()
+      .required("RF Module Version is required")
+      .oneOf(
+        ["custom", "2.4ghz_nrf24", "433mhz_lora", "hybrid_lora_nrf24"],
+        "Invalid RF module version"
+      ),
   });
 
-  // Get date and time from RTC
   const rtcDate = currentDeviceInfoData?.Rtc
     ? formatRtcDate(formatUnixTimestamp(+currentDeviceInfoData.Rtc))
     : "";
@@ -149,6 +204,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       signalBrightness: 20,
       signalPower: deviceActiveStateData?.Power || false,
       minimumBatteryLevel: 12.0,
+      signalConfig: "active_low_cp",
+      flashOnPoorSignal: false,
+      rfModuleVersion: "custom",
     },
     validationSchema,
     validateOnChange: true,
@@ -156,6 +214,15 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     validateOnMount: true,
     async onSubmit(values, actions) {
       try {
+        console.log("Submitting values:", {
+          signalBrightness: values.signalBrightness,
+          signalPower: values.signalPower,
+          minimumBatteryLevel: values.minimumBatteryLevel,
+          signalConfig: values.signalConfig,
+          flashOnPoorSignal: values.flashOnPoorSignal,
+          rfModuleVersion: values.rfModuleVersion,
+        });
+        return;
         setIsSubmitting(true);
         const response = await HttpRequest.patch(
           `/user-devices/${params.deviceId}/configuration`,
@@ -163,6 +230,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
             signalBrightness: values.signalBrightness,
             signalPower: values.signalPower,
             minimumBatteryLevel: values.minimumBatteryLevel,
+            signalConfig: values.signalConfig,
+            flashOnPoorSignal: values.flashOnPoorSignal,
+            rfModuleVersion: values.rfModuleVersion,
           }
         );
         alert("Configuration updated successfully!");
@@ -176,42 +246,31 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     },
   });
 
-  // Handler for brightness slider
   const handleBrightnessChange = (value: number | number[]) => {
     if (typeof value === "number") {
       formik.setFieldValue("signalBrightness", value);
     }
   };
 
-  // Handler for brightness slider after release
+  // TODO: Add a function to send the brightness value to the backend
   const handleBrightnessAfterChange = (value: number | number[]) => {
     if (typeof value === "number") {
       console.log("Sending brightness value to backend:", value);
     }
   };
 
-  // Toggle handlers
-  const handleSignalPowerToggle = () => {
-    formik.setFieldValue("signalPower", !formik.values.signalPower);
-  };
+  if (isLoading || !devices) {
+    return <LoadingSpinner color="blue" height="big" />;
+  }
 
-  // Update form with Redux data when it changes
-  useEffect(() => {
-    if (currentDeviceInfoData && deviceActiveStateData) {
-      formik.setValues({
-        ...formik.values,
-        signalPower: deviceActiveStateData.Power,
-      });
-    }
-  }, [currentDeviceInfoData, deviceActiveStateData]);
-
-  if (isLoading) return <LoadingSpinner color="blue" height="big" />;
+  if (!params?.deviceId) {
+    return <div>Error: Device ID is missing</div>;
+  }
 
   return (
     <section className="deviceConfigPage">
       <div className="deviceConfigPage__header--box">
         <h2 className="deviceConfigPage__header">Device Configurations</h2>
-
         <div className="deviceConfigPage__controls">
           <div className="deviceConfigPage__toggle">
             <span>Signal Power:</span>
@@ -227,7 +286,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
               />
             </button>
           </div>
-
           <div className="deviceConfigPage__toggle">
             <span>Allow Admin Support:</span>
             <button
@@ -249,7 +307,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
       <form onSubmit={formik.handleSubmit}>
         <div className="deviceConfigPage__firstRow">
-          {/* Left Side - Read Only Fields */}
           <div className="deviceConfigPage__firstBox">
             <div className="deviceConfigPage__firstBox--top">
               <p className="deviceConfigPage__firstBox--header">
@@ -259,7 +316,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
               <div className="deviceConfigPage__firstBox--inputs">
                 <NormalInput
                   id="deviceId"
-                  type="deviceId"
+                  type="text"
                   name="deviceId"
                   label="Device ID"
                   value={params.deviceId || deviceAvailability?.DeviceID || ""}
@@ -270,7 +327,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   name="deviceKey"
                   label="Secret Key"
                   type={showPassword ? "text" : "password"}
-                  value={device?.secretKey}
+                  value={device?.secretKey || ""}
                   passwordIcon={true}
                   showPassword={showPassword}
                   updatePasswordVisibility={() => {
@@ -302,21 +359,19 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   value={currentDeviceInfoData?.JunctionId || ""}
                   readOnly
                 />
-
                 <NormalInput
                   id="intersectionPassword"
-                  type={showPassword ? "text" : "password"}
+                  type={showIntersectionPassword ? "text" : "password"}
                   name="intersectionPassword"
                   label="Intersection Password"
                   value={currentDeviceInfoData?.JunctionId || ""}
                   passwordIcon={true}
-                  showPassword={showPassword}
+                  showPassword={showIntersectionPassword}
                   updatePasswordVisibility={() => {
-                    setShowPassword((prev) => !prev);
+                    setShowIntersectionPassword((prev) => !prev);
                   }}
                   readOnly
                 />
-
                 <NormalInput
                   id="intersectionLocation"
                   type="text"
@@ -325,27 +380,10 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   value={currentDeviceInfoData?.JunctionId || ""}
                   readOnly
                 />
-
-                {/* <NormalInput
-                  id="intersectionType"
-                  type="text"
-                  name="intersectionType"
-                  label="Intersection Type"
-                  invalid={
-                    formik.errors.intersectionType &&
-                    formik.touched.intersectionType
-                  }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.intersectionType}
-                  inputErrorMessage={formik.errors.intersectionType}
-                /> */}
               </div>
             </div>
           </div>
 
-          {/* Right Side - Editable Fields */}
           <div className="deviceConfigPage__secondBox">
             <div className="deviceConfigPage__firstBox--top">
               <p className="deviceConfigPage__secondBox--header">
@@ -363,15 +401,10 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                     onChange={handleBrightnessChange}
                     onAfterChange={handleBrightnessAfterChange}
                     marks={{
-                      // 10: "10%",
                       20: "20%",
-                      // 30: "30%",
                       40: "40%",
-                      // 50: "50%",
                       60: "60%",
-                      // 70: "70%",
                       80: "80%",
-                      // 90: "90%",
                       100: "100%",
                     }}
                   />
@@ -392,7 +425,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                         name="signalConfig"
                         value="active_low_cp"
                         checked={signalConfig === "active_low_cp"}
-                        onChange={() => setSignalConfig("active_low_cp")}
+                        onChange={() =>
+                          handleSignalConfigChange("active_low_cp")
+                        }
                       />
                       Active Low with Common Positive
                     </label>
@@ -402,11 +437,19 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                         name="signalConfig"
                         value="active_high_cp"
                         checked={signalConfig === "active_high_cp"}
-                        onChange={() => setSignalConfig("active_high_cp")}
+                        onChange={() =>
+                          handleSignalConfigChange("active_high_cp")
+                        }
                       />
                       Active High with Common Positive
                     </label>
                   </div>
+                  {formik.errors.signalConfig &&
+                    formik.touched.signalConfig && (
+                      <div className="input-error">
+                        {formik.errors.signalConfig}
+                      </div>
+                    )}
                 </div>
 
                 <NormalInput
@@ -428,20 +471,48 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   max="36"
                 />
 
-                {/* <NormalInput
-                  id="notifications"
-                  type="text"
-                  name="notifications"
-                  label="Notifications"
-                  invalid={
-                    formik.errors.notifications && formik.touched.notifications
+                <div className="deviceConfigPage__checkbox">
+                  <label className="">
+                    <input
+                      type="checkbox"
+                      name="flashOnPoorSignal"
+                      checked={formik.values.flashOnPoorSignal}
+                      onChange={handleFlashOnPoorSignalChange}
+                    />
+                    Flash on Poor Signal Quality
+                  </label>
+                  {formik.errors.flashOnPoorSignal &&
+                    formik.touched.flashOnPoorSignal && (
+                      <div className="input-error">
+                        {formik.errors.flashOnPoorSignal}
+                      </div>
+                    )}
+                </div>
+
+                <SelectField
+                  label="RF Module Version"
+                  name="rfModuleVersion"
+                  options={rfModuleOptions}
+                  value={rfModuleOptions.find(
+                    (option) => option.value === formik.values.rfModuleVersion
+                  )}
+                  onChange={handleRfModuleVersionChange}
+                  placeholder="Select RF Module Version"
+                  isSearchable={true}
+                  isClearable={false}
+                  status={
+                    formik.errors.rfModuleVersion &&
+                    formik.touched.rfModuleVersion
+                      ? "error"
+                      : null
                   }
-                  placeholder=""
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  value={formik.values.notifications}
-                  inputErrorMessage={formik.errors.notifications}
-                /> */}
+                  helper={
+                    formik.errors.rfModuleVersion &&
+                    formik.touched.rfModuleVersion
+                      ? formik.errors.rfModuleVersion
+                      : null
+                  }
+                />
               </div>
             </div>
 

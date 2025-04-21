@@ -42,6 +42,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
 
       &.on {
         color: $text-success-color;
@@ -178,6 +179,107 @@
     h3 {
       font-size: 1.6rem;
       margin-bottom: 1rem;
+    }
+  }
+
+  &__checkbox {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.5rem;
+
+    & label {
+      display: flex;
+      align-items: center;
+      font-size: 1.6rem;
+      color: $color-black-light;
+      cursor: pointer;
+      gap: 1rem;
+    }
+
+    & input[type="checkbox"] {
+      width: 1.8rem;
+      height: 1.8rem;
+      border: 0.1rem solid $color-yellow;
+      border-radius: 0.3rem;
+      accent-color: $color-yellow;
+      cursor: pointer;
+    }
+
+    & .input-error {
+      color: $text-error-color;
+      font-size: 1.3rem;
+      margin-top: 0.5rem;
+      margin-left: 2.8rem;
+    }
+  }
+}
+
+.deviceConfigPage__menu {
+  position: relative;
+  display: inline-block;
+}
+
+.deviceConfigPage__menu-icon {
+  cursor: pointer;
+  color: $color-black-light;
+  transition: color 0.3s ease;
+}
+
+.deviceConfigPage__menu-icon:hover {
+  color: $color-yellow;
+}
+
+.deviceConfigPage__menu-dropdown {
+  position: absolute;
+  background-color: $color-white;
+  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2);
+  border: 0.1rem solid rgba($color-yellow, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  z-index: 100;
+  right: 0;
+  top: 100%;
+  width: 15rem;
+  margin-top: 0.5rem;
+  box-sizing: border-box;
+
+  &-button {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 1.4rem;
+    letter-spacing: 0.05rem;
+    color: $color-black-light;
+    background-color: rgba($color-yellow, 0.8);
+    border: 0.1rem solid $color-yellow;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px;
+    margin-bottom: 0.5rem;
+    box-sizing: border-box;
+    color: white;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background-color: rgba($color-yellow, 1);
+      box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 6px;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      background-color: rgba($color-yellow, 0.3);
+      color: rgba($color-black-light, 0.5);
+      border-color: rgba($color-yellow, 0.5);
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 0.7;
     }
   }
 }

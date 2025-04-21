@@ -1,71 +1,159 @@
-import React, { useEffect, useState } from "react";
-import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import Select from "react-select";
+"use client";
+
+import React, { useState } from "react";
+import Select, {
+  StylesConfig,
+  components,
+  ControlProps,
+  OptionProps,
+  SingleValue,
+  ActionMeta,
+} from "react-select";
 
 export interface Option {
-  value: string | number;
+  value: string;
   label: string;
 }
 
-interface SelectFieldProps {
+interface SelectFieldProps<T extends Option = Option> {
   label?: string;
-  onChange: (selectedOption: Option | null) => void;
+  onChange: (newValue: SingleValue<T>, actionMeta: ActionMeta<T>) => void;
   status?: "success" | "error" | "warning" | null;
   helper?: string | null;
-  value: any;
-  options: Option[];
+  value?: SingleValue<T>;
+  options: readonly T[];
   placeholder?: string;
   name?: string;
   disabled?: boolean;
+  className?: string;
   width?: string;
   style?: React.CSSProperties;
   isSearchable?: boolean;
-  isClearable?: boolean;
   height?: string;
+  leftIcon?: React.ReactNode;
+  isClearable?: boolean;
 }
 
-const SelectComponent = Select as unknown as React.FC<any>;
-const SelectField: React.FC<SelectFieldProps> = ({
+function SelectField<T extends Option = Option>({
   onChange,
-  value,
+  value = null,
   options,
   label,
-  placeholder = "",
+  placeholder = "Select...",
   name,
   status,
   helper,
-  disabled,
+  disabled = false,
+  className = "",
   width,
   isSearchable = true,
-  isClearable,
   style,
   height,
-}) => {
-  const [optionsIsShown, setOptionsIsShown] = useState<boolean>(false);
-  const [selectedOption, setSelectedOption] = useState<Option | null>(value);
+  leftIcon,
+  isClearable = false,
+}: SelectFieldProps<T>): React.ReactElement {
+  const [selectedOption, setSelectedOption] = useState<SingleValue<T>>(value);
 
-  useEffect(() => {
-    setSelectedOption(value);
-  }, [value]);
-
-  const getBorderColor = (isFocused: boolean) => {
-    if (status === "success") return "#2BAC47";
-    if (status === "error") return "#C83532";
-    if (status === "warning") return "#EF8943";
-    return isFocused ? "#C6CDE6" : "#D0D5DD";
+  const customStyles: StylesConfig<T, false> = {
+    control: (provided, state) => ({
+      ...provided,
+      padding: leftIcon ? "0 14px 0 0" : "0 2px",
+      boxShadow: "none",
+      borderColor: state.isFocused ? "#D0D5DD" : "#D0D5DD",
+      borderWidth: "1px",
+      marginTop: "4px",
+      borderRadius: "8px",
+      height: height || "43px",
+      minHeight: "43px",
+      backgroundColor: "#FFFFFF",
+      fontSize: "14px",
+      "&:hover": {
+        borderColor: "#D0D5DD",
+      },
+    }),
+    valueContainer: (provided) => ({
+      ...provided,
+      padding: leftIcon ? "0 0 0 10px" : "0 10px",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: "#101828",
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: "#667085",
+    }),
+    indicatorSeparator: () => ({ display: "none" }),
+    dropdownIndicator: (provided) => ({
+      ...provided,
+      color: "#667085",
+      "&:hover": {
+        color: "#101828",
+      },
+    }),
+    menuList: (provided) => ({
+      ...provided,
+      maxHeight: "200px",
+      overflowY: "auto",
+      "&::-webkit-scrollbar": {
+        width: "6px",
+      },
+      "&::-webkit-scrollbar-track": {
+        background: "#f1f1f1",
+      },
+      "&::-webkit-scrollbar-thumb": {
+        background: "#D0D5DD",
+        borderRadius: "50%",
+      },
+      "&::-webkit-scrollbar-thumb:hover": {
+        background: "#667085",
+      },
+    }),
+    menu: (provided) => ({
+      ...provided,
+      position: "absolute",
+      zIndex: 9999,
+      background: "#fff",
+      border: "1px solid #EAECF0",
+      borderRadius: "8px",
+      fontSize: "13px",
+      boxShadow:
+        "0px 4px 6px -2px rgba(16, 24, 40, 0.03), 0px 12px 16px -4px rgba(16, 24, 40, 0.08)",
+    }),
+    menuPortal: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? "#F9FAFB" : "white",
+      color: "#101828",
+      "&:hover": {
+        backgroundColor: "#F9FAFB",
+        cursor: "pointer",
+      },
+    }),
   };
 
-  const getBackgroundColor = () => {
-    if (status === "success") return "#F1F8F2";
-    if (status === "error") return "#FBEFEF";
-    if (status === "warning") return "#FDF3EC";
-    return "white";
-  };
+  // Custom control component with left icon support
+  const CustomControl = (props: ControlProps<T, false>) => (
+    <components.Control {...props}>
+      {leftIcon && <div className="pl-3 text-gray-500">{leftIcon}</div>}
+      {props.children}
+    </components.Control>
+  );
 
-  const handleInputChange = (selectedOption: any) => {
-    setSelectedOption(selectedOption);
-    setOptionsIsShown(false);
-    onChange(selectedOption);
+  // Custom option component for additional styling if needed
+  const CustomOption = (props: OptionProps<T, false>) => (
+    <components.Option {...props}>{props.children}</components.Option>
+  );
+
+  const handleInputChange = (
+    newValue: SingleValue<T>,
+    actionMeta: ActionMeta<T>
+  ) => {
+    setSelectedOption(newValue);
+    onChange(newValue, actionMeta);
   };
 
   return (
@@ -75,127 +163,47 @@ const SelectField: React.FC<SelectFieldProps> = ({
         width: width || "100%",
         position: "relative",
       }}
+      className={className}
     >
-      {label && selectedOption && (
-        <label
-          style={{
-            position: "absolute",
-            fontSize: "12px",
-            color: "#736A85",
-            fontWeight: "normal",
-            left: "10px",
-            top: "-21px",
-            zIndex: 10,
-          }}
-        >
-          {label}
-        </label>
-      )}
-
-      <SelectComponent
-        styles={{}}
+      {label && <label className="normalInput__label">{label}</label>}
+      <Select<T, false>
+        menuPortalTarget={document.body}
         components={{
-          DropdownIndicator: () => (
-            <div
-              style={{
-                paddingRight: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {optionsIsShown ? <IoIosArrowDown /> : <IoIosArrowUp />}
-            </div>
+          Control: CustomControl,
+          Option: CustomOption,
+          DropdownIndicator: (props) => (
+            <components.DropdownIndicator {...props}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M5 7.5L10 12.5L15 7.5"
+                  stroke="#667085"
+                  strokeWidth="1.66667"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </components.DropdownIndicator>
           ),
-          IndicatorSeparator: () => null,
         }}
+        styles={customStyles}
         onChange={handleInputChange}
         value={selectedOption}
         options={options}
-        placeholder={placeholder || label}
-        menuIsOpen={optionsIsShown}
+        placeholder={placeholder}
         name={name}
         isDisabled={disabled}
         isSearchable={isSearchable}
-        onMenuOpen={() => setOptionsIsShown(true)}
-        onMenuClose={() => setOptionsIsShown(false)}
         isClearable={isClearable}
       />
-      {helper && (
-        <p
-          style={{
-            marginTop: "8px",
-            fontSize: "14px",
-            display: "flex",
-            gap: "4px",
-            alignItems: "start",
-            color:
-              status === "success"
-                ? "#2BAC47"
-                : status === "error"
-                ? "#C83532"
-                : status === "warning"
-                ? "#EF8943"
-                : "#736A85",
-          }}
-        >
-          {helper}
-        </p>
-      )}
+      {helper && <p className="mt-1 text-sm text-gray-500">{helper}</p>}
     </div>
   );
-};
-
-const StatusIcon = ({ status }: { status: string }) => {
-  if (status === "success") {
-    return (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M7 13.6666C3.318 13.6666 0.333328 10.682 0.333328 6.99998C0.333328 3.31798 3.318 0.333313 7 0.333313C10.682 0.333313 13.6667 3.31798 13.6667 6.99998C13.6667 10.682 10.682 13.6666 7 13.6666ZM6.22933 9.98998L10.9427 5.27598L10 4.33331L6.22933 8.10465L4.34333 6.21865L3.40066 7.16131L6.22933 9.98998Z"
-          fill="#2BAC47"
-        />
-      </svg>
-    );
-  }
-  if (status === "error") {
-    return (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M8 14.6667C4.318 14.6667 1.33333 11.682 1.33333 8.00001C1.33333 4.31801 4.318 1.33334 8 1.33334C11.682 1.33334 14.6667 4.31801 14.6667 8.00001C14.6667 11.682 11.682 14.6667 8 14.6667ZM7.33333 10V11.3333H8.66666V10H7.33333ZM7.33333 4.66668V8.66668H8.66666V4.66668H7.33333Z"
-          fill="#C83532"
-        />
-      </svg>
-    );
-  }
-  if (status === "warning") {
-    return (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M8 14.6667C4.318 14.6667 1.33333 11.682 1.33333 8.00001C1.33333 4.31801 4.318 1.33334 8 1.33334C11.682 1.33334 14.6667 4.31801 14.6667 8.00001C14.6667 11.682 11.682 14.6667 8 14.6667ZM7.33333 10V11.3333H8.66666V10H7.33333ZM7.33333 4.66668V8.66668H8.66666V4.66668H7.33333Z"
-          fill="#EF8943"
-        />
-      </svg>
-    );
-  }
-  return null;
-};
+}
 
 export default SelectField;
