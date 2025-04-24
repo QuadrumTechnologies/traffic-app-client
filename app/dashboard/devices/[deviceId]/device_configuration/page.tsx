@@ -17,7 +17,11 @@ import {
 } from "@/utils/misc";
 import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
-import SelectField, { Option } from "@/components/UI/SelectField/SelectField";
+import {
+  GetItemFromLocalStorage,
+  SetItemToLocalStorage,
+} from "@/utils/localStorageFunc";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface DeviceConfigurationPageProps {
   params: any;
@@ -35,14 +39,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   const [adminSupport, setAdminSupport] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [signalConfig, setSignalConfig] = useState<string>("active_low_cp");
-
-  const rfModuleOptions: Option[] = [
-    { value: "custom", label: "Custom" },
-    { value: "2.4ghz_nrf24", label: "2.4GHz nRF24" },
-    { value: "433mhz_lora", label: "433MHz LoRa" },
-    { value: "hybrid_lora_nrf24", label: "Hybrid (LoRa+nRF24)" },
-  ];
 
   const {
     devices,
@@ -50,6 +46,10 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     currentDeviceInfoData,
     deviceActiveStateData,
   } = useAppSelector((state) => state.userDevice);
+
+  const [sliderValue, setSliderValue] = useState<number>(
+    deviceActiveStateData?.SignalLevel || 20
+  );
 
   const device =
     devices?.find((device) => device?.deviceId === params?.deviceId) || null;
@@ -72,31 +72,122 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     fetchDeviceAdminSupportStatus();
   }, [params.deviceId, dispatch]);
 
-  const handleSignalPowerToggle = () => {
-    formik.setFieldValue("signalPower", !formik.values.signalPower);
+  useEffect(() => {
+    setSliderValue(deviceActiveStateData?.SignalLevel || 20);
+  }, [deviceActiveStateData?.SignalLevel]);
+
+  const handleRequest = async (action: string, payloadValue?: any) => {
+    const device = devices?.find(
+      (device) => device.deviceId === params.deviceId
+    );
+
+    if (!device) {
+      emitToastMessage("Device not found.", "error");
+      return;
+    }
+
+    const isPasswordVerified = GetItemFromLocalStorage("isPasswordVerified");
+    if (!isPasswordVerified || Date.now() - isPasswordVerified.time > 180000) {
+      const password = prompt("Please enter your password to proceed");
+
+      if (!password) return;
+
+      try {
+        await HttpRequest.post("/confirm-password", {
+          email: GetItemFromLocalStorage("user").email,
+          password,
+        });
+        emitToastMessage("Password verified", "success");
+        SetItemToLocalStorage("isPasswordVerified", {
+          isPasswordVerified: true,
+          time: Date.now(),
+        });
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to verify password.";
+        emitToastMessage(errorMessage, "error");
+        return;
+      }
+    }
+
+    const socket = getWebSocket();
+
+    const sendMessage = () => {
+      const payload: { [key: string]: any } = {
+        action,
+        DeviceID: params.deviceId,
+      };
+      if (payloadValue !== undefined) {
+        payload[action] = payloadValue;
+      }
+      socket.send(
+        JSON.stringify({
+          event: "intersection_control_request",
+          payload,
+        })
+      );
+    };
+
+    if (socket.readyState === WebSocket.OPEN) {
+      sendMessage();
+      setTimeout(() => {
+        dispatch(getUserDeviceStateData(params.deviceId));
+      }, 500);
+    } else {
+      socket.onopen = () => {
+        sendMessage();
+        setTimeout(() => {
+          dispatch(getUserDeviceStateData(params.deviceId));
+        }, 500);
+      };
+    }
+
+    SetItemToLocalStorage("isPasswordVerified", {
+      isPasswordVerified: true,
+      time: Date.now(),
+    });
   };
 
-  const handleSignalConfigChange = (value: string) => {
-    setSignalConfig(value);
-    formik.setFieldValue("signalConfig", value);
+  const handleSignalPowerToggle = () => {
+    const newPowerState = !deviceActiveStateData?.Power;
+    const confirmReset = confirm(
+      `Are you sure you want to turn ${
+        newPowerState ? "on" : "off"
+      } the device?`
+    );
+
+    if (!confirmReset) return;
+    handleRequest("Power", newPowerState);
+  };
+
+  const handleBrightnessChange = (value: number | number[]) => {
+    if (typeof value === "number") {
+      setSliderValue(value);
+    }
+  };
+
+  const handleBrightnessChangeComplete = (value: number | number[]) => {
+    if (typeof value === "number") {
+      handleRequest("SignalLevel", value); // Send request only on release
+    }
   };
 
   const handleFlashOnPoorSignalChange = () => {
-    formik.setFieldValue("flashOnPoorSignal", !formik.values.flashOnPoorSignal);
+    const newFlashState = !deviceActiveStateData?.ErrorFlash;
+    handleRequest("ErrorFlash", newFlashState);
   };
 
-  const handleRfModuleVersionChange = (selectedOption: Option | null) => {
-    formik.setFieldValue("rfModuleVersion", selectedOption?.value || "custom");
-  };
+  const handleResetToDefault = () => {
+    const confirmReset = confirm(
+      "Are you sure you want to reset to default settings?"
+    );
 
-  useEffect(() => {
-    if (currentDeviceInfoData && deviceActiveStateData) {
-      formik.setValues({
-        ...formik.values,
-        signalPower: deviceActiveStateData.Power,
-      });
-    }
-  }, [currentDeviceInfoData, deviceActiveStateData]);
+    if (!confirmReset) return;
+
+    handleRequest("Reset");
+  };
 
   const handleAdminSupportToggle = async () => {
     const newStatus = !adminSupport;
@@ -118,77 +209,20 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
         }
       );
       setAdminSupport(response.data.data.allowAdminSupport);
+      emitToastMessage("Admin support status updated.", "success");
     } catch (error) {
       console.error("Error updating toggle", error);
-      alert("Failed to update admin support status.");
+      emitToastMessage("Failed to update admin support status.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // TODO: Add a function to send the signal power value to the backend
-  const handleSignalPowerChange = (value: boolean) => {
-    console.log("Sending signal power value to backend:", value);
-  };
-
-  const handleResetToDefault = () => {
-    const confirmReset = confirm(
-      "Are you sure you want to reset to default settings?"
-    );
-
-    if (!confirmReset) return;
-
-    const socket = getWebSocket();
-    const deviceId = params.deviceId;
-
-    const sendMessage = () => {
-      socket.send(
-        JSON.stringify({
-          event: "intersection_control_request",
-          payload: { action: "reset_defaults", DeviceID: deviceId },
-        })
-      );
-    };
-
-    if (socket.readyState === WebSocket.OPEN) {
-      sendMessage();
-      setTimeout(() => {
-        dispatch(getUserDeviceStateData(deviceId));
-      }, 500);
-    } else {
-      socket.onopen = () => {
-        sendMessage();
-        setTimeout(() => {
-          dispatch(getUserDeviceStateData(deviceId));
-        }, 500);
-      };
-    }
-  };
-
   const validationSchema = Yup.object({
-    signalBrightness: Yup.number()
-      .required("Signal Brightness is required")
-      .oneOf(BRIGHTNESS_LEVELS, "Invalid brightness level"),
-    signalPower: Yup.boolean().required("Signal Power is required"),
     minimumBatteryLevel: Yup.number()
       .required("Minimum Battery Level is required")
       .min(9, "Minimum battery level must be at least 9V")
       .max(36, "Maximum battery level is 36V"),
-    signalConfig: Yup.string()
-      .required("Signal Configuration is required")
-      .oneOf(
-        ["active_low_cp", "active_high_cp"],
-        "Invalid signal configuration"
-      ),
-    flashOnPoorSignal: Yup.boolean().required(
-      "Flash on Poor Signal is required"
-    ),
-    rfModuleVersion: Yup.string()
-      .required("RF Module Version is required")
-      .oneOf(
-        ["custom", "2.4ghz_nrf24", "433mhz_lora", "hybrid_lora_nrf24"],
-        "Invalid RF module version"
-      ),
   });
 
   const rtcDate = currentDeviceInfoData?.Rtc
@@ -201,12 +235,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
   const formik = useFormik({
     initialValues: {
-      signalBrightness: 20,
-      signalPower: deviceActiveStateData?.Power || false,
       minimumBatteryLevel: 12.0,
-      signalConfig: "active_low_cp",
-      flashOnPoorSignal: false,
-      rfModuleVersion: "custom",
     },
     validationSchema,
     validateOnChange: true,
@@ -214,50 +243,23 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     validateOnMount: true,
     async onSubmit(values, actions) {
       try {
-        console.log("Submitting values:", {
-          signalBrightness: values.signalBrightness,
-          signalPower: values.signalPower,
-          minimumBatteryLevel: values.minimumBatteryLevel,
-          signalConfig: values.signalConfig,
-          flashOnPoorSignal: values.flashOnPoorSignal,
-          rfModuleVersion: values.rfModuleVersion,
-        });
-        return;
         setIsSubmitting(true);
-        const response = await HttpRequest.patch(
+        await HttpRequest.patch(
           `/user-devices/${params.deviceId}/configuration`,
           {
-            signalBrightness: values.signalBrightness,
-            signalPower: values.signalPower,
             minimumBatteryLevel: values.minimumBatteryLevel,
-            signalConfig: values.signalConfig,
-            flashOnPoorSignal: values.flashOnPoorSignal,
-            rfModuleVersion: values.rfModuleVersion,
           }
         );
-        alert("Configuration updated successfully!");
+        emitToastMessage("Configuration updated successfully!", "success");
       } catch (error: any) {
         console.error("Error updating configuration", error);
-        alert("Failed to update configuration.");
+        emitToastMessage("Failed to update configuration.", "error");
       } finally {
         setIsSubmitting(false);
         actions.setSubmitting(false);
       }
     },
   });
-
-  const handleBrightnessChange = (value: number | number[]) => {
-    if (typeof value === "number") {
-      formik.setFieldValue("signalBrightness", value);
-    }
-  };
-
-  // TODO: Add a function to send the brightness value to the backend
-  const handleBrightnessAfterChange = (value: number | number[]) => {
-    if (typeof value === "number") {
-      console.log("Sending brightness value to backend:", value);
-    }
-  };
 
   if (isLoading || !devices) {
     return <LoadingSpinner color="blue" height="big" />;
@@ -277,12 +279,12 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
             <button
               onClick={handleSignalPowerToggle}
               className={`deviceConfigPage__toggle-button ${
-                formik.values.signalPower ? "on" : "off"
+                deviceActiveStateData?.Power ? "on" : "off"
               }`}
             >
               <FaPowerOff
                 size={24}
-                color={formik.values.signalPower ? "red" : "grey"}
+                color={deviceActiveStateData?.Power ? "red" : "grey"}
               />
             </button>
           </div>
@@ -390,16 +392,40 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                 Configure your device settings
               </p>
               <div className="deviceConfigPage__secondBox--inputs">
+                <NormalInput
+                  id="signalConfig"
+                  type="text"
+                  name="signalConfig"
+                  label="Signal Configuration"
+                  value={deviceActiveStateData?.SignalConfig || ""}
+                  readOnly
+                />
+                <NormalInput
+                  id="communicationFrequency"
+                  type="text"
+                  name="communicationFrequency"
+                  label="Communication Frequency"
+                  value={currentDeviceInfoData?.CommunicationFrequency || ""}
+                  readOnly
+                />
+                <NormalInput
+                  id="communicationChannel"
+                  type="text"
+                  name="communicationChannel"
+                  label="Communication Channel"
+                  value={currentDeviceInfoData?.CommunicationChannel || ""}
+                  readOnly
+                />
                 <div className="deviceConfigPage__slider-container">
-                  <h3>Signal Brightness: {formik.values.signalBrightness}%</h3>
+                  <h3>Signal Brightness: {sliderValue}%</h3>
                   <Slider
                     id="signalBrightness"
                     min={10}
                     max={100}
                     step={10}
-                    value={formik.values.signalBrightness}
+                    value={sliderValue}
                     onChange={handleBrightnessChange}
-                    onAfterChange={handleBrightnessAfterChange}
+                    onAfterChange={handleBrightnessChangeComplete}
                     marks={{
                       20: "20%",
                       40: "40%",
@@ -408,50 +434,18 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                       100: "100%",
                     }}
                   />
-                  {formik.errors.signalBrightness &&
-                    formik.touched.signalBrightness && (
-                      <div className="input-error">
-                        {formik.errors.signalBrightness}
-                      </div>
-                    )}
                 </div>
-
-                <div className="deviceConfigPage__radio-group">
-                  <h3>Signal Configuration:</h3>
-                  <div className="deviceConfigPage__radio-options">
-                    <label className="deviceConfigPage__radio-label">
-                      <input
-                        type="radio"
-                        name="signalConfig"
-                        value="active_low_cp"
-                        checked={signalConfig === "active_low_cp"}
-                        onChange={() =>
-                          handleSignalConfigChange("active_low_cp")
-                        }
-                      />
-                      Active Low with Common Positive
-                    </label>
-                    <label className="deviceConfigPage__radio-label">
-                      <input
-                        type="radio"
-                        name="signalConfig"
-                        value="active_high_cp"
-                        checked={signalConfig === "active_high_cp"}
-                        onChange={() =>
-                          handleSignalConfigChange("active_high_cp")
-                        }
-                      />
-                      Active High with Common Positive
-                    </label>
-                  </div>
-                  {formik.errors.signalConfig &&
-                    formik.touched.signalConfig && (
-                      <div className="input-error">
-                        {formik.errors.signalConfig}
-                      </div>
-                    )}
+                <div className="deviceConfigPage__checkbox">
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="flashOnPoorSignal"
+                      checked={deviceActiveStateData?.ErrorFlash || false}
+                      onChange={handleFlashOnPoorSignalChange}
+                    />
+                    Flash on Poor Signal Quality
+                  </label>
                 </div>
-
                 <NormalInput
                   id="minimumBatteryLevel"
                   type="number"
@@ -469,49 +463,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   step="0.1"
                   min="9"
                   max="36"
-                />
-
-                <div className="deviceConfigPage__checkbox">
-                  <label className="">
-                    <input
-                      type="checkbox"
-                      name="flashOnPoorSignal"
-                      checked={formik.values.flashOnPoorSignal}
-                      onChange={handleFlashOnPoorSignalChange}
-                    />
-                    Flash on Poor Signal Quality
-                  </label>
-                  {formik.errors.flashOnPoorSignal &&
-                    formik.touched.flashOnPoorSignal && (
-                      <div className="input-error">
-                        {formik.errors.flashOnPoorSignal}
-                      </div>
-                    )}
-                </div>
-
-                <SelectField
-                  label="RF Module Version"
-                  name="rfModuleVersion"
-                  options={rfModuleOptions}
-                  value={rfModuleOptions.find(
-                    (option) => option.value === formik.values.rfModuleVersion
-                  )}
-                  onChange={handleRfModuleVersionChange}
-                  placeholder="Select RF Module Version"
-                  isSearchable={true}
-                  isClearable={false}
-                  status={
-                    formik.errors.rfModuleVersion &&
-                    formik.touched.rfModuleVersion
-                      ? "error"
-                      : null
-                  }
-                  helper={
-                    formik.errors.rfModuleVersion &&
-                    formik.touched.rfModuleVersion
-                      ? formik.errors.rfModuleVersion
-                      : null
-                  }
                 />
               </div>
             </div>

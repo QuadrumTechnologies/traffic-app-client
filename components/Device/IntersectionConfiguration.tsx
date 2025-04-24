@@ -55,7 +55,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
   const [showManualMoreConfig, setShowManualMoreConfig] =
     useState<boolean>(false);
-  // State to track the current mode (Auto or Manual)
   const [initialSignalStrings, setInitialSignlStrings] = useState("");
   const params = useParams();
   const email = GetItemFromLocalStorage("user")?.email;
@@ -69,12 +68,15 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     const device = devices?.find((device) => device.deviceId === deviceId);
 
     if (!device) {
-      alert("Device not found.");
+      emitToastMessage("Device not found.", "error");
       return;
     }
 
     if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
-      alert("Admin support is not enabled for this device.");
+      emitToastMessage(
+        "Admin support is not enabled for this device.",
+        "error"
+      );
       return;
     }
 
@@ -99,6 +101,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
         return;
       }
     }
+
     if (action === "Manual") {
       dispatch(setManualMode(true));
       setShowManualMoreConfig(true);
@@ -134,11 +137,12 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
         }, 500);
       };
     }
-    // Update the time since one of the button has been clicked again
+
     SetItemToLocalStorage("isPasswordVerified", {
       isPasswordVerified: true,
       time: Date.now(),
     });
+
     return () => {
       if (socket) {
         socket.close();
@@ -217,7 +221,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
                 .required("Blink time is required")
             : schema.notRequired()
       ),
-
       amberDurationGreenToRed: Yup.number().when(
         "amberEnabled",
         (amberEnabled, schema) =>
@@ -233,7 +236,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       try {
         const encodedSignals = encodeSignals();
 
-        // Send a webscoket event to the device to start the phase
         const socket = getWebSocket();
 
         const sendMessage = () => {
@@ -279,7 +281,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           error?.response?.data?.message || "An error occurred",
           "error"
         );
-      } finally {
       }
     },
   });
@@ -288,12 +289,15 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     const device = devices.find((device) => device.deviceId === deviceId);
 
     if (!device) {
-      alert("Device not found.");
+      emitToastMessage("Device not found.", "error");
       return;
     }
 
     if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
-      alert("Admin support is not enabled for this device.");
+      emitToastMessage(
+        "Admin support is not enabled for this device.",
+        "error"
+      );
       return;
     }
 
@@ -335,9 +339,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           </button>
           <button onClick={() => handleRequest("Hold")}>Hold</button>
           <button onClick={() => handleRequest("Next")}>Next</button>
-          <button onClick={() => handleRequest("Restart")}>Restart</button>
-          <button onClick={() => handleRequest("Power")}>Power</button>
-          {/* <button onClick={() => handleRequest("Reset")}>Reset</button> */}
+          <button onClick={() => handleRequest("Reboot")}>Reboot</button>
         </div>
         {showManualMoreConfig && (
           <form

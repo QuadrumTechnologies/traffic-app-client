@@ -6,6 +6,7 @@ interface DirectionData {
   Bat: string;
   Temp: string;
 }
+
 interface InitialStateTypes {
   devices: any[];
   phases: any[];
@@ -27,6 +28,8 @@ interface InitialStateTypes {
     Period: string;
     JunctionId: string;
     DeviceID: string;
+    CommunicationFrequency: string;
+    CommunicationChannel: string;
   };
   activePhaseSignal: {
     Countdown: string;
@@ -45,6 +48,9 @@ interface InitialStateTypes {
     Hold: boolean;
     Reset: boolean;
     Restart: boolean;
+    SignalLevel: number;
+    ErrorFlash: boolean;
+    SignalConfig: string;
   };
 }
 
@@ -69,13 +75,14 @@ const initialState: InitialStateTypes = {
     Period: "",
     JunctionId: "",
     DeviceID: "",
+    CommunicationFrequency: "",
+    CommunicationChannel: "",
   },
   activePhaseSignal: {
     Countdown: "",
     Phase: "",
     DeviceID: "",
   },
-
   deviceAvailability: {
     DeviceID: "",
     Status: false,
@@ -88,6 +95,9 @@ const initialState: InitialStateTypes = {
     Hold: false,
     Reset: false,
     Restart: false,
+    SignalLevel: 20,
+    ErrorFlash: false,
+    SignalConfig: "",
   },
 };
 
@@ -96,7 +106,6 @@ export const getUserDevice = createAsyncThunk(
   async (email?: string) => {
     try {
       const { data } = await HttpRequest.get(`/devices`);
-      // emitToastMessage("Your device(s) are fetched successfully", "success");
       console.log("Devices", data);
       return data;
     } catch (error: any) {
@@ -112,8 +121,6 @@ export const getUserPhase = createAsyncThunk(
       const {
         data: { data },
       } = await HttpRequest.get(`/phases`);
-
-      // emitToastMessage("Your phase(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
       console.log(error?.response.data.message, "Get user phase error");
@@ -128,7 +135,6 @@ export const getUserPattern = createAsyncThunk(
       const {
         data: { data },
       } = await HttpRequest.get(`/patterns`);
-      // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
       console.log(error?.response.data.message, "Get user pattern error");
@@ -143,13 +149,13 @@ export const getUserPlan = createAsyncThunk(
       const {
         data: { data },
       } = await HttpRequest.get(`/plans`);
-      // emitToastMessage("Your pattern(s) are fetched successfully", "success");
       return data;
     } catch (error: any) {
       console.log(error?.response.data.message, "Get user plan error");
     }
   }
 );
+
 export const getUserDeviceInfoData = createAsyncThunk(
   "userDevice/getUserDeviceInfoData",
   async (deviceId: string) => {
@@ -163,6 +169,7 @@ export const getUserDeviceInfoData = createAsyncThunk(
     }
   }
 );
+
 export const getUserDeviceStateData = createAsyncThunk(
   "userDevice/getUserDeviceStateData",
   async (deviceId: string) => {
@@ -181,7 +188,6 @@ const UserDeviceSlice = createSlice({
   name: "userDevice",
   initialState: initialState,
   reducers: {
-    // Patterns Tab
     addOrUpdatePhaseConfig: (state, action) => {
       const { id, name, signalString, duration } = action.payload;
       const existingPhase = state.configuredPhases.find(
@@ -200,7 +206,6 @@ const UserDeviceSlice = createSlice({
         });
       }
     },
-
     removePhaseConfig: (state, action) => {
       const phaseIdToRemove = action.payload;
       state.configuredPhases = state.configuredPhases.filter(
@@ -277,6 +282,7 @@ const UserDeviceSlice = createSlice({
       });
   },
 });
+
 export const {
   addOrUpdatePhaseConfig,
   removePhaseConfig,
