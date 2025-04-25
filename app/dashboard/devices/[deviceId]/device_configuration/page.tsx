@@ -170,7 +170,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
   const handleBrightnessChangeComplete = (value: number | number[]) => {
     if (typeof value === "number") {
-      handleRequest("SignalLevel", value); // Send request only on release
+      handleRequest("SignalLevel", value);
     }
   };
 
@@ -366,7 +366,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   type={showIntersectionPassword ? "text" : "password"}
                   name="intersectionPassword"
                   label="Intersection Password"
-                  value={currentDeviceInfoData?.JunctionId || ""}
+                  value={currentDeviceInfoData?.JunctionPassword || ""}
                   passwordIcon={true}
                   showPassword={showIntersectionPassword}
                   updatePasswordVisibility={() => {

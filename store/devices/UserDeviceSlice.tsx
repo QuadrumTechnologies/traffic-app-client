@@ -27,6 +27,7 @@ interface InitialStateTypes {
     Plan: string;
     Period: string;
     JunctionId: string;
+    JunctionPassword: string;
     DeviceID: string;
     CommunicationFrequency: string;
     CommunicationChannel: string;
@@ -74,6 +75,7 @@ const initialState: InitialStateTypes = {
     Plan: "",
     Period: "",
     JunctionId: "",
+    JunctionPassword: "",
     DeviceID: "",
     CommunicationFrequency: "",
     CommunicationChannel: "",

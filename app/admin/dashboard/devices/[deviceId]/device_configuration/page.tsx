@@ -364,7 +364,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   type={showIntersectionPassword ? "text" : "password"}
                   name="intersectionPassword"
                   label="Intersection Password"
-                  value={currentDeviceInfoData?.JunctionId || ""}
+                  value={currentDeviceInfoData?.JunctionPassword || ""}
                   passwordIcon={true}
                   showPassword={showIntersectionPassword}
                   updatePasswordVisibility={() => {

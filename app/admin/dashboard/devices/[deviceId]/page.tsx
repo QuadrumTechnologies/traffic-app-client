@@ -181,6 +181,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                 Plan: "",
                 Period: "",
                 JunctionId: "",
+                JunctionPassword: "",
                 DeviceID: "",
               })
             );
