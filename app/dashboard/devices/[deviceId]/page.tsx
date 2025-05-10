@@ -341,48 +341,37 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
               <thead>
                 <tr>
                   <th>Parameters/Device ID</th>
-                  {directions.map(
-                    (dir) =>
-                      currentDeviceInfoData?.[dir] && <th key={dir}>{dir}</th>
-                  )}
+                  {directions.map((dir) => (
+                    <th key={dir}>{dir}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Battery [V]</td>
-                  {directions.map(
-                    (dir) =>
-                      currentDeviceInfoData?.[dir] && (
-                        <td
-                          key={`${dir}-battery`}
-                          className={
-                            currentDeviceInfoData?.[dir]?.Bat === "0"
-                              ? "red"
-                              : ""
-                          }
-                        >
-                          {currentDeviceInfoData?.[dir]?.Bat ?? "0"}
-                        </td>
-                      )
-                  )}
+                  {directions.map((dir) => (
+                    <td
+                      key={`${dir}-battery`}
+                      className={
+                        currentDeviceInfoData?.[dir]?.Bat === "0" ? "red" : ""
+                      }
+                    >
+                      {currentDeviceInfoData?.[dir]?.Bat ?? "N/A"}
+                    </td>
+                  ))}
                 </tr>
                 <tr>
                   <td>Temperature [°C]</td>
-                  {directions.map(
-                    (dir) =>
-                      currentDeviceInfoData?.[dir] && (
-                        <td
-                          key={`${dir}-temperature`}
-                          className={
-                            currentDeviceInfoData?.[dir].Temp === "0"
-                              ? "blue"
-                              : ""
-                          }
-                        >
-                          {currentDeviceInfoData?.[dir]?.Temp ?? "0"}
-                        </td>
-                      )
-                  )}
+                  {directions.map((dir) => (
+                    <td
+                      key={`${dir}-temperature`}
+                      className={
+                        currentDeviceInfoData?.[dir]?.Temp === "0" ? "blue" : ""
+                      }
+                    >
+                      {currentDeviceInfoData?.[dir]?.Temp ?? "N/A"}
+                    </td>
+                  ))}
                 </tr>
               </tbody>
             </table>
