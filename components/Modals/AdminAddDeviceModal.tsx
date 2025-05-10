@@ -34,7 +34,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
 
   const adminUser = GetItemFromLocalStorage("adminUser");
 
-  const deviceType = deviceTypes.find(
+  const device = deviceTypes.find(
     (dev) => dev.department === adminUser.department
   );
 
@@ -45,7 +45,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
 
   const formik = useFormik<FormValuesType>({
     initialValues: {
-      deviceType: `${deviceType?.type}`,
+      deviceType: `${device?.type}`,
       deviceId: "",
       deviceStatus: null,
       ownerEmail: "",
@@ -99,8 +99,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
         setSuccessMessage(data.message);
         emitToastMessage(data.message, "success");
         closeModal();
-        dispatch(getAdminDevice(adminUser.email));
-        console.log("Admin add device success", data, adminUser.email);
+        dispatch(getAdminDevice(device));
         setisAddingDevice(false);
       } catch (error: any) {
         console.log("Admin add device error", error);
@@ -127,12 +126,12 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
           id="deviceType"
           type="text"
           name="deviceType"
-          value={deviceType?.type}
+          value={device?.type}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           inputErrorMessage={formik.errors.deviceType}
           invalid={!!formik.errors.deviceType && formik.touched.deviceType}
-          placeholder={deviceType?.type}
+          placeholder={device?.type}
           readOnly
         />
 

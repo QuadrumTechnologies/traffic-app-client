@@ -9,7 +9,6 @@ const instance = axios.create({
   responseType: "json",
 });
 
-// Helper function to check if code is running in the browser
 const isBrowser = typeof window !== "undefined";
 
 instance.interceptors.request.use(
@@ -19,11 +18,9 @@ instance.interceptors.request.use(
 
     let token: string | null;
 
-    // Check pathname if in browser
     if (isBrowser) {
       const pathname = window.location.pathname;
-      console.log("Pathname on Request", pathname);
-      if (pathname.includes("admin")) {
+      if (pathname.startsWith("/admin")) {
         token = adminToken;
       } else {
         token = userToken;
