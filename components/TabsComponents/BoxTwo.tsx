@@ -446,7 +446,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
 
         const currentPhase = pattern.configuredPhases[index];
         let timeLeft =
-          initialTimeLeft !== null ? initialTimeLeft : currentPhase.duration;
+          initialTimeLeft !== null ? initialTimeLeft : currentPhase?.duration;
 
         const showPhase = (
           phase: any,

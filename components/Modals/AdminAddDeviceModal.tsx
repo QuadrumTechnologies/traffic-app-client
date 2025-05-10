@@ -96,11 +96,11 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
           ownerEmail,
           purchasedDate,
         });
-        console.log("Admin add device sucess", data);
         setSuccessMessage(data.message);
         emitToastMessage(data.message, "success");
         closeModal();
         dispatch(getAdminDevice(adminUser.email));
+        console.log("Admin add device success", data, adminUser.email);
         setisAddingDevice(false);
       } catch (error: any) {
         console.log("Admin add device error", error);
