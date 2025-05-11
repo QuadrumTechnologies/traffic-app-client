@@ -261,6 +261,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         })
       );
     };
+    console.log("State Request Set for", params.deviceId);
 
     const sendInfoMessage = () => {
       socket.send(
