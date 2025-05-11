@@ -1,0 +1,51 @@
+$traffic-green: #28a745;
+$traffic-red: #dc3545;
+$traffic-yellow: #ffc107;
+$road-gray: #4a4a4a;
+$sign-white: #f8f9fa;
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(180deg, $road-gray 0%, #343a40 100%);
+  font-family: "Arial", sans-serif;
+  color: $sign-white;
+  text-align: center;
+  padding: 1rem;
+
+  h2 {
+    font-size: 2.5rem;
+    color: $traffic-red;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  p {
+    font-size: 1.2rem;
+    color: $traffic-yellow;
+    margin-bottom: 2rem;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  button {
+    padding: 0.75rem 2rem;
+    background-color: $traffic-green;
+    color: $sign-white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background-color: darken($traffic-green, 10%);
+      transform: translateY(-2px);
+    }
+  }
+}

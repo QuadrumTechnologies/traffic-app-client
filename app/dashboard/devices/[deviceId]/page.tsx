@@ -197,11 +197,11 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             );
             emitToastMessage("Could not fetch device signal data", "error");
           } else {
-            console.log(
-              "Current Phase and Countdown",
-              feedback.payload.Countdown,
-              feedback.payload.Phase
-            );
+            // console.log(
+            //   "Current Phase and Countdown",
+            //   feedback.payload.Countdown,
+            //   feedback.payload.Phase
+            // );
 
             startCountdown(feedback.payload.Countdown, feedback.payload.Phase);
             dispatch(addCurrentDeviceSignalData(feedback.payload));

@@ -11,21 +11,36 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdUpload } from "react-icons/md";
+import { ImSpinner2 } from "react-icons/im"; // Added for loading state
+
+// Define types for plan and schedule
+interface ScheduleSegment {
+  value?: string;
+  label?: string;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  schedule?: Record<string, ScheduleSegment>;
+}
 
 interface BoxThreeProps {}
-const BoxThree: React.FC<BoxThreeProps> = ({}) => {
+
+const BoxThree: React.FC<BoxThreeProps> = () => {
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
   const newPathname =
     pathname.slice(0, pathname.lastIndexOf("/")) + "/schedule";
   const dispatch = useAppDispatch();
-  const email = GetItemFromLocalStorage("user")?.email;
+  const email = GetItemFromLocalStorage("user")?.email || "";
 
-  const { plans } = useAppSelector((state) => state.userDevice);
-  const [searchedResult, setSearchedResult] = useState<any[]>([]);
+  const { plans = [] } = useAppSelector((state) => state.userDevice);
+  const [searchedResult, setSearchedResult] = useState<Plan[]>([]);
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
   const [inputtedPlanName, setInputtedPlanName] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const searchPlanByName = (planName: string) => {
     const matchedPhases = plans.filter((plan) =>
@@ -33,6 +48,7 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
     );
     setSearchedResult(matchedPhases);
   };
+
   const plansToShow = showSearchedResult ? searchedResult : plans;
   const dayOrder = [
     "SUNDAY",
@@ -44,17 +60,20 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
     "SATURDAY",
   ];
 
-  const sortedPlans = [...plansToShow].sort((a, b) => {
-    if (a.name === "CUSTOM") return 1; // 'CUSTOM' should always go last
+  const sortedPlans = [...(plansToShow || [])].sort((a, b) => {
+    if (!a || !b) return 0;
+    if (a.name === "CUSTOM") return 1;
     if (b.name === "CUSTOM") return -1;
-
     return dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name);
   });
 
   useEffect(() => {
-    dispatch(getUserPlan(email));
-    dispatch(closePreviewCreatedPatternPhase());
-  }, [dispatch]);
+    if (email) {
+      setIsLoading(true);
+      dispatch(getUserPlan(email)).finally(() => setIsLoading(false));
+      dispatch(closePreviewCreatedPatternPhase());
+    }
+  }, [dispatch, email]);
 
   const handleDeletePlan = async (planId: string, planName: string) => {
     const confirmResult = confirm(
@@ -66,11 +85,12 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
       emitToastMessage(data.message, "success");
       dispatch(getUserPlan(email));
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to delete plan",
+        "error"
+      );
     }
   };
-
-  getWebSocket();
 
   const handleUploadPlan = async (
     planId: string,
@@ -85,19 +105,18 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
     }
 
     try {
-      const plan = plans.find((plan) => plan.id === planId);
-      console.log("The Selected Plan", plan?.schedule);
+      const plan = plans.find((p) => p.id === planId);
       if (!plan || !plan.schedule) {
-        console.error("Invalid plan or missing schedule");
+        emitToastMessage("Invalid plan or missing schedule", "error");
         return;
       }
 
       const socket = getWebSocket();
 
       const sendMessage = (
-        startSegmentKey: any,
-        endSegmentKey: any,
-        timeSegment: any
+        startSegmentKey: string,
+        endSegmentKey: string,
+        timeSegment: ScheduleSegment
       ) => {
         const [startHours, startMinutes] = startSegmentKey
           .split(":")
@@ -122,7 +141,7 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
                 email,
                 plan: plan.name,
                 timeSegmentString,
-                patternName: timeSegment.label,
+                patternName: timeSegment.label || "",
               },
             })
           );
@@ -134,44 +153,40 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
               feedback.payload.Plan === plan.name &&
               feedback.payload.Period === startSegmentKey
             ) {
-              console.log("Upload success for time segment:", feedback);
               resolve();
             }
           };
         });
       };
 
-      // Track the last valid time segment value and its key
-      let lastValidSegment = null;
-      let lastStartKey = null;
+      let lastValidSegment: ScheduleSegment | null = null;
+      let lastStartKey: string | null = null;
 
-      for (const timeSegmentKey of Object.keys(plan.schedule)) {
-        let timeSegment = plan.schedule[timeSegmentKey];
-
-        // If the current segment has a value, send the previous accumulated range and start a new one
-        if (timeSegment && timeSegment.value) {
-          // If there's a previous segment without values, send it
-          if (lastValidSegment && lastStartKey !== timeSegmentKey) {
-            console.log(
-              `Uploading accumulated time segment from ${lastStartKey} to ${timeSegmentKey}`
-            );
+      for (const timeSegmentKey of Object.keys(plan.schedule || {})) {
+        const timeSegment = plan.schedule[timeSegmentKey];
+        if (timeSegment?.value) {
+          if (
+            lastValidSegment &&
+            lastStartKey &&
+            lastStartKey !== timeSegmentKey
+          ) {
             await sendMessage(lastStartKey, timeSegmentKey, lastValidSegment);
           }
-
-          // Update the last valid segment and its start key
           lastValidSegment = timeSegment;
           lastStartKey = timeSegmentKey;
         }
       }
 
-      // If there's any remaining segment that needs to be uploaded till the end of the day
       if (lastValidSegment && lastStartKey) {
         await sendMessage(lastStartKey, "23:59", lastValidSegment);
       }
 
-      console.log(`All segments uploaded for plan: ${plan.name}`);
+      emitToastMessage(`Plan "${plan.name}" uploaded successfully`, "success");
     } catch (error: any) {
-      emitToastMessage(error?.response?.data?.message, "error");
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to upload plan",
+        "error"
+      );
     }
   };
 
@@ -182,83 +197,95 @@ const BoxThree: React.FC<BoxThreeProps> = ({}) => {
     if (!confirmResult) return;
 
     try {
-      for (const plan of plans) {
-        if (plan && plan.id && plan.name) {
-          console.log(`Uploading plan: ${plan.name}`);
+      for (const plan of plans || []) {
+        if (plan?.id && plan?.name) {
           await handleUploadPlan(plan.id, plan.name, false);
         }
       }
-
       emitToastMessage("All plans uploaded successfully!", "success");
     } catch (error: any) {
-      console.error("Error uploading all plans:", error);
-      emitToastMessage(error?.response?.data?.message, "error");
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to upload all plans",
+        "error"
+      );
     }
   };
 
   return (
     <div className="boxThree">
-      <div>
-        {plans?.length > 0 ? (
-          <>
-            <div className="plans__header">
-              <h2>Available Plan(s)</h2>
-              <form
-                action=""
-                onSubmit={(e: any) => {
-                  e.preventDefault();
-                  searchPlanByName(inputtedPlanName);
+      {isLoading ? (
+        <div className="plans__loading">
+          <ImSpinner2 className="spinner" />
+          Loading plans...
+        </div>
+      ) : plans?.length > 0 ? (
+        <>
+          <div className="plans__header">
+            <h2>Available Plan(s)</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                searchPlanByName(inputtedPlanName);
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Find a plan by its name"
+                value={inputtedPlanName}
+                onChange={(e) => {
+                  setInputtedPlanName(e.target.value);
+                  searchPlanByName(e.target.value);
+                  setShowSearchedResult(true);
                 }}
-              >
-                <input
-                  type="text"
-                  placeholder="Find a plan by its name"
-                  value={inputtedPlanName}
-                  onChange={(e) => {
-                    setInputtedPlanName(e.target.value);
-                    searchPlanByName(e.target.value);
-                    setShowSearchedResult(true);
-                  }}
-                />
-              </form>
-            </div>
-            <ul className="plans">
-              {sortedPlans?.map((plan, index) => (
-                <li className="plans__list" key={index}>
+              />
+            </form>
+          </div>
+          <ul className="plans">
+            {sortedPlans?.length > 0 ? (
+              sortedPlans.map((plan, index) => (
+                <li className="plans__list" key={plan.id || index}>
                   <div className="plans__list--item">
                     <h3>{plan.name}</h3>
                     <div>
                       <button
-                        onClick={() => {
-                          handleUploadPlan(plan.id, plan.name);
-                        }}
+                        onClick={() => handleUploadPlan(plan.id, plan.name)}
                       >
                         <MdUpload />
                       </button>
                       <button
-                        onClick={() => {
-                          handleDeletePlan(plan.id, plan.name);
-                        }}
+                        onClick={() => handleDeletePlan(plan.id, plan.name)}
                       >
                         <FaTrashAlt />
                       </button>
                     </div>
                   </div>
                 </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <div className="plans__noPlans">
-            You have not created any schedule yet.
-          </div>
-        )}
+              ))
+            ) : (
+              <div className="plans__noResults">
+                No plans match your search.
+              </div>
+            )}
+          </ul>
+        </>
+      ) : (
+        <div className="plans__noPlans">
+          You have not created any schedule yet.
+        </div>
+      )}
+      <div className="boxThree__actions">
+        <button onClick={() => router.push(newPathname)}>
+          Go to schedule page
+        </button>
+        <button
+          onClick={handleUploadAllPlan}
+          disabled={isLoading || !plans?.length}
+        >
+          Upload All Plans
+        </button>
       </div>
-      <button onClick={() => router.push(newPathname)}>
-        Go to schedule page
-      </button>
-      <button onClick={handleUploadAllPlan}>Upload All Plans</button>
     </div>
   );
 };
+
 export default BoxThree;
