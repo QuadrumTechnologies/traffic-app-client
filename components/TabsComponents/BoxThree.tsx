@@ -11,7 +11,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdUpload } from "react-icons/md";
-import { ImSpinner2 } from "react-icons/im"; // Added for loading state
+import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 
 // Define types for plan and schedule
 interface ScheduleSegment {
@@ -48,8 +48,6 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     );
     setSearchedResult(matchedPhases);
   };
-  console.log("plans", plans);
-  console.log("searchedResult", searchedResult);
 
   const plansToShow = showSearchedResult ? searchedResult : plans;
   const dayOrder = [
@@ -62,16 +60,12 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     "SATURDAY",
   ];
 
-  console.log("plansToShow", plansToShow);
-
   const sortedPlans = [...(plansToShow || [])].sort((a, b) => {
     if (!a || !b) return 0;
     if (a.name === "CUSTOM") return 1;
     if (b.name === "CUSTOM") return -1;
     return dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name);
   });
-
-  console.log("sortedPlans", sortedPlans);
 
   useEffect(() => {
     if (email) {
@@ -220,10 +214,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
   return (
     <div className="boxThree">
       {isLoading ? (
-        <div className="plans__loading">
-          <ImSpinner2 className="spinner" />
-          Loading plans...
-        </div>
+        <LoadingSpinner color="blue" />
       ) : plans?.length > 0 ? (
         <>
           <div className="plans__header">
