@@ -51,8 +51,8 @@ const SignalLight = styled.div<{
   $editable: boolean;
   $manualMode: boolean;
 }>`
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.45rem;
+  height: 1.45rem;
   background-color: ${({ color }) =>
     color === "R"
       ? "red"
@@ -61,7 +61,7 @@ const SignalLight = styled.div<{
       : color === "G"
       ? "green"
       : "rgb(83,92,91)"};
-  margin: 1.1px;
+  margin: 1.7px;
   border-radius: 50%;
   cursor: ${({ $editable, $manualMode }) =>
     $editable || $manualMode ? "pointer" : "default"};
@@ -101,8 +101,8 @@ const PedestrianSignalLight = styled.div<{
   $editable: boolean;
   $manualMode: boolean;
 }>`
-  width: 1rem;
-  height: 1rem;
+  width: 0.9rem;
+  height: 0.9rem;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -285,37 +285,40 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   );
 
   const handlePlanChange = (newValue: SingleValue<Option>) => {
+    console.log("handlePlanChange called with:", newValue);
+
     if (newValue) {
       setSelectedPlan(newValue);
       const plan = plans?.find(
         (plan) => plan?.name.toLowerCase() === newValue.value.toLowerCase()
       );
-
       if (plan) {
         const fullSchedule: ScheduleData = {};
         timeSegments.forEach((time) => {
-          fullSchedule[time] = plan.schedule[time] || null;
+          fullSchedule[time] = plan.schedule[time]
+            ? {
+                value: plan.schedule[time].value,
+                label: plan.schedule[time].label,
+              }
+            : null;
         });
-
         setSchedule(fullSchedule);
         setCustomDate(plan.customDate ? new Date(plan.customDate) : null);
       } else {
-        const emptySchedule: ScheduleData = {};
-        timeSegments.forEach((time) => {
-          emptySchedule[time] = null;
-        });
-
-        setSchedule(emptySchedule);
+        // Fallback to current schedule if plan not found
+        setSchedule((prev) => ({ ...prev }));
+        setCustomDate(dayType.value === "custom" ? customDate : null);
       }
     }
   };
 
   useEffect(() => {
+    console.log("dayType changed:", dayType);
     handlePlanChange({
       value: dayType?.value.toUpperCase(),
       label: dayType?.label.toUpperCase(),
     });
-  }, []);
+  }, [dayType, plans]);
 
   const handleDayTypeChange = (newValue: SingleValue<Option>) => {
     if (newValue) {
@@ -378,13 +381,41 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           dayType.value === "custom" ? customDate || undefined : undefined,
       });
       emitToastMessage(data.message, "success");
-      dispatch(getUserPlan());
-      // setSchedule({});
-      setSelectedPattern(null);
-      handlePlanChange({
+
+      const savedPlan = {
+        name: data.plan?.name || dayType.value.toUpperCase(),
+        schedule: data.plan?.schedule || schedule,
+        customDate:
+          data.plan?.customDate ||
+          (dayType.value === "custom" ? customDate : null),
+      };
+
+      // Update selectedPlan and schedule
+      const updatedPlan = {
         value: dayType.value.toUpperCase(),
         label: dayType.label.toUpperCase(),
+      };
+      setSelectedPlan(updatedPlan);
+
+      // Update schedule state with saved plan's schedule
+      const fullSchedule: ScheduleData = {};
+      timeSegments.forEach((time) => {
+        fullSchedule[time] = savedPlan.schedule[time]
+          ? {
+              value: savedPlan.schedule[time].value,
+              label: savedPlan.schedule[time].label,
+            }
+          : null;
       });
+
+      setSchedule(fullSchedule);
+
+      setCustomDate(
+        savedPlan.customDate ? new Date(savedPlan.customDate) : null
+      );
+
+      // Refresh plans in the background
+      await dispatch(getUserPlan());
     } catch (error: any) {
       emitToastMessage(
         error?.response?.data?.message || "An error occurred",

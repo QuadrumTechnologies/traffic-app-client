@@ -55,18 +55,34 @@ const Background = styled.div<{ $backgroundImage: string }>`
   }
 `;
 
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(1px);
+  z-index: 1000;
+  pointer-events: auto;
+`;
+
 const PhaseContainer = styled.form`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 40%;
-  background-color: grey;
-  padding: 0.4rem;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%;
+  background-color: #ffffff;
+  padding: 1rem;
   border-radius: 0.4rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.6rem;
+  z-index: 1001;
+  pointer-events: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 `;
 
 const PhaseNameInput = styled.input`
@@ -85,29 +101,32 @@ const PhaseNameInput = styled.input`
     border-color: #2a2a29;
   }
 `;
-const AddPhaseButton = styled.button`
+
+const AddPhaseButton = styled.button<{ disabled: boolean }>`
   padding: 0.8rem 1rem;
-  background-color: #514604;
+  background-color: ${({ disabled }) => (disabled ? "#cccccc" : "#514604")};
   color: white;
   border: none;
   border-radius: 0.4rem;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   font-size: 1.4rem;
   width: 100%;
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
 
-  &:hover {
-    border-color: #2a2a29;
+  &:hover:not(:disabled) {
+    background-color: #2a2a29;
   }
 `;
+
 const AddPhaseIcon = styled(motion.div)`
   position: absolute;
-  top: 44.1%;
-  left: 45%;
+  top: 44.4%;
+  left: 45.8%;
   background-color: rgb(83, 92, 91);
   color: white;
   border: none;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 1rem;
   @media screen and (max-width: 1300px) {
     top: 44.6%;
     left: 45.5%;
@@ -137,12 +156,13 @@ const AddPhaseIcon = styled(motion.div)`
     left: 43%;
   }
 `;
+
 const DurationDisplay = styled.div<{
   $countDownColor: "red" | "green" | "yellow";
 }>`
   position: absolute;
-  top: 44.1%;
-  left: 45%;
+  top: 44.4%;
+  left: 45.8%;
   background-color: ${({ $countDownColor }) =>
     $countDownColor === "red" ||
     $countDownColor === "green" ||
@@ -203,7 +223,6 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
 }) => {
   const [signals, setSignals] = useState<Signal[]>(initialSignals);
   const [showInputModal, setShowInputModal] = useState<boolean>(false);
-
   const [isCreatingPhase, setIsCreatingPhase] = useState<boolean>(false);
   const [phaseName, setPhaseName] = useState<string>("");
   const dispatch = useAppDispatch();
@@ -231,7 +250,8 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
     dispatch(setLandingPageSignals({ direction, signalType, color }));
   };
 
-  const handleAddPhase = async () => {
+  const handleAddPhase = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!phaseName) {
       alert("Please enter a name for the phase.");
       return;
@@ -243,9 +263,7 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
       signals: Signal[],
       direction: "N" | "E" | "S" | "W"
     ): "R" | "G" | "X" => {
-      // Find the adjacent signal direction based on the current direction
       let adjacentDirection: "N" | "E" | "S" | "W";
-
       switch (direction) {
         case "S":
           adjacentDirection = "E";
@@ -262,12 +280,9 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
         default:
           adjacentDirection = "N";
       }
-
-      // Find the signal with the adjacent direction and return its pedestrian signal
       const adjacentSignal = signals.find(
         (signal) => signal.direction === adjacentDirection
       );
-
       return adjacentSignal ? adjacentSignal.pedestrian : "X";
     };
 
@@ -281,7 +296,6 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
                 signals,
                 signal.direction
               );
-
               return `${signal.direction}${signal.left}${signal.straight}${signal.right}${signal.bike}${signal.pedestrian}${adjacentPedestrian}`;
             })
             .join("") +
@@ -294,9 +308,8 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
         phaseName,
         phaseData: encodedSignals,
       });
-      console.log("response", data);
-      emitToastMessage(data.message, "success");
       dispatch(getUserPhase(user.email));
+      emitToastMessage(data.message, "success");
       setIsCreatingPhase(false);
       setPhaseName("");
       setShowInputModal(false);
@@ -329,13 +342,12 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
           onClick={() => setShowInputModal((prev) => !prev)}
         >
           {!showInputModal ? (
-            <IoMdAddCircle size={53} />
+            <IoMdAddCircle size={56} />
           ) : (
-            <MdCancel size={53} />
+            <MdCancel size={56} />
           )}
         </AddPhaseIcon>
       )}
-
       {createdPatternPhasePreviewing.showDuration &&
         createdPatternPhasePreviewing.duration !== null && (
           <DurationDisplay $countDownColor={countDownColor}>
@@ -343,18 +355,23 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
           </DurationDisplay>
         )}
       {showInputModal && (
-        <PhaseContainer>
-          <PhaseNameInput
-            type="text"
-            placeholder="Enter phase name"
-            value={phaseName}
-            onChange={(e) => setPhaseName(e.target.value)}
-            autoFocus={true}
-          />
-          <AddPhaseButton onClick={handleAddPhase}>
-            {isCreatingPhase ? "Creating..." : "Create"}
-          </AddPhaseButton>
-        </PhaseContainer>
+        <ModalBackdrop onClick={() => setShowInputModal(false)}>
+          <PhaseContainer
+            onSubmit={handleAddPhase}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <PhaseNameInput
+              type="text"
+              placeholder="Enter phase name"
+              value={phaseName}
+              onChange={(e) => setPhaseName(e.target.value)}
+              autoFocus={true}
+            />
+            <AddPhaseButton type="submit" disabled={isCreatingPhase}>
+              {isCreatingPhase ? "Creating..." : "Create"}
+            </AddPhaseButton>
+          </PhaseContainer>
+        </ModalBackdrop>
       )}
     </Background>
   );

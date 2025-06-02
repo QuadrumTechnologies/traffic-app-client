@@ -195,9 +195,11 @@ const AdminDevices = () => {
               <h3
                 onClick={() => handleRedirectionToDevicePage(device.deviceId)}
               >
-                {device.deviceType}
+                {device?.info?.JunctionId || device?.deviceType}
               </h3>
-              <p>{device.deviceId}</p>
+              <p>
+                {device?.deviceType} : {device.deviceId}
+              </p>
             </div>
             <div className="devices-item__status">
               {device?.deviceStatus?.status === "purchased"

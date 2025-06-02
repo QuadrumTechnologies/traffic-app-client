@@ -42,7 +42,7 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
     dispatch(setSignalState());
   };
 
-  // Function to delete a phase
+  // Function to delete a single phase
   const handleDeletePhase = async (phaseName: string) => {
     const confirmResult = confirm(
       `Are you sure you want to delete "${phaseName}" phase?`
@@ -59,6 +59,30 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
       setActiveOrLastAddedPhase(phaseName);
     } catch (error: any) {
       emitToastMessage(error?.response.data.message, "error");
+    }
+  };
+
+  // Function to delete all phases
+  const handleDeleteAllPhases = async () => {
+    const confirmResult = confirm(
+      "Are you sure you want to delete ALL phases? This action cannot be undone."
+    );
+
+    if (!confirmResult) return;
+
+    try {
+      const { data } = await HttpRequest.delete(`/phases/all/${email}`);
+      emitToastMessage(data.message, "success");
+      dispatch(getUserPhase(email));
+      setActiveOrLastAddedPhase("");
+      setSearchedResult([]);
+      setShowSearchedResult(false);
+      setInputtedPhaseName("");
+    } catch (error: any) {
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to delete all phases",
+        "error"
+      );
     }
   };
 
@@ -92,6 +116,15 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
                 }}
               />
             </form>
+          </div>
+          <div>
+            <button
+              className="phases__deleteAll"
+              onClick={handleDeleteAllPhases}
+              disabled={!phases || phases.length === 0}
+            >
+              Delete All Phases
+            </button>
           </div>
 
           <ul className="phases">
@@ -174,35 +207,6 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
             Add a new phase by configuring each signal, then click the add icon
             at the center of the intersection to enter the phase name.
           </p>
-          <div className="phases__buttonBox">
-            <button
-              className="phases__clear"
-              onClick={() => {
-                dispatch(setSignalStringToAllRed());
-                dispatch(setSignalState());
-              }}
-            >
-              All Red
-            </button>
-            <button
-              className="phases__clear"
-              onClick={() => {
-                dispatch(setSignalStringToAllAmber());
-                dispatch(setSignalState());
-              }}
-            >
-              All Yellow
-            </button>
-            <button
-              className="phases__clear"
-              onClick={() => {
-                dispatch(setSignalStringToAllBlank());
-                dispatch(setSignalState());
-              }}
-            >
-              All Blank
-            </button>
-          </div>
         </div>
       )}
       {!phases || phases?.length === 0 ? (
@@ -212,6 +216,35 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
           a name for the phase before submitting.
         </p>
       ) : null}
+      <div className="phases__buttonBox">
+        <button
+          className="phases__clear"
+          onClick={() => {
+            dispatch(setSignalStringToAllRed());
+            dispatch(setSignalState());
+          }}
+        >
+          All Red
+        </button>
+        <button
+          className="phases__clear"
+          onClick={() => {
+            dispatch(setSignalStringToAllAmber());
+            dispatch(setSignalState());
+          }}
+        >
+          All Yellow
+        </button>
+        <button
+          className="phases__clear"
+          onClick={() => {
+            dispatch(setSignalStringToAllBlank());
+            dispatch(setSignalState());
+          }}
+        >
+          All Blank
+        </button>
+      </div>
     </div>
   );
 };
