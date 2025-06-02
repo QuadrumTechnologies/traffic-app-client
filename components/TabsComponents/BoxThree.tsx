@@ -13,7 +13,6 @@ import { FaTrashAlt } from "react-icons/fa";
 import { MdUpload } from "react-icons/md";
 import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 
-// Define types for plan and schedule
 interface ScheduleSegment {
   value?: string;
   label?: string;
@@ -87,6 +86,27 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     } catch (error: any) {
       emitToastMessage(
         error?.response?.data?.message || "Failed to delete plan",
+        "error"
+      );
+    }
+  };
+
+  const handleDeleteAllPlans = async () => {
+    const confirmResult = confirm(
+      "Are you sure you want to delete ALL plans? This action cannot be undone."
+    );
+    if (!confirmResult) return;
+
+    try {
+      const { data } = await HttpRequest.delete(`/plans/all/${email}`);
+      emitToastMessage(data.message, "success");
+      dispatch(getUserPlan(email));
+      setSearchedResult([]);
+      setShowSearchedResult(false);
+      setInputtedPlanName("");
+    } catch (error: any) {
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to delete all plans",
         "error"
       );
     }
@@ -236,6 +256,16 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
                 }}
               />
             </form>
+          </div>
+          <div>
+            {" "}
+            <button
+              className="phases__deleteAll"
+              onClick={handleDeleteAllPlans}
+              disabled={!plans || plans.length === 0}
+            >
+              Delete All Plans
+            </button>
           </div>
           <ul className="plans">
             {sortedPlans?.length > 0 ? (

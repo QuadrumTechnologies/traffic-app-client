@@ -126,6 +126,33 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     }
   };
 
+  const handleDeleteAllPatterns = async () => {
+    const confirmResult = confirm(
+      "Are you sure you want to delete ALL patterns? This action cannot be undone."
+    );
+    if (!confirmResult) return;
+
+    try {
+      const { data } = await HttpRequest.delete(`/patterns/all/${email}`);
+      emitToastMessage(data.message, "success");
+      dispatch(getUserPattern(email));
+      setUpdatedPatternPhases([]);
+      setSelectedPattern(null);
+      setShowPatternPhases(null);
+      setSearchedResult([]);
+      setShowSearchedResult(false);
+      setInputtedPatternName("");
+      setActivePatternIndex(null);
+      setActivePreviewPhase(null);
+      stopPlayPhases();
+    } catch (error: any) {
+      emitToastMessage(
+        error?.response?.data?.message || "Failed to delete all patterns",
+        "error"
+      );
+    }
+  };
+
   const handleDragEndEdit = (result: any) => {
     if (!result.destination) return;
     const reorderedPhases = [...updatedPatternPhases];
@@ -989,6 +1016,15 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 }}
               />
             </form>
+          </div>
+          <div>
+            <button
+              className="phases__deleteAll"
+              onClick={handleDeleteAllPatterns}
+              disabled={!phases || phases.length === 0}
+            >
+              Delete All Patterns
+            </button>
           </div>
           <ul className="patterns">
             {patternsToShow?.map((pattern, index) => (
