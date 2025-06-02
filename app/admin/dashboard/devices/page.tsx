@@ -195,7 +195,7 @@ const AdminDevices = () => {
               <h3
                 onClick={() => handleRedirectionToDevicePage(device.deviceId)}
               >
-                {device?.info?.JunctionId || device?.deviceType}
+                {device?.info?.JunctionId || "No Junction ID"}
               </h3>
               <p>
                 {device?.deviceType} : {device.deviceId}
