@@ -4,6 +4,7 @@ import { DeviceConfigItem } from "@/app/dashboard/devices/[deviceId]/page";
 import DeviceConfigurationItem from "./DeviceConfigurationItem";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppSelector } from "@/hooks/reduxHook";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface DeviceConfigurationProps {
   deviceConfigItems: DeviceConfigItem[];
@@ -26,7 +27,10 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
     }
 
     if (!device?.userDevice?.allowAdminSupport && pathname.includes("admin")) {
-      alert("Admin support is not enabled for this device.");
+      emitToastMessage(
+        "Admin support is not enabled for this device.",
+        "error"
+      );
       return;
     }
 

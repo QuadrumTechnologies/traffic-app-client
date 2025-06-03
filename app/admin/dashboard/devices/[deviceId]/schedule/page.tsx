@@ -253,6 +253,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         ...selectedPattern,
         configuredPhases: configuredPhases,
         name: newPatternName,
+        deviceId: params.deviceId,
       });
 
       emitToastMessage(data.message, "success");
@@ -373,6 +374,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     try {
       const { data } = await HttpRequest.post("/plans", {
         id: Date.now().toString(),
+        deviceId: params.deviceId,
         email,
         schedule,
         dayType: dayType.value,

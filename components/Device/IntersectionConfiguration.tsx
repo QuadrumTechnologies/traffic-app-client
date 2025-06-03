@@ -86,9 +86,16 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
       if (!password) return;
 
+      // Audit log reason
+      const reason = `Device ${deviceId} ${action} action requested by user`;
+
       try {
-        await HttpRequest.post("/confirm-password", {
+        const endpoint = pathname.includes("admin")
+          ? "/admin/confirm-password"
+          : "/confirm-password";
+        await HttpRequest.post(endpoint, {
           email: GetItemFromLocalStorage("user").email,
+          reason,
           password,
         });
         emitToastMessage("Password verified", "success");

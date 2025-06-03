@@ -14,6 +14,7 @@ import {
   setLandingPageSignals,
   SignalState,
 } from "@/store/signals/SignalConfigSlice";
+import { useParams } from "next/navigation";
 
 export interface Signal extends SignalState {
   direction: "N" | "E" | "S" | "W";
@@ -226,6 +227,7 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
   const [isCreatingPhase, setIsCreatingPhase] = useState<boolean>(false);
   const [phaseName, setPhaseName] = useState<string>("");
   const dispatch = useAppDispatch();
+  const params = useParams<{ deviceId: string }>();
 
   useEffect(() => {
     setSignals(initialSignals);
@@ -307,6 +309,7 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
         email: user.email,
         phaseName,
         phaseData: encodedSignals,
+        deviceId: params.deviceId,
       });
       dispatch(getUserPhase(user.email));
       emitToastMessage(data.message, "success");

@@ -1,3 +1,5 @@
+import { DeviceStatus } from "@/app/dashboard/devices/page";
+
 interface PhaseData {
   duration: number;
   blinkTimeRedToGreen: number;
@@ -67,9 +69,11 @@ export const formatRtcTime = (rtc: string | undefined): string => {
   });
 };
 
-export const getDeviceStatus = (statuses: any, deviceId: string) => {
-  const deviceStatus = statuses.find((status: any) => status.id === deviceId);
-  return deviceStatus ? deviceStatus.status : false;
+export const getDeviceStatus = (
+  statuses: DeviceStatus[],
+  deviceId: string
+): DeviceStatus | null => {
+  return statuses.find((s) => s.id === deviceId) || null;
 };
 
 export const formatUnixTimestamp = (

@@ -30,6 +30,7 @@ import {
 } from "react-icons/fa";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
+import { useParams } from "next/navigation";
 
 interface BoxTwoProps {}
 
@@ -49,6 +50,7 @@ interface Pattern {
 
 const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
   const email = GetItemFromLocalStorage("user").email;
+  const params = useParams<{ deviceId: string }>();
 
   const dispatch = useAppDispatch();
   const { phases, patterns, configuredPhases } = useAppSelector(
@@ -172,6 +174,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         ...pattern,
         email,
         name: newPatternName,
+        deviceId: params.deviceId,
       });
 
       emitToastMessage("Pattern duplicated successfully", "success");
@@ -428,6 +431,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
           amberDurationRedToGreen: values.amberDurationRedToGreen,
           amberDurationGreenToRed: values.amberDurationGreenToRed,
           configuredPhases: configuredPhases,
+          deviceId: params.deviceId,
         });
 
         emitToastMessage(data.message, "success");
@@ -646,7 +650,12 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
       {/* Logic to add a new pattern */}
       <div className="patterns__buttonBox">
         {!showAllAvailablePhases && !showOtherPatternConfig && (
-          <button onClick={() => setShowAllAvailablePhases(true)}>
+          <button
+            style={{
+              width: "fit-content",
+            }}
+            onClick={() => setShowAllAvailablePhases(true)}
+          >
             Add a new Pattern
           </button>
         )}
@@ -1017,15 +1026,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
               />
             </form>
           </div>
-          <div>
-            <button
-              className="phases__deleteAll"
-              onClick={handleDeleteAllPatterns}
-              disabled={!phases || phases.length === 0}
-            >
-              Delete All Patterns
-            </button>
-          </div>
+
           <ul className="patterns">
             {patternsToShow?.map((pattern, index) => (
               <li className="patterns__list" key={index}>
@@ -1271,6 +1272,22 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
           You have not created any pattern yet.
         </div>
       )}
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "flex-end",
+          margin: "1rem 0 1rem 0",
+        }}
+      >
+        <button
+          className="phases__deleteAll"
+          onClick={handleDeleteAllPatterns}
+          disabled={!phases || phases.length === 0}
+        >
+          Delete All Patterns
+        </button>
+      </div>
     </div>
   );
 };

@@ -8,26 +8,36 @@ interface DeviceStatus {
   id: string;
   status: boolean;
 }
+interface DeviceStatus {
+  id: string;
+  status: boolean;
+  lastSeen: string | null;
+}
 
 export const useDeviceStatus = () => {
   const [statuses, setStatuses] = useState<DeviceStatus[]>([]);
   const dispatch = useAppDispatch();
+  const timeoutMap: { [key: string]: NodeJS.Timeout } = {};
+
   useEffect(() => {
     const ws = getWebSocket();
 
-    const timeoutMap: { [key: string]: NodeJS.Timeout } = {};
-
-    const updateDeviceStatus = (id: string, status: boolean) => {
+    const updateDeviceStatus = (
+      id: string,
+      status: boolean,
+      lastSeen: string | null = null
+    ) => {
       setStatuses((prevStatuses) => {
         const existingStatus = prevStatuses.find((s) => s.id === id);
         if (existingStatus) {
-          if (existingStatus.status !== status) {
-          }
-          return prevStatuses.map((s) => (s.id === id ? { ...s, status } : s));
+          return prevStatuses.map((s) =>
+            s.id === id ? { ...s, status, lastSeen } : s
+          );
         } else {
-          return [...prevStatuses, { id, status }];
+          return [...prevStatuses, { id, status, lastSeen }];
         }
       });
+      dispatch(updateDeviceAvailability({ DeviceID: id, status }));
     };
 
     const handleWebSocketMessage = (event: MessageEvent) => {
@@ -38,16 +48,24 @@ export const useDeviceStatus = () => {
         message?.source.type === "hardware"
       ) {
         const deviceId = message.source.id;
-
-        updateDeviceStatus(deviceId, true);
+        updateDeviceStatus(deviceId, true, null);
 
         clearTimeout(timeoutMap[deviceId]);
         timeoutMap[deviceId] = setTimeout(() => {
-          updateDeviceStatus(deviceId, false);
+          updateDeviceStatus(deviceId, false, new Date().toISOString());
           dispatch(
             updateDeviceAvailability({ DeviceID: deviceId, status: false })
           );
         }, 30000);
+      } else if (
+        message.event === "device_status" &&
+        message?.source.type === "hardware"
+      ) {
+        updateDeviceStatus(
+          message.source.id,
+          message.source.status,
+          message.source.lastSeen
+        );
       }
     };
 
@@ -55,13 +73,10 @@ export const useDeviceStatus = () => {
       ws.onmessage = handleWebSocketMessage;
     }
 
-    // return () => {
-    //   if (ws) {
-    //     ws.close();
-    //   }
-    //   Object.values(timeoutMap).forEach(clearTimeout);
-    // };
-  }, []);
+    return () => {
+      Object.values(timeoutMap).forEach(clearTimeout);
+    };
+  }, [dispatch]);
 
   return statuses;
 };

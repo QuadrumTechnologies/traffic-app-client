@@ -17,16 +17,19 @@ import HttpRequest from "@/store/services/HttpRequest";
 import { getUserPhase } from "@/store/devices/UserDeviceSlice";
 
 interface BoxOneProps {}
+
 const BoxOne: React.FC<BoxOneProps> = ({}) => {
   const email = GetItemFromLocalStorage("user")?.email;
+  const dispatch = useAppDispatch();
   const [checked, setChecked] = useState<number>(1);
   const { phases } = useAppSelector((state) => state.userDevice);
-  const dispatch = useAppDispatch();
+
   const [activeOrLastAddedPhase, setActiveOrLastAddedPhase] =
     useState<string>("");
   const [searchedResult, setSearchedResult] = useState<any[]>([]);
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
   const [inputtedPhaseName, setInputtedPhaseName] = useState<string>("");
+
   const searchPhaseByName = (phaseName: string) => {
     const matchedPhases = phases.filter((phase) =>
       phase.name.toLowerCase().includes(phaseName.toLowerCase())
@@ -117,7 +120,14 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
               />
             </form>
           </div>
-          <div>
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "flex-end",
+              margin: "-.5rem 0 1rem 0",
+            }}
+          >
             <button
               className="phases__deleteAll"
               onClick={handleDeleteAllPhases}
@@ -169,9 +179,14 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
 
             if (!password) return;
 
+            const reason = `Device ${
+              !checked ? "Enable Conflicts Check" : "Disable Conflicts Check"
+            } action requested by user`;
+
             try {
               await HttpRequest.post("/confirm-password", {
                 email: GetItemFromLocalStorage("user").email,
+                reason,
                 password,
               });
               dispatch(allowConflictConfig(true));

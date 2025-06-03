@@ -257,16 +257,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
               />
             </form>
           </div>
-          <div>
-            {" "}
-            <button
-              className="phases__deleteAll"
-              onClick={handleDeleteAllPlans}
-              disabled={!plans || plans.length === 0}
-            >
-              Delete All Plans
-            </button>
-          </div>
+
           <ul className="plans">
             {sortedPlans?.length > 0 ? (
               sortedPlans.map((plan, index) => (
@@ -310,6 +301,15 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
         >
           Upload All Plans
         </button>
+        <div>
+          <button
+            className="phases__deleteAll"
+            onClick={handleDeleteAllPlans}
+            disabled={!plans || plans.length === 0}
+          >
+            Delete All Plans
+          </button>
+        </div>
       </div>
     </div>
   );

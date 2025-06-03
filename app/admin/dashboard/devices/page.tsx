@@ -18,6 +18,7 @@ import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { deviceTypes } from "@/utils/deviceTypes";
 import { CgProfile } from "react-icons/cg";
+import { getDeviceStatus } from "@/utils/misc";
 
 const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
@@ -30,8 +31,7 @@ const AdminDevices = () => {
   const router = useRouter();
 
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
-  const [hoveredDeviceId, setHoveredDeviceId] = useState(null);
-
+  const [hoveredDeviceId, setHoveredDeviceId] = useState<string | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
@@ -39,6 +39,7 @@ const AdminDevices = () => {
   const closeDeviceActionModal = () => {
     setShowOptions(false);
   };
+
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
@@ -87,9 +88,13 @@ const AdminDevices = () => {
     );
     if (!password) return;
 
+    // Audit log reason
+    const reason = `Device ${selectedDeviceId} will be ${action}. Admin action taken.`;
+
     try {
       await HttpRequest.post("/admin/confirm-password", {
         email: adminUser?.email,
+        reason,
         password,
       });
 
@@ -128,15 +133,10 @@ const AdminDevices = () => {
 
   if (isFetchingDevices) return <LoadingSpinner color="blue" height="big" />;
 
-  const getDeviceStatus = (deviceId: string) => {
-    const deviceStatus = statuses.find((status) => status.id === deviceId);
-    return deviceStatus ? deviceStatus.status : false;
-  };
-
   return (
     <aside>
       <div className="devices-header">
-        <h2 className="page-header">My Devices </h2>
+        <h2 className="page-header">My Devices</h2>
         <button onClick={() => setShowAddDeviceModal(true)}>
           <FaPlus /> Add New
         </button>
@@ -165,153 +165,165 @@ const AdminDevices = () => {
       )}
 
       <div className="devices-list">
-        {devices?.map((device) => (
-          <div key={device.deviceId} className="devices-item">
-            <div className="devices-item__icon-wrapper">
-              <CgProfile
-                className="devices-item__icon devices-item-profile"
-                onMouseEnter={() => {
-                  setHoveredDeviceId(device.deviceId);
-                }}
-                onMouseLeave={() => {
-                  setHoveredDeviceId(null);
-                }}
-              />
-              {hoveredDeviceId === device.deviceId && device?.deviceStatus && (
-                <div className="devices-item__modal">
-                  <p>
-                    <span>Owner's Email:</span> {device.deviceStatus.ownerEmail}
-                  </p>
-                  <p>
-                    <span> Purchased Date: </span>
-                    {new Date(
-                      device.deviceStatus.purchaseDate
-                    ).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="devices-item__details">
-              <h3
-                onClick={() => handleRedirectionToDevicePage(device.deviceId)}
-              >
-                {device?.info?.JunctionId || "No Junction ID"}
-              </h3>
-              <p>
-                {device?.deviceType} : {device.deviceId}
-              </p>
-            </div>
-            <div className="devices-item__status">
-              {device?.deviceStatus?.status === "purchased"
-                ? device?.userDevice?.status.toUpperCase() ||
-                  "PURCHASED BUT NOT ACTIVATED"
-                : "NOT PURCHASED"}
-              {device?.userDevice &&
-              device?.userDevice?.status !== "disabled" &&
-              getDeviceStatus(device.deviceId) ? (
-                <div className="devices_on">
-                  <p>Online</p>
-                </div>
-              ) : (
-                <div className="devices_off">
-                  <p>Offline</p>
-                </div>
-              )}
-            </div>
-
-            <div className="deviceConfigPage__menu">
-              <CiMenuKebab
-                size={24}
-                className="deviceConfigPage__menu-icon"
-                onClick={() => {
-                  setSelectedDeviceId(device.deviceId);
-                  setShowOptions((prev) => !prev);
-                }}
-              />
-              {showOptions && selectedDeviceId === device.deviceId && (
-                <div
-                  className="deviceConfigPage__menu-dropdown"
-                  ref={deviceActionModal}
+        {devices?.map((device) => {
+          const status = getDeviceStatus(statuses, device.deviceId);
+          return (
+            <div key={device.deviceId} className="devices-item">
+              <div className="devices-item__icon-wrapper">
+                <CgProfile
+                  className="devices-item__icon devices-item-profile"
+                  onMouseEnter={() => {
+                    setHoveredDeviceId(device.deviceId);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredDeviceId(null);
+                  }}
+                />
+                {hoveredDeviceId === device.deviceId &&
+                  device?.deviceStatus && (
+                    <div className="devices-item__modal">
+                      <p>
+                        <span>Owner's Email:</span>{" "}
+                        {device.deviceStatus.ownerEmail}
+                      </p>
+                      <p>
+                        <span>Purchased Date:</span>{" "}
+                        {new Date(
+                          device.deviceStatus.purchaseDate
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+              </div>
+              <div className="devices-item__details">
+                <h3
+                  onClick={() => handleRedirectionToDevicePage(device.deviceId)}
                 >
-                  {device?.userDevice?.isTrash && (
+                  {device?.info?.JunctionId || "No Junction ID"}
+                </h3>
+                <p>
+                  {device?.deviceType} : {device.deviceId}
+                </p>
+              </div>
+              <div className="devices-item__status">
+                {device?.deviceStatus?.status === "purchased"
+                  ? device?.userDevice?.status.toUpperCase() ||
+                    "PURCHASED BUT NOT ACTIVATED"
+                  : "NOT PURCHASED"}
+                {device?.userDevice &&
+                device?.userDevice?.status !== "disabled" &&
+                status?.status ? (
+                  <div className="devices_on">
+                    <p>Online</p>
+                  </div>
+                ) : (
+                  <div className="devices_off">
+                    <p>
+                      Offline
+                      {status?.lastSeen
+                        ? ` (Last seen: ${new Date(
+                            status.lastSeen
+                          ).toLocaleString()})`
+                        : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="deviceConfigPage__menu">
+                <CiMenuKebab
+                  size={24}
+                  className="deviceConfigPage__menu-icon"
+                  onClick={() => {
+                    setSelectedDeviceId(device.deviceId);
+                    setShowOptions((prev) => !prev);
+                  }}
+                />
+                {showOptions && selectedDeviceId === device.deviceId && (
+                  <div
+                    className="deviceConfigPage__menu-dropdown"
+                    ref={deviceActionModal}
+                  >
+                    {device?.userDevice?.isTrash && (
+                      <button
+                        className="deviceConfigPage__menu-dropdown-button"
+                        onClick={() => {
+                          confirmAction("restore");
+                          setShowOptions(false);
+                        }}
+                      >
+                        Restore
+                      </button>
+                    )}
                     <button
                       className="deviceConfigPage__menu-dropdown-button"
                       onClick={() => {
-                        confirmAction("restore");
+                        const action =
+                          device?.userDevice?.status === "recalled"
+                            ? "unrecalled"
+                            : device?.userDevice
+                            ? "recall"
+                            : "assign";
+
+                        if (action === "recall") {
+                          confirmAction("recall");
+                          setShowOptions(false);
+                        } else if (action === "unrecalled") {
+                          confirmAction("unrecalled");
+                          setShowOptions(false);
+                        } else {
+                          assignDeviceHandler();
+                          setShowOptions(false);
+                        }
+                      }}
+                      disabled={
+                        device?.deviceStatus?.status === "purchased" &&
+                        !device?.userDevice
+                      }
+                    >
+                      {device?.userDevice?.status === "recalled"
+                        ? "Unrecalled"
+                        : !device?.userDevice
+                        ? "Assign"
+                        : "Recall"}
+                    </button>
+                    <button
+                      disabled={!device.userDevice}
+                      className="deviceConfigPage__menu-dropdown-button"
+                      onClick={() => {
+                        const action =
+                          device?.userDevice?.status === "active"
+                            ? "disable"
+                            : "enable";
+                        confirmAction(action);
                         setShowOptions(false);
                       }}
                     >
-                      Restore
+                      {device?.userDevice
+                        ? device?.userDevice?.status === "active"
+                          ? "Disable"
+                          : "Enable"
+                        : "Disable/Enable"}
                     </button>
-                  )}
-                  <button
-                    className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => {
-                      const action =
-                        device?.userDevice?.status === "recalled"
-                          ? "unrecalled"
-                          : device?.userDevice
-                          ? "recall"
-                          : "assign";
-
-                      if (action === "recall") {
-                        confirmAction("recall");
+                    <button
+                      className="deviceConfigPage__menu-dropdown-button"
+                      onClick={() => {
+                        if (
+                          device?.userDevice &&
+                          !device?.userDevice?.isRecalled
+                        )
+                          return alert("Please recall device before deleting.");
+                        confirmAction("delete");
                         setShowOptions(false);
-                      } else if (action === "unrecalled") {
-                        confirmAction("unrecalled");
-                        setShowOptions(false);
-                      } else {
-                        assignDeviceHandler();
-                        setShowOptions(false);
-                      }
-                    }}
-                    disabled={
-                      device?.deviceStatus?.status === "purchased" &&
-                      !device?.userDevice
-                    }
-                  >
-                    {device?.userDevice?.status === "recalled"
-                      ? "Unrecalled"
-                      : !device?.userDevice
-                      ? "Assign"
-                      : "Recall"}
-                  </button>
-
-                  <button
-                    disabled={!device.userDevice}
-                    className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => {
-                      const action =
-                        device?.userDevice?.status === "active"
-                          ? "disable"
-                          : "enable";
-                      confirmAction(action);
-                      setShowOptions(false);
-                    }}
-                  >
-                    {device?.userDevice
-                      ? device?.userDevice?.status === "active"
-                        ? "Disable"
-                        : "Enable"
-                      : "Disable/Enable"}
-                  </button>
-                  <button
-                    className="deviceConfigPage__menu-dropdown-button"
-                    onClick={() => {
-                      if (device?.userDevice && !device?.userDevice?.isRecalled)
-                        return alert("Please recall device before deleting.");
-                      confirmAction("delete");
-                      setShowOptions(false);
-                    }}
-                    // disabled={device.userDevice}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </aside>
   );

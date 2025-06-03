@@ -18,6 +18,12 @@ import {
 import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
 import SelectField, { Option } from "@/components/UI/SelectField/SelectField";
+import {
+  GetItemFromLocalStorage,
+  SetItemToLocalStorage,
+} from "@/utils/localStorageFunc";
+import { emitToastMessage } from "@/utils/toastFunc";
+import { usePathname } from "next/navigation";
 
 interface DeviceConfigurationPageProps {
   params: any;
@@ -29,6 +35,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   params,
 }) => {
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showIntersectionPassword, setShowIntersectionPassword] =
     useState<boolean>(false);
@@ -72,31 +79,139 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     fetchDeviceAdminSupportStatus();
   }, [params.deviceId, dispatch]);
 
+  const handleRequest = async (action: string, payloadValue?: any) => {
+    const device = devices?.find(
+      (device) => device.deviceId === params.deviceId
+    );
+
+    if (!device) {
+      emitToastMessage("Device not found.", "error");
+      return;
+    }
+
+    const isPasswordVerified = GetItemFromLocalStorage("isPasswordVerified");
+    if (!isPasswordVerified || Date.now() - isPasswordVerified.time > 180000) {
+      const password = prompt("Please enter your password to proceed");
+      if (!password) return;
+
+      // Audit log reason based on action
+      const reason = `Device ${params.deviceId} ${
+        action === "Reset!" ? "hard reset" : action.toLowerCase()
+      } action requested by admin`;
+
+      try {
+        const endpoint = "/admin/confirm-password";
+        await HttpRequest.post(endpoint, {
+          email: GetItemFromLocalStorage("adminUser").email,
+          reason,
+          password,
+        });
+        emitToastMessage("Password verified", "success");
+        SetItemToLocalStorage("isPasswordVerified", {
+          isPasswordVerified: true,
+          time: Date.now(),
+        });
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to verify password.";
+        emitToastMessage(errorMessage, "error");
+        return;
+      }
+    }
+
+    const socket = getWebSocket();
+
+    const sendMessage = () => {
+      const payload: { [key: string]: any } = {
+        action,
+        DeviceID: params.deviceId,
+      };
+      if (payloadValue !== undefined) {
+        payload[action] = payloadValue;
+      }
+      socket.send(
+        JSON.stringify({
+          event: "intersection_control_request",
+          payload,
+        })
+      );
+    };
+
+    if (socket.readyState === WebSocket.OPEN) {
+      sendMessage();
+      setTimeout(() => {
+        dispatch(getUserDeviceStateData(params.deviceId));
+      }, 500);
+    } else {
+      socket.onopen = () => {
+        sendMessage();
+        setTimeout(() => {
+          dispatch(getUserDeviceStateData(params.deviceId));
+        }, 500);
+      };
+    }
+
+    SetItemToLocalStorage("isPasswordVerified", {
+      isPasswordVerified: true,
+      time: Date.now(),
+    });
+  };
+
   const handleSignalPowerToggle = () => {
-    formik.setFieldValue("signalPower", !formik.values.signalPower);
+    const newPowerState = !formik.values.signalPower;
+    formik.setFieldValue("signalPower", newPowerState);
+    handleRequest("Power", newPowerState);
   };
 
   const handleSignalConfigChange = (value: string) => {
     setSignalConfig(value);
     formik.setFieldValue("signalConfig", value);
+    handleRequest("SignalConfig", value);
   };
 
   const handleFlashOnPoorSignalChange = () => {
-    formik.setFieldValue("flashOnPoorSignal", !formik.values.flashOnPoorSignal);
+    const newFlashState = !formik.values.flashOnPoorSignal;
+    formik.setFieldValue("flashOnPoorSignal", newFlashState);
+    handleRequest("ErrorFlash", newFlashState);
   };
 
   const handleRfModuleVersionChange = (selectedOption: Option | null) => {
-    formik.setFieldValue("rfModuleVersion", selectedOption?.value || "custom");
+    const newRfModuleVersion = selectedOption?.value || "custom";
+    formik.setFieldValue("rfModuleVersion", newRfModuleVersion);
+    // Optionally send to backend if needed
   };
 
-  useEffect(() => {
-    if (currentDeviceInfoData && deviceActiveStateData) {
-      formik.setValues({
-        ...formik.values,
-        signalPower: deviceActiveStateData.Power,
-      });
+  const handleBrightnessChange = (value: number | number[]) => {
+    if (typeof value === "number") {
+      formik.setFieldValue("signalBrightness", value);
     }
-  }, [currentDeviceInfoData, deviceActiveStateData]);
+  };
+
+  const handleBrightnessAfterChange = (value: number | number[]) => {
+    if (typeof value === "number") {
+      handleRequest("SignalLevel", value);
+    }
+  };
+
+  const handleSoftReset = () => {
+    const confirmReset = confirm(
+      "Are you sure you want to perform a soft reset? This will reset device settings to their default state."
+    );
+
+    if (!confirmReset) return;
+    handleRequest("Reset");
+  };
+
+  const handleHardReset = () => {
+    const confirmReset = confirm(
+      "Are you sure you want to perform a hard reset? This will clear all device data and settings, including phases, patterns, and plans, and cannot be undone."
+    );
+
+    if (!confirmReset) return;
+    handleRequest("Reset!");
+  };
 
   const handleAdminSupportToggle = async () => {
     const newStatus = !adminSupport;
@@ -118,52 +233,29 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
         }
       );
       setAdminSupport(response.data.data.allowAdminSupport);
+      emitToastMessage("Admin support status updated.", "success");
     } catch (error) {
       console.error("Error updating toggle", error);
-      alert("Failed to update admin support status.");
+      emitToastMessage("Failed to update admin support status.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // TODO: Add a function to send the signal power value to the backend
-  const handleSignalPowerChange = (value: boolean) => {
-    console.log("Sending signal power value to backend:", value);
-  };
-
-  const handleResetToDefault = () => {
-    const confirmReset = confirm(
-      "Are you sure you want to reset to default settings?"
-    );
-
-    if (!confirmReset) return;
-
-    const socket = getWebSocket();
-    const deviceId = params.deviceId;
-
-    const sendMessage = () => {
-      socket.send(
-        JSON.stringify({
-          event: "intersection_control_request",
-          payload: { action: "reset_defaults", DeviceID: deviceId },
-        })
-      );
-    };
-
-    if (socket.readyState === WebSocket.OPEN) {
-      sendMessage();
-      setTimeout(() => {
-        dispatch(getUserDeviceStateData(deviceId));
-      }, 500);
-    } else {
-      socket.onopen = () => {
-        sendMessage();
-        setTimeout(() => {
-          dispatch(getUserDeviceStateData(deviceId));
-        }, 500);
-      };
+  useEffect(() => {
+    if (currentDeviceInfoData && deviceActiveStateData) {
+      formik.setValues({
+        signalBrightness: deviceActiveStateData?.SignalLevel || 20,
+        signalPower: deviceActiveStateData?.Power || false,
+        minimumBatteryLevel: formik.values.minimumBatteryLevel,
+        signalConfig: deviceActiveStateData?.SignalConfig || "active_low_cp",
+        flashOnPoorSignal: deviceActiveStateData?.ErrorFlash || false,
+        rfModuleVersion:
+          currentDeviceInfoData?.CommunicationChannel || "custom",
+      });
+      setSignalConfig(deviceActiveStateData?.SignalConfig || "active_low_cp");
     }
-  };
+  }, [currentDeviceInfoData, deviceActiveStateData]);
 
   const validationSchema = Yup.object({
     signalBrightness: Yup.number()
@@ -202,7 +294,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   const formik = useFormik({
     initialValues: {
       signalBrightness: 20,
-      signalPower: deviceActiveStateData?.Power || false,
+      signalPower: false,
       minimumBatteryLevel: 12.0,
       signalConfig: "active_low_cp",
       flashOnPoorSignal: false,
@@ -214,17 +306,8 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     validateOnMount: true,
     async onSubmit(values, actions) {
       try {
-        console.log("Submitting values:", {
-          signalBrightness: values.signalBrightness,
-          signalPower: values.signalPower,
-          minimumBatteryLevel: values.minimumBatteryLevel,
-          signalConfig: values.signalConfig,
-          flashOnPoorSignal: values.flashOnPoorSignal,
-          rfModuleVersion: values.rfModuleVersion,
-        });
-        return;
         setIsSubmitting(true);
-        const response = await HttpRequest.patch(
+        await HttpRequest.patch(
           `/user-devices/${params.deviceId}/configuration`,
           {
             signalBrightness: values.signalBrightness,
@@ -235,29 +318,16 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
             rfModuleVersion: values.rfModuleVersion,
           }
         );
-        alert("Configuration updated successfully!");
+        emitToastMessage("Configuration updated successfully!", "success");
       } catch (error: any) {
         console.error("Error updating configuration", error);
-        alert("Failed to update configuration.");
+        emitToastMessage("Failed to update configuration.", "error");
       } finally {
         setIsSubmitting(false);
         actions.setSubmitting(false);
       }
     },
   });
-
-  const handleBrightnessChange = (value: number | number[]) => {
-    if (typeof value === "number") {
-      formik.setFieldValue("signalBrightness", value);
-    }
-  };
-
-  // TODO: Add a function to send the brightness value to the backend
-  const handleBrightnessAfterChange = (value: number | number[]) => {
-    if (typeof value === "number") {
-      console.log("Sending brightness value to backend:", value);
-    }
-  };
 
   if (isLoading || !devices) {
     return <LoadingSpinner color="blue" height="big" />;
@@ -528,10 +598,17 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
               </button>
               <button
                 type="button"
-                onClick={handleResetToDefault}
+                onClick={handleSoftReset}
                 className="deviceConfigPage__reset-button"
               >
-                Reset to Default
+                Soft Reset
+              </button>
+              <button
+                type="button"
+                onClick={handleHardReset}
+                className="deviceConfigPage__reset-button"
+              >
+                Hard Reset
               </button>
             </div>
           </div>

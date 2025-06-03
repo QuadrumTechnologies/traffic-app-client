@@ -19,6 +19,12 @@ import { CiMenuKebab } from "react-icons/ci";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { getUserDevice } from "@/store/devices/UserDeviceSlice";
 
+export interface DeviceStatus {
+  id: string;
+  status: boolean;
+  lastSeen: string | null;
+}
+
 const UserDevices = () => {
   const { devices, isFetchingDevices, deviceAvailability } = useAppSelector(
     (state) => state.userDevice
@@ -49,6 +55,8 @@ const UserDevices = () => {
       `Device ${selectedDeviceId} will be moved to trash for 30 days. After this period, it will be permanently deleted. Admins can delete it permanently at any time. Enter your password to continue.`
     );
 
+    const reason = `Device ${selectedDeviceId} moved to trash by user`;
+
     if (!password) return;
 
     const user = GetItemFromLocalStorage("user");
@@ -56,6 +64,7 @@ const UserDevices = () => {
     try {
       await HttpRequest.post("/confirm-password", {
         email: user?.email,
+        reason,
         password,
       });
 
@@ -100,64 +109,72 @@ const UserDevices = () => {
         </div>
       )}
       <div className="devices-list">
-        {devices?.map((device: any, index) => (
-          <div
-            key={index}
-            className={`devices-item ${
-              device?.status === "disabled" ? "disabled" : ""
-            }`}
-          >
-            <BsDeviceSsd className="devices-item__icon" />
-            <div className="devices-item__details">
-              <h3
-                onClick={() => handleRedirectionToDevicePage(device.deviceId)}
-              >
-                {device?.info?.JunctionId || "No Junction ID"}
-              </h3>
-              <p>
-                {device?.deviceType} : {device.deviceId}
-              </p>
-            </div>
-            <div className="devices-item__status">
-              {device?.status.toUpperCase()}
-              {getDeviceStatus(statuses, device.deviceId) ||
-              (deviceAvailability.Status &&
-                deviceAvailability.DeviceID === device.deviceId) ? (
-                <div className="devices_on">
-                  <p>Online</p>
-                </div>
-              ) : (
-                <div className="devices_off">
-                  <p>Offline</p>
-                </div>
-              )}
-            </div>
-            <div className="deviceConfigPage__menu">
-              <CiMenuKebab
-                size={24}
-                className="deviceConfigPage__menu-icon"
-                onClick={() => {
-                  setSelectedDeviceId(device.deviceId);
-                  setShowOptions((prev) => !prev);
-                }}
-              />
-              {showOptions && selectedDeviceId === device.deviceId && (
-                <div
-                  className="deviceConfigPage__menu-dropdown"
-                  ref={deviceActionModal}
+        {devices?.map((device: any, index) => {
+          const status = getDeviceStatus(statuses, device.deviceId);
+          return (
+            <div
+              key={index}
+              className={`devices-item ${
+                device?.status === "disabled" ? "disabled" : ""
+              }`}
+            >
+              <BsDeviceSsd className="devices-item__icon" />
+              <div className="devices-item__details">
+                <h3
+                  onClick={() => handleRedirectionToDevicePage(device.deviceId)}
                 >
-                  <button
-                    className="deviceConfigPage__menu-dropdown-button"
-                    onClick={confirmAction}
-                    disabled={device?.isTrash}
+                  {device?.info?.JunctionId || "No Junction ID"}
+                </h3>
+                <p>
+                  {device?.deviceType} : {device.deviceId}
+                </p>
+              </div>
+              <div className="devices-item__status">
+                {device?.status.toUpperCase()}
+                {status?.status ? (
+                  <div className="devices_on">
+                    <p>Online</p>
+                  </div>
+                ) : (
+                  <div className="devices_off">
+                    <p>
+                      Offline
+                      {status?.lastSeen
+                        ? ` (Last seen: ${new Date(
+                            status.lastSeen
+                          ).toLocaleString()})`
+                        : ""}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="deviceConfigPage__menu">
+                <CiMenuKebab
+                  size={24}
+                  className="deviceConfigPage__menu-icon"
+                  onClick={() => {
+                    setSelectedDeviceId(device.deviceId);
+                    setShowOptions((prev) => !prev);
+                  }}
+                />
+                {showOptions && selectedDeviceId === device.deviceId && (
+                  <div
+                    className="deviceConfigPage__menu-dropdown"
+                    ref={deviceActionModal}
                   >
-                    {device?.isTrash ? "In Trash" : "Move to Trash"}
-                  </button>
-                </div>
-              )}
+                    <button
+                      className="deviceConfigPage__menu-dropdown-button"
+                      onClick={confirmAction}
+                      disabled={device?.isTrash}
+                    >
+                      {device?.isTrash ? "In Trash" : "Move to Trash"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </aside>
   );

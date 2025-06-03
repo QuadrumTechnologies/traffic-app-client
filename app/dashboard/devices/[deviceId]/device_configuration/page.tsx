@@ -22,6 +22,7 @@ import {
   SetItemToLocalStorage,
 } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
+import { usePathname } from "next/navigation";
 
 interface DeviceConfigurationPageProps {
   params: any;
@@ -33,6 +34,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   params,
 }) => {
   const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showIntersectionPassword, setShowIntersectionPassword] =
     useState<boolean>(false);
@@ -89,12 +91,20 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     const isPasswordVerified = GetItemFromLocalStorage("isPasswordVerified");
     if (!isPasswordVerified || Date.now() - isPasswordVerified.time > 180000) {
       const password = prompt("Please enter your password to proceed");
-
       if (!password) return;
 
+      // Audit log reason based on action
+      const reason = `Device ${params.deviceId} ${
+        action === "Reset!" ? "hard reset" : action.toLowerCase()
+      } action requested by user`;
+
       try {
-        await HttpRequest.post("/confirm-password", {
+        const endpoint = pathname.includes("admin")
+          ? "/admin/confirm-password"
+          : "/confirm-password";
+        await HttpRequest.post(endpoint, {
           email: GetItemFromLocalStorage("user").email,
+          reason,
           password,
         });
         emitToastMessage("Password verified", "success");
@@ -179,14 +189,22 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     handleRequest("ErrorFlash", newFlashState);
   };
 
-  const handleResetToDefault = () => {
+  const handleSoftReset = () => {
     const confirmReset = confirm(
-      "Are you sure you want to reset to default settings?"
+      "Are you sure you want to perform a soft reset? This will reset device settings to their default state."
     );
 
     if (!confirmReset) return;
-
     handleRequest("Reset");
+  };
+
+  const handleHardReset = () => {
+    const confirmReset = confirm(
+      "Are you sure you want to perform a hard reset? This will clear all device data and settings, including phases, patterns, and plans, and cannot be undone."
+    );
+
+    if (!confirmReset) return;
+    handleRequest("Reset!");
   };
 
   const handleAdminSupportToggle = async () => {
@@ -479,10 +497,17 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
               </button>
               <button
                 type="button"
-                onClick={handleResetToDefault}
+                onClick={handleSoftReset}
                 className="deviceConfigPage__reset-button"
               >
-                Reset to Default
+                Soft Reset
+              </button>
+              <button
+                type="button"
+                onClick={handleHardReset}
+                className="deviceConfigPage__reset-button"
+              >
+                Hard Reset
               </button>
             </div>
           </div>
