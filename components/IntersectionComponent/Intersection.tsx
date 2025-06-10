@@ -39,7 +39,7 @@ interface IntersectionDisplayProps {
 
 const Background = styled.div<{ $backgroundImage: string }>`
   position: relative;
-  width: 100%;
+  width: 550px;
   height: 50em;
   border: none;
   background-image: url(${({ $backgroundImage }) => $backgroundImage});
@@ -47,6 +47,7 @@ const Background = styled.div<{ $backgroundImage: string }>`
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  margin: 0 auto;
 
   @media screen and (max-width: 1300px) {
     height: 55em;
