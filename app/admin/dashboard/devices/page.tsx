@@ -234,7 +234,21 @@ const AdminDevices = () => {
                     </>
                   )}
                 </div>
-              
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    fontSize: "1.4rem",
+                    letterSpacing: "0.05rem",
+                    color: "#888",
+                  }}
+                >
+                  {device?.userDevice?.lastSeen
+                    ? `Last seen: ${dayjs(device.userDevice.lastSeen).format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )}`
+                    : "Last seen: Device has never connected"}
+                </div>
               </div>
 
               <div className="deviceConfigPage__menu">
