@@ -18,6 +18,7 @@ import { emitToastMessage } from "@/utils/toastFunc";
 import { CiMenuKebab } from "react-icons/ci";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { getUserDevice } from "@/store/devices/UserDeviceSlice";
+import dayjs from "dayjs";
 
 export interface DeviceStatus {
   id: string;
@@ -129,24 +130,40 @@ const UserDevices = () => {
                   {device?.deviceType} : {device.deviceId}
                 </p>
               </div>
-              <div className="devices-item__status">
-                {device?.status.toUpperCase()}
-                {status?.status ? (
-                  <div className="devices_on">
-                    <p>Online</p>
-                  </div>
-                ) : (
-                  <div className="devices_off">
-                    <p>
-                      Offline
-                      {status?.lastSeen
-                        ? ` (Last seen: ${new Date(
-                            status.lastSeen
-                          ).toLocaleString()})`
-                        : ""}
-                    </p>
-                  </div>
-                )}
+              <div>
+                <div
+                  className="devices-item__status"
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  {device?.status.toUpperCase()}
+                  {status?.status ? (
+                    <div className="devices_on">
+                      <p>Online</p>
+                    </div>
+                  ) : (
+                    <div className="devices_off">
+                      <p>Offline</p>
+                    </div>
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    fontSize: "1.4rem",
+                    letterSpacing: "0.05rem",
+                    color: "#888",
+                  }}
+                >
+                  {device?.lastSeen
+                    ? `Last seen: ${dayjs(device?.lastSeen).format(
+                        "YYYY-MM-DD HH:mm:ss"
+                      )}`
+                    : "Last seen: Device has never connected"}
+                </div>
               </div>
               <div className="deviceConfigPage__menu">
                 <CiMenuKebab

@@ -19,6 +19,7 @@ import { useOutsideClick } from "@/hooks/useOutsideClick";
 import { deviceTypes } from "@/utils/deviceTypes";
 import { CgProfile } from "react-icons/cg";
 import { getDeviceStatus } from "@/utils/misc";
+import dayjs from "dayjs";
 
 const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
@@ -29,6 +30,8 @@ const AdminDevices = () => {
   const statuses = useDeviceStatus();
   const pathname = usePathname();
   const router = useRouter();
+
+  console.log("AdminDevices Rendered", devices, statuses);
 
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
   const [hoveredDeviceId, setHoveredDeviceId] = useState<string | null>(null);
@@ -205,30 +208,35 @@ const AdminDevices = () => {
                   {device?.deviceType} : {device.deviceId}
                 </p>
               </div>
-              <div className="devices-item__status">
-                {device?.deviceStatus?.status === "purchased"
-                  ? device?.userDevice?.status.toUpperCase() ||
-                    "PURCHASED BUT NOT ACTIVATED"
-                  : "NOT PURCHASED"}
-                {device?.userDevice &&
-                device?.userDevice?.status !== "disabled" &&
-                status?.status ? (
-                  <div className="devices_on">
-                    <p>Online</p>
-                  </div>
-                ) : (
-                  <div className="devices_off">
-                    <p>
-                      Offline
-                      {status?.lastSeen
-                        ? ` (Last seen: ${new Date(
-                            status.lastSeen
-                          ).toLocaleString()})`
-                        : ""}
-                    </p>
-                  </div>
-                )}
+              <div>
+                <div
+                  className="devices-item__status"
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  {device?.deviceStatus?.status === "purchased"
+                    ? device?.userDevice?.status.toUpperCase() ||
+                      "PURCHASED BUT NOT ACTIVATED"
+                    : "NOT PURCHASED"}
+                  {device?.userDevice &&
+                  device?.userDevice?.status !== "disabled" &&
+                  status?.status ? (
+                    <div className="devices_on">
+                      <p>Online</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="devices_off">
+                        <p>Offline</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              
               </div>
+
               <div className="deviceConfigPage__menu">
                 <CiMenuKebab
                   size={24}
