@@ -6,7 +6,9 @@ import { useAppSelector } from "@/hooks/reduxHook";
 
 const positions = {
   N: {
-    1400: { top: 22.5, left: 36.8 },
+    1600: { top: 22.5, left: 37.5 },
+    1500: { top: 22.5, left: 36.6 },
+    1400: { top: 22.5, left: 35.4 },
     1300: { top: 23, left: 35.4 },
     1200: { top: 22, left: 38 },
     1100: { top: 22.5, left: 36.3 },
@@ -20,7 +22,9 @@ const positions = {
     300: { top: 27, left: 35 },
   },
   E: {
-    1400: { top: 36, left: 70.5 },
+    1600: { top: 36, left: 69.8 },
+    1500: { top: 36, left: 70.5 },
+    1400: { top: 36, left: 73 },
     1300: { top: 36.4, left: 73.5 },
     1200: { top: 36.4, left: 69.5 },
     1100: { top: 36, left: 71.5 },
@@ -34,6 +38,8 @@ const positions = {
     300: { top: 39, left: 73.5 },
   },
   S: {
+    1600: { top: 74, left: 49.7 },
+    1500: { top: 74, left: 49.7 },
     1400: { top: 74, left: 49.7 },
     1300: { top: 74.5, left: 50.5 },
     1200: { top: 74.5, left: 50.5 },
@@ -48,7 +54,9 @@ const positions = {
     300: { top: 70, left: 50 },
   },
   W: {
-    1400: { top: 50.3, left: 25 },
+    1600: { top: 50.3, left: 26.5 },
+    1500: { top: 50.3, left: 25.2 },
+    1400: { top: 50.3, left: 22.5 },
     1300: { top: 50.8, left: 21.7 },
     1200: { top: 50.8, left: 27 },
     1100: { top: 50.4, left: 25 },
@@ -65,7 +73,12 @@ const positions = {
 
 const pedestrianPositions = {
   N: {
-    1400: { first: { top: 26, left: -18 }, second: { top: 26, left: 160 } },
+    1600: { first: { top: 25.5, left: -17 }, second: { top: 25.5, left: 150 } },
+    1500: { first: { top: 25.5, left: -17 }, second: { top: 25.5, left: 150 } },
+    1400: {
+      first: { top: 24.5, left: -17 },
+      second: { top: 24.5, left: 150 },
+    },
     1300: { first: { top: 23, left: -19 }, second: { top: 23, left: 159 } },
     1200: { first: { top: 23, left: -15 }, second: { top: 23, left: 130 } },
     1100: { first: { top: 22, left: -14 }, second: { top: 22, left: 130 } },
@@ -79,7 +92,9 @@ const pedestrianPositions = {
     300: { first: { top: 16, left: -9 }, second: { top: 16, left: 80 } },
   },
   E: {
-    1400: { first: { top: -20, left: -25 }, second: { top: 160, left: -25 } },
+    1600: { first: { top: -20, left: -25 }, second: { top: 145, left: -25 } },
+    1500: { first: { top: -20, left: -25 }, second: { top: 145, left: -25 } },
+    1400: { first: { top: -20, left: -25 }, second: { top: 145, left: -25 } },
     1300: { first: { top: -22, left: -25 }, second: { top: 158, left: -25 } },
     1200: { first: { top: -22, left: -25 }, second: { top: 125, left: -25 } },
     1100: { first: { top: -18, left: -25 }, second: { top: 125, left: -25 } },
@@ -93,9 +108,17 @@ const pedestrianPositions = {
     300: { first: { top: -12, left: -14 }, second: { top: 80, left: -14 } },
   },
   S: {
+    1600: {
+      first: { top: -27, left: -90 },
+      second: { top: -27, left: 75 },
+    },
+    1500: {
+      first: { top: -27, left: -90 },
+      second: { top: -27, left: 75 },
+    },
     1400: {
-      first: { top: -27, left: -98 },
-      second: { top: -27, left: 80 },
+      first: { top: -27, left: -91 },
+      second: { top: -27, left: 76 },
     },
     1300: { first: { top: -25, left: -99 }, second: { top: -25, left: 78 } },
     1200: { first: { top: -25, left: -80 }, second: { top: -25, left: 60 } },
@@ -110,7 +133,9 @@ const pedestrianPositions = {
     300: { first: { top: -15, left: -52 }, second: { top: -15, left: 40 } },
   },
   W: {
-    1400: { first: { top: 78, left: 29 }, second: { top: -97, left: 29 } },
+    1600: { first: { top: 74, left: 29 }, second: { top: -92, left: 29 } },
+    1500: { first: { top: 74, left: 29 }, second: { top: -92, left: 29 } },
+    1400: { first: { top: 73, left: 29 }, second: { top: -92, left: 29 } },
     1300: { first: { top: 75, left: 25 }, second: { top: -100, left: 25 } },
     1200: { first: { top: 62, left: 25 }, second: { top: -82, left: 25 } },
     1100: { first: { top: 62, left: 25 }, second: { top: -80, left: 25 } },
@@ -126,7 +151,7 @@ const pedestrianPositions = {
 };
 
 const breakpoints = [
-  1400, 1300, 1200, 1100, 1000, 900, 800, 700, 600, 500, 400, 300,
+  1600, 1500, 1400, 1300, 1200, 1100, 1000, 900, 800, 700, 600, 500, 400, 300,
 ];
 
 const getResponsiveValue = <T,>(
