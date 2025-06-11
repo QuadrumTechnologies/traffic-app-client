@@ -297,7 +297,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
         </button>
         <button
           onClick={handleUploadAllPlan}
-          disabled={isLoading || !plans?.length}
+          disabled={isLoading || !plans || plans.length === 0}
         >
           Upload All Plans
         </button>

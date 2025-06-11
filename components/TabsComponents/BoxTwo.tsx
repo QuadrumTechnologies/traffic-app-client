@@ -1283,7 +1283,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         <button
           className="phases__deleteAll"
           onClick={handleDeleteAllPatterns}
-          disabled={!phases || phases.length === 0}
+          disabled={!patterns || patterns.length === 0}
         >
           Delete All Patterns
         </button>
