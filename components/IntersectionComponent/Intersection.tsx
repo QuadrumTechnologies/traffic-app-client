@@ -59,11 +59,11 @@ const Background = styled.div<{ $backgroundImage: string }>`
     width: 450px;
   }
   @media screen and (max-width: 400px) {
-    width: 350px;
+    width: 330px;
   }
-  // @media screen and (max-width: 300px) {
-  //   width: 100%;
-  // }
+  @media screen and (max-width: 300px) {
+    width: 100%;
+  }
 `;
 
 const ModalBackdrop = styled.div`
