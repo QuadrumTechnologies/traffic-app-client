@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useAppSelector, useAppDispatch } from "@/hooks/reduxHook";
@@ -48,10 +50,9 @@ interface Pattern {
   amberDurationGreenToRed: number;
 }
 
-const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
-  const email = GetItemFromLocalStorage("user").email;
+const BoxTwo: React.FC<BoxTwoProps> = () => {
+  const email = GetItemFromLocalStorage("user")?.email;
   const params = useParams<{ deviceId: string }>();
-
   const dispatch = useAppDispatch();
   const { phases, patterns, configuredPhases } = useAppSelector(
     (state) => state.userDevice
@@ -61,15 +62,11 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     useState<boolean>(false);
   const [showOtherPatternConfig, setShowOtherPatternConfig] =
     useState<boolean>(false);
-
   const [showPatternPhases, setShowPatternPhases] = useState<number | null>(
     null
   );
   const [selectedPattern, setSelectedPattern] = useState<any>(null);
-
   const [updatedPatternPhases, setUpdatedPatternPhases] = useState<any[]>([]);
-
-  // Logic for adding new pattern
   const [selectedPhases, setSelectedPhases] = useState<any[]>([]);
   const [phaseToConfigure, setPhaseToConfigure] =
     useState<PhaseConfigType | null>(null);
@@ -80,7 +77,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
   const [activeOrLastAddedPhase, setActiveOrLastAddedPhase] =
     useState<string>("");
   const [activeAction, setActiveAction] = useState<string | null>(null);
-
   const [activePreviewPhase, setActivePreviewPhase] = useState(null);
   const [searchedResult, setSearchedResult] = useState<any[]>([]);
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
@@ -102,10 +98,11 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     if (showPatternPhases === index) {
       setShowPatternPhases(null);
       setSelectedPattern(null);
+      setUpdatedPatternPhases([]);
     } else {
       setShowPatternPhases(index);
       setSelectedPattern(pattern);
-      setUpdatedPatternPhases(pattern?.phases);
+      setUpdatedPatternPhases(pattern?.configuredPhases || []);
     }
   };
 
@@ -113,18 +110,23 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     const confirmResult = confirm(
       `Are you sure you want to delete "${patternName}" pattern?`
     );
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("Pattern deletion cancelled", "info");
+      return;
+    }
     const pattern = patterns?.find((p) => p.name === patternName);
 
     try {
-      const { data } = await HttpRequest.delete(
+      const response = await HttpRequest.delete(
         `/patterns/${pattern?.name}/${email}`
       );
-      emitToastMessage(data.message, "success");
       dispatch(getUserPattern(email));
       setUpdatedPatternPhases([]);
+      setShowPatternPhases(null);
+      setSelectedPattern(null);
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -132,11 +134,13 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     const confirmResult = confirm(
       "Are you sure you want to delete ALL patterns? This action cannot be undone."
     );
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("All patterns deletion cancelled", "info");
+      return;
+    }
 
     try {
-      const { data } = await HttpRequest.delete(`/patterns/all/${email}`);
-      emitToastMessage(data.message, "success");
+      const response = await HttpRequest.delete(`/patterns/all/${email}`);
       dispatch(getUserPattern(email));
       setUpdatedPatternPhases([]);
       setSelectedPattern(null);
@@ -148,10 +152,8 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
       setActivePreviewPhase(null);
       stopPlayPhases();
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to delete all patterns",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -165,31 +167,28 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
 
   const duplicatePatternHandler = async (patternName: string) => {
     const newPatternName = prompt("Enter a name for the pattern");
-    if (!newPatternName)
-      return emitToastMessage("A new pattern name is required", "error");
+    if (!newPatternName) {
+      emitToastMessage("A new pattern name is required", "error");
+      return;
+    }
 
     const pattern = patterns.find((pattern) => pattern.name === patternName);
     try {
-      const { data } = await HttpRequest.post("/patterns", {
+      const response = await HttpRequest.post("/patterns", {
         ...pattern,
         email,
         name: newPatternName,
         deviceId: params.deviceId,
       });
-
-      emitToastMessage("Pattern duplicated successfully", "success");
       dispatch(getUserPattern(email));
       dispatch(clearPhaseConfig());
       handleCancel();
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "An error occurred",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
-  // Logic for creating a new pattern
   const handlePhaseSelect = (phase: any) => {
     setSelectedPhases((prev) => {
       const newPhaseInstance = { ...phase, id: `${phase.name}-${Date.now()}` };
@@ -210,7 +209,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     setSelectedPhases(reorderedPhases);
   };
 
-  // For previewing phase
   const handlePhasePreview = (phaseSignalString: string, phaseName: string) => {
     dispatch(setSignalString(phaseSignalString));
     dispatch(setSignalState());
@@ -219,15 +217,9 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     setActiveOrLastAddedPhase(phaseName);
   };
 
-  useEffect(() => {
-    dispatch(getUserPattern(email));
-    dispatch(setIsIntersectionConfigurable(false));
-  }, [dispatch]);
-
   const handleCreatedPatternPhasePreview = (phase: any) => {
     if (activePreviewPhase === phase.id) {
       dispatch(closePreviewCreatedPatternPhase());
-
       setActivePreviewPhase(null);
     } else {
       if (activePreviewPhase) {
@@ -243,7 +235,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     }
   };
 
-  // Logic for configuring a pattern
   const handleConfigurePhase = (phaseId: string, phaseName: string) => {
     if (
       phaseToConfigure &&
@@ -257,7 +248,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     }
 
     const foundPhase = phases.find((p) => p.name === phaseName);
-
     if (foundPhase) {
       setPhaseToConfigure({ ...foundPhase, id: phaseId });
       phaseFormik.resetForm({
@@ -285,7 +275,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     const foundPhase = pattern.configuredPhases.find(
       (p: any) => p.id === phase.id
     );
-
     if (foundPhase) {
       setAlreadyCreatedPatternPhaseToConfigure({ ...foundPhase });
     }
@@ -318,7 +307,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     },
   });
 
-  // Formik for handling duration modification for phases in the available pattern
   const createdPhaseFormik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -330,7 +318,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         .min(1, "Minimum duration is 1"),
     }),
     onSubmit: async (values) => {
-      // Send a put request to the bacnkend
       const configuredPhases = updatedPatternPhases.map((phase) => {
         if (phase.id === alreadyCreatedPatternPhaseToConfigure?.id) {
           return { ...phase, duration: values.duration };
@@ -339,16 +326,18 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
       });
 
       try {
-        const { data } = await HttpRequest.put(
+        const response = await HttpRequest.put(
           `/patterns/${selectedPattern.name}/${email}/`,
           {
             configuredPhases: configuredPhases,
           }
         );
-        emitToastMessage(data.message, "success");
-        setAlreadyCreatedPatternPhaseToConfigure(null);
         dispatch(getUserPattern(email));
-      } catch (error: any) {}
+        setAlreadyCreatedPatternPhaseToConfigure(null);
+      } catch (error: any) {
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
+      }
     },
   });
 
@@ -421,7 +410,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     }),
     onSubmit: async (values) => {
       try {
-        const { data } = await HttpRequest.post("/patterns", {
+        const response = await HttpRequest.post("/patterns", {
           name: values.patternName,
           email: email,
           blinkEnabled: values.blinkEnabled,
@@ -433,20 +422,15 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
           configuredPhases: configuredPhases,
           deviceId: params.deviceId,
         });
-
-        emitToastMessage(data.message, "success");
         dispatch(getUserPattern(email));
         handleCancel();
       } catch (error: any) {
-        emitToastMessage(
-          error?.response?.data?.message || "An error occurred",
-          "error"
-        );
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       }
     },
   });
 
-  // Preview Pattern logic
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [activePatternIndex, setActivePatternIndex] = useState<number | null>(
@@ -469,7 +453,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         index: number,
         initialTimeLeft: number | null = null
       ) => {
-        // Clear any previous interval
         if (intervalId) {
           clearInterval(intervalId);
           setIntervalId(null);
@@ -504,7 +487,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 clearInterval(blinkInterval);
                 resolve();
               }
-            }, 500); // 500ms for each blink state
+            }, 500);
           });
         };
 
@@ -532,6 +515,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
 
             if (timeLeft <= 0) {
               clearInterval(id);
+              setIntervalId(null);
               setRemainingTime(null);
 
               if (pattern.blinkEnabled && pattern.blinkTimeGreenToRed > 0) {
@@ -564,8 +548,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
   };
 
   const stopPlayPhases = () => {
-    console.log("Pause Playing");
-
     if (isPlaying && intervalId) {
       clearInterval(intervalId);
       setIsPlaying(false);
@@ -638,44 +620,44 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
     activePatternIndex === index;
 
   useEffect(() => {
+    if (email) {
+      dispatch(getUserPattern(email));
+    }
+    dispatch(setIsIntersectionConfigurable(false));
+
     return () => {
       if (intervalId) {
-        clearTimeout(intervalId);
+        clearInterval(intervalId);
       }
+      stopPlayPhases();
     };
-  }, [intervalId]);
+  }, [dispatch, email, intervalId]);
 
   return (
     <div className="boxTwo">
-      {/* Logic to add a new pattern */}
       <div className="patterns__buttonBox">
         {!showAllAvailablePhases && !showOtherPatternConfig && (
           <button
-            style={{
-              width: "fit-content",
-            }}
+            style={{ width: "fit-content" }}
             onClick={() => setShowAllAvailablePhases(true)}
           >
             Add a new Pattern
           </button>
         )}
         {showOtherPatternConfig && (
-          <>
-            <button
-              onClick={() => {
-                setShowOtherPatternConfig(false);
-                setShowAllAvailablePhases(true);
-              }}
-            >
-              Back
-            </button>
-          </>
+          <button
+            onClick={() => {
+              setShowOtherPatternConfig(false);
+              setShowAllAvailablePhases(true);
+            }}
+          >
+            Back
+          </button>
         )}
         {(showAllAvailablePhases || showOtherPatternConfig) && (
           <button onClick={handleCancel}>Cancel</button>
         )}
       </div>
-      {/* Show avalible phases for configuration */}
       {showAllAvailablePhases && (
         <>
           <h2 className="patterns__availablePhases--header">
@@ -687,7 +669,7 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 className={`patterns__availablePhases--item ${
                   activeOrLastAddedPhase === phase.name && "active"
                 }`}
-                key={index}
+                key={phase._id || index}
               >
                 <h3>{phase.name}</h3>
                 <div>
@@ -702,7 +684,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
             ))}
           </ul>
 
-          {/* Selected Phases Section */}
           {selectedPhases?.length > 0 && (
             <div className="patterns__selected">
               <p>
@@ -720,92 +701,90 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                           draggableId={phaseInstance.id}
                           index={index}
                         >
-                          {(provided) => {
-                            return (
-                              <li
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                <div className="row">
-                                  <h3>{phaseInstance.name}</h3>
-                                  <form onSubmit={phaseFormik.handleSubmit}>
-                                    {phaseToConfigure &&
-                                    phaseToConfigure.id === phaseInstance.id ? (
-                                      <>
-                                        <input
-                                          id="duration"
-                                          name="duration"
-                                          type="number"
-                                          value={phaseFormik.values.duration}
-                                          onChange={phaseFormik.handleChange}
-                                          onBlur={phaseFormik.handleBlur}
-                                          autoFocus
-                                        />
-                                        <button
-                                          type="submit"
-                                          disabled={
-                                            !phaseFormik.values.duration ||
-                                            !phaseFormik.dirty
+                          {(provided) => (
+                            <li
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <div className="row">
+                                <h3>{phaseInstance.name}</h3>
+                                <form onSubmit={phaseFormik.handleSubmit}>
+                                  {phaseToConfigure &&
+                                  phaseToConfigure.id === phaseInstance.id ? (
+                                    <>
+                                      <input
+                                        id="duration"
+                                        name="duration"
+                                        type="number"
+                                        value={phaseFormik.values.duration}
+                                        onChange={phaseFormik.handleChange}
+                                        onBlur={phaseFormik.handleBlur}
+                                        autoFocus
+                                      />
+                                      <button
+                                        type="submit"
+                                        disabled={
+                                          !phaseFormik.values.duration ||
+                                          !phaseFormik.dirty
+                                        }
+                                      >
+                                        Save
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPhaseToConfigure(null);
+                                          phaseFormik.resetForm();
+                                        }}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {configuredPhases.find(
+                                        (p) => p.id === phaseInstance.id
+                                      )?.duration ? (
+                                        <span>
+                                          Dur:{" "}
+                                          {
+                                            configuredPhases.find(
+                                              (p) => p.id === phaseInstance.id
+                                            )?.duration
                                           }
-                                        >
-                                          Save
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setPhaseToConfigure(null);
-                                            phaseFormik.resetForm();
-                                          }}
-                                        >
-                                          Cancel
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <>
+                                        </span>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleConfigurePhase(
+                                            phaseInstance.id,
+                                            phaseInstance.name
+                                          )
+                                        }
+                                      >
                                         {configuredPhases.find(
                                           (p) => p.id === phaseInstance.id
-                                        )?.duration ? (
-                                          <span>
-                                            Dur:{" "}
-                                            {
-                                              configuredPhases.find(
-                                                (p) => p.id === phaseInstance.id
-                                              )?.duration
-                                            }
-                                          </span>
-                                        ) : null}
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleConfigurePhase(
-                                              phaseInstance.id,
-                                              phaseInstance.name
-                                            )
-                                          }
-                                        >
-                                          {configuredPhases.find(
-                                            (p) => p.id === phaseInstance.id
-                                          )?.duration
-                                            ? "Edit Duration"
-                                            : "Set Duration"}
-                                        </button>
-                                      </>
-                                    )}
-                                  </form>
-                                  <button
-                                    onClick={() =>
-                                      handleRemovePhaseFromSelectedPhases(
-                                        phaseInstance.id
-                                      )
-                                    }
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </li>
-                            );
-                          }}
+                                        )?.duration
+                                          ? "Edit Duration"
+                                          : "Set Duration"}
+                                      </button>
+                                    </>
+                                  )}
+                                </form>
+                                <button
+                                  onClick={() =>
+                                    handleRemovePhaseFromSelectedPhases(
+                                      phaseInstance.id
+                                    )
+                                  }
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </li>
+                          )}
                         </Draggable>
                       ))}
                       {provided.placeholder}
@@ -830,7 +809,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         </>
       )}
 
-      {/* Show blink and amber configuration and create pattern*/}
       {showOtherPatternConfig && (
         <div>
           <form
@@ -849,7 +827,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 />
                 Enable Blink
               </label>
-
               {formik.values.blinkEnabled && (
                 <>
                   <div className="patterns__selected--item">
@@ -878,7 +855,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                         <div>{formik.errors.blinkTimeRedToGreen}</div>
                       )}
                   </div>
-
                   <div className="patterns__selected--item">
                     <label htmlFor="blinkTimeGreenToRed">
                       Blink Time (Green to Red)
@@ -907,7 +883,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 </>
               )}
             </div>
-
             <div className="patterns__selected--title">
               <label>
                 <input
@@ -919,7 +894,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 />
                 Enable Amber
               </label>
-
               {formik.values.amberEnabled && (
                 <>
                   <div className="patterns__selected--item">
@@ -947,7 +921,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                         <div>{formik.errors.amberDurationRedToGreen}</div>
                       )}
                   </div>
-
                   <div className="patterns__selected--item">
                     <label htmlFor="amberDurationGreenToRed">
                       Amber Duration (Green to Red)
@@ -976,7 +949,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                 </>
               )}
             </div>
-
             <div className="patterns__selected--ctn">
               <input
                 type="text"
@@ -1002,13 +974,11 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
         </div>
       )}
 
-      {/* Available Patterns */}
       {patterns?.length > 0 ? (
         <>
           <div className="patterns__header">
             <h2>Available Pattern(s)</h2>
             <form
-              action=""
               onSubmit={(e: any) => {
                 e.preventDefault();
                 searchPatternByName(inputtedPatternName);
@@ -1037,7 +1007,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                       : pattern?.name}
                   </h3>
                   <div>
-                    {/* Show More (Ellipsis) Button */}
                     {showPatternPhases === index ? (
                       <button
                         className={
@@ -1063,10 +1032,8 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                         <MdExpandMore />
                       </button>
                     )}
-
-                    {/* Previous Button */}
                     <button
-                      disabled={!isCurrentPatternPlaying(index)} // Only enable if this pattern is active
+                      disabled={!isCurrentPatternPlaying(index)}
                       className={
                         activeAction === "prev" && showPatternPhases === index
                           ? "active"
@@ -1079,8 +1046,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                     >
                       <FaArrowLeft />
                     </button>
-
-                    {/* Play/Pause Button */}
                     <button
                       className={
                         activeAction === "play" && showPatternPhases === index
@@ -1098,10 +1063,8 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                         <FaPlay />
                       )}
                     </button>
-
-                    {/* Next Button */}
                     <button
-                      disabled={!isCurrentPatternPlaying(index)} // Only enable if this pattern is active
+                      disabled={!isCurrentPatternPlaying(index)}
                       className={
                         activeAction === "next" && showPatternPhases === index
                           ? "active"
@@ -1114,8 +1077,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                     >
                       <FaArrowRight />
                     </button>
-
-                    {/* Duplicate Button */}
                     <button
                       className={
                         activeAction === "duplicate" &&
@@ -1130,8 +1091,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                     >
                       <IoDuplicate />
                     </button>
-
-                    {/* Delete Button */}
                     <button
                       className={
                         activeAction === "delete" && showPatternPhases === index
@@ -1149,7 +1108,6 @@ const BoxTwo: React.FC<BoxTwoProps> = ({}) => {
                   </div>
                 </div>
 
-                {/* Show phases under the selected pattern */}
                 {showPatternPhases === index && (
                   <DragDropContext onDragEnd={handleDragEndEdit}>
                     <Droppable droppableId="pattern-phases">

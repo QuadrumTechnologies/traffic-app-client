@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import InformationInput from "../UI/Input/InformationInput";
@@ -8,99 +10,80 @@ import { getWebSocket } from "@/app/dashboard/websocket";
 import { emitToastMessage } from "@/utils/toastFunc";
 
 interface ResetModalProps {
-  course: any | null;
+  device: any | null;
   closeModal: () => void;
 }
 
 interface FormValuesType {
-  courseCode: string;
+  deviceId: string;
 }
 
-const ResetModal: React.FC<ResetModalProps> = ({ course, closeModal }) => {
+const ResetModal: React.FC<ResetModalProps> = ({ device, closeModal }) => {
   const [isResetting, setIsResetting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const formik = useFormik<FormValuesType>({
     initialValues: {
-      courseCode: "",
+      deviceId: "",
     },
     validationSchema: Yup.object().shape({
-      courseCode: Yup.string()
-        .required("Course Code is required")
-        .matches(/^[A-Z]{3} \d{3}$/, "Course must be in the format 'XXX 000'"),
+      deviceId: Yup.string()
+        .required("Device ID is required")
+        .matches(
+          /^[A-Za-z0-9-]+$/,
+          "Device ID must contain only letters, numbers, or hyphens"
+        ),
     }),
     validateOnChange: true,
     validateOnBlur: true,
     validateOnMount: true,
-    onSubmit: async (values, actions) => {
+    onSubmit: async (values) => {
+      if (values.deviceId !== device?.deviceId) {
+        emitToastMessage("Device ID does not match.", "error");
+        return;
+      }
       try {
         setIsResetting(true);
         const response = await HttpRequest.delete(
-          `/courses/${values?.courseCode}/reset`
+          `/devices/${values.deviceId}/reset`
         );
-
         const socket = getWebSocket();
-
-        // Function to emit delete_fingerprint event
-        const emitDeleteFingerprintEvent = (matricNos: string[]) => {
-          socket?.send(
-            JSON.stringify({
-              event: "delete_fingerprint",
-              payload: {
-                students: matricNos,
-                courseCode: response.data.courseCode,
-              },
-            })
-          );
-        };
-
-        const students = response.data.students;
-        const studentsMatricNos = students.map((stud: any) => stud.matricNo);
-        emitDeleteFingerprintEvent(studentsMatricNos);
-
-        // Reset formData and close modal after enroll_feedback
+        socket.send(
+          JSON.stringify({
+            event: "device_reset_request",
+            payload: {
+              DeviceID: values.deviceId,
+            },
+          })
+        );
         formik.resetForm();
+        closeModal();
       } catch (error) {
-        setErrorMessage("Failed to reset course. Try again!");
-        emitToastMessage("Failed to reset course. Try again!", "error");
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       } finally {
         setIsResetting(false);
-        setTimeout(() => {
-          setErrorMessage("");
-          setSuccessMessage("");
-        }, 7000);
       }
     },
   });
+
   useEffect(() => {
     const socket = getWebSocket();
-
-    const handleAttendanceFeedback = (event: MessageEvent) => {
+    const handleFeedback = (event: MessageEvent) => {
       const feedback = JSON.parse(event.data);
-      if (feedback.event !== "delete_fingerprint_feedback") return;
-
+      if (feedback.event !== "device_reset_feedback") return;
       if (feedback.payload.error) {
-        setSuccessMessage("");
-        setErrorMessage(feedback.payload.message);
         emitToastMessage(feedback.payload.message, "error");
       } else {
-        formik.resetForm();
-        setSuccessMessage(feedback.payload.message);
         emitToastMessage(feedback.payload.message, "success");
+        formik.resetForm();
+        closeModal();
       }
-      setTimeout(() => {
-        setErrorMessage("");
-        setSuccessMessage("");
-      }, 7000);
     };
-
-    socket?.addEventListener("message", handleAttendanceFeedback);
-
+    socket?.addEventListener("message", handleFeedback);
     return () => {
-      socket?.removeEventListener("message", handleAttendanceFeedback);
+      socket?.removeEventListener("message", handleFeedback);
     };
-  }, []);
+  }, [formik, closeModal]);
 
   return (
     <div className="resetOverlay">
@@ -108,27 +91,24 @@ const ResetModal: React.FC<ResetModalProps> = ({ course, closeModal }) => {
         <MdOutlineClose className="resetOverlay-icon" />
       </div>
       <h2 className="resetOverlay-text">
-        This action will remove all enrolled students and attendance records for
-        the course with the code {course?.courseCode}.
+        This action will reset all configurations for the device with ID{" "}
+        {device?.deviceId}.
       </h2>
       <h3 className="resetOverlay-text_2">
-        If you wish to continue, enter <span>{course?.courseCode}</span> in the
+        If you wish to continue, enter <span>{device?.deviceId}</span> in the
         field below
       </h3>
       <form onSubmit={formik.handleSubmit}>
         <InformationInput
-          id="courseCode"
+          id="deviceId"
           type="text"
-          name="courseCode"
-          value={formik.values.courseCode}
+          name="deviceId"
+          value={formik.values.deviceId}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          inputErrorMessage={formik.errors.courseCode}
-          placeholder="e.g ABC 123"
+          inputErrorMessage={formik.errors.deviceId}
+          placeholder="Enter Device ID"
         />
-        {errorMessage && <p className="signup-error">{errorMessage}</p>}
-        {successMessage && <p className="signup-success">{successMessage}</p>}
-
         <button
           className="resetOverlay-button"
           type="submit"
@@ -140,4 +120,5 @@ const ResetModal: React.FC<ResetModalProps> = ({ course, closeModal }) => {
     </div>
   );
 };
+
 export default ResetModal;

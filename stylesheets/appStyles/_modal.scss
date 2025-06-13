@@ -6,29 +6,21 @@
   height: 100%;
   background-color: rgba($color-black, 0.5);
   backdrop-filter: blur(0.5rem);
+  z-index: 998; // just below the overlay
 }
 
 .overlay {
   position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 999;
-  top: 15%;
-  left: 30%;
-
-  @media screen and (max-width: 1400px) {
-    left: 22%;
-  }
-  @media screen and (max-width: 1000px) {
-    left: 20%;
-  }
-  @media screen and (max-width: 700px) {
-    left: 15%;
-  }
-  @media screen and (max-width: 700px) {
-    left: 10%;
-  }
-  @media screen and (max-width: 500px) {
-    left: 8%;
-  }
+  max-width: 100%;
+  width: 600px;
+  padding: 4rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba($color-black, 0.2);
 }
 
 .details-backdrop {
@@ -39,23 +31,19 @@
   height: 100%;
   background-color: rgba($color-black, 0.7);
   backdrop-filter: blur(0.9rem);
+  z-index: 99;
 }
 
 .details-overlay {
   position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 100;
-  top: 10%;
-  left: 20%;
-  @media screen and (max-width: 1400px) {
-    left: 15%;
-  }
-  @media screen and (max-width: 1000px) {
-    left: 12%;
-  }
-  @media screen and (max-width: 700px) {
-    left: 5%;
-  }
-  @media screen and (max-width: 500px) {
-    left: 2.5%;
-  }
+  max-width: 90%;
+  width: 600px;
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba($color-black, 0.3);
 }

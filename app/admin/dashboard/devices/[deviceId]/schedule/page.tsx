@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import Select, { ActionMeta, SingleValue } from "react-select";
@@ -31,7 +32,7 @@ interface ScheduleData {
 }
 
 interface ScheduleTemplateProps {
-  params: any;
+  params: { deviceId: string };
 }
 
 interface Pattern {
@@ -55,28 +56,21 @@ interface Pattern {
 
 function generateTimeSegments(): string[] {
   const segments: string[] = [];
-
   segments.push("00:00");
-
   let hour = 0;
   let minute = 31;
-
   while (hour < 24) {
     const time = `${hour.toString().padStart(2, "0")}:${minute
       .toString()
       .padStart(2, "0")}`;
     segments.push(time);
-
     minute += 30;
-
     if (minute >= 60) {
       minute -= 60;
       hour += 1;
     }
-
     if (hour >= 24) break;
   }
-
   return segments;
 }
 
@@ -97,21 +91,22 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const { patterns, phases, plans, configuredPhases, currentDeviceInfoData } =
     useAppSelector((state) => state.userDevice);
   const dispatch = useAppDispatch();
-  const email = GetItemFromLocalStorage("user")?.email;
+  const email = GetItemFromLocalStorage("user")?.email || "";
+  const socket = getWebSocket();
 
   const patternsOptions: Option[] =
     patterns
       ?.map((pattern) => ({
-        value: pattern?.name?.toLowerCase(),
-        label: pattern?.name,
+        value: pattern.name.toLowerCase(),
+        label: pattern.name,
       }))
       .sort((a, b) => a.label.localeCompare(b.label)) || [];
 
   const plansOptions: Option[] =
     plans
       ?.map((plan) => ({
-        value: plan?.name,
-        label: plan?.name,
+        value: plan.name.toLowerCase(),
+        label: plan.name,
       }))
       .sort((a, b) => a.label.localeCompare(b.label)) || [];
 
@@ -119,7 +114,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const [dayType, setDayType] = useState<Option>(dayTypeOptions[0]);
   const [customDate, setCustomDate] = useState<Date | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Option | null>(null);
-
   const [rightBoxContent, setRightBoxContent] = useState<
     "patterns" | "upload" | "download" | null
   >(null);
@@ -127,7 +121,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     useState<boolean>(false);
   const [isDownloadingSchedule, setIsDownloadingSchedule] =
     useState<boolean>(false);
-
   const [selectedPattern, setSelectedPattern] = useState<any>(null);
   const [updatedPatternPhases, setUpdatedPatternPhases] = useState<any[]>([]);
   const [newPatternName, setNewPatternName] = useState<string>("");
@@ -144,25 +137,20 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
   const handleSelectPattern = (patternName: string) => {
     dispatch(clearPhaseConfig());
-
-    // If no patternName or invalid pattern, reset everything to null
     if (!patternName) {
       setSelectedPattern(null);
       setRightBoxContent(null);
       setUpdatedPatternPhases([]);
-      dispatch(clearPhaseConfig());
       return;
     }
-
     const pattern = patterns?.find(
-      (pattern) => pattern?.name.toLowerCase() === patternName
+      (p) => p.name.toLowerCase() === patternName.toLowerCase()
     );
-
     if (pattern) {
       setSelectedPattern(pattern);
       setRightBoxContent("patterns");
       setUpdatedPatternPhases(pattern.configuredPhases);
-      pattern?.configuredPhases.forEach((phase: any) => {
+      pattern.configuredPhases.forEach((phase: any) => {
         dispatch(addOrUpdatePhaseConfig(phase));
       });
     }
@@ -173,7 +161,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       ...updatedPatternPhases,
       {
         id: phase._id,
-        name: phase?.name,
+        name: phase.name,
         signalString: phase.data,
         duration: "",
       },
@@ -183,7 +171,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
   const handleRemovePhaseFromSelectedPhases = (phaseId: string) => {
     setUpdatedPatternPhases((prev) =>
-      prev.filter((phase) => phase?.id !== phaseId)
+      prev.filter((phase) => phase.id !== phaseId)
     );
     dispatch(removePhaseConfig(phaseId));
   };
@@ -191,7 +179,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const handleConfigurePhase = (phaseId: string, phaseName: string) => {
     if (
       phaseToConfigure &&
-      phaseToConfigure?.id !== phaseId &&
+      phaseToConfigure.id !== phaseId &&
       phaseFormik.dirty
     ) {
       const confirmSwitch = window.confirm(
@@ -199,15 +187,13 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       if (!confirmSwitch) return;
     }
-
-    const foundPhase = phases?.find((p) => p?.name === phaseName);
-
+    const foundPhase = phases?.find((p) => p.name === phaseName);
     if (foundPhase) {
       setPhaseToConfigure({ ...foundPhase, id: phaseId });
       phaseFormik.resetForm({
         values: {
           duration:
-            configuredPhases?.find((p) => p?.id === foundPhase?.id)?.duration ||
+            configuredPhases?.find((p) => p.id === foundPhase.id)?.duration ||
             "",
         },
       });
@@ -218,7 +204,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases?.find((p) => p?.id === phaseToConfigure?.id)
+        ? configuredPhases?.find((p) => p.id === phaseToConfigure.id)
             ?.duration || ""
         : "",
     },
@@ -230,8 +216,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     onSubmit: async (values) => {
       if (phaseToConfigure) {
         const configToSave = {
-          id: phaseToConfigure?.id,
-          name: phaseToConfigure?.name,
+          id: phaseToConfigure.id,
+          name: phaseToConfigure.name,
           signalString: phaseToConfigure.data,
           duration: values.duration,
         };
@@ -243,28 +229,26 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
   const saveNewPattern = async () => {
     if (!newPatternName) {
-      alert("Please provide a new pattern name.");
+      emitToastMessage("Please provide a new pattern name.", "error");
       return;
     }
-
     try {
-      const { data } = await HttpRequest.post("/patterns", {
-        email: email,
+      await HttpRequest.post("/patterns", {
+        email,
         ...selectedPattern,
         configuredPhases: configuredPhases,
         name: newPatternName,
         deviceId: params.deviceId,
       });
-
-      emitToastMessage(data.message, "success");
-      dispatch(getUserPattern());
+      dispatch(getUserPattern(email));
       dispatch(clearPhaseConfig());
       setSelectedPattern(null);
+      setNewPatternName("");
+      setUpdatedPatternPhases([]);
+      setRightBoxContent(null);
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "An error occurred",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -275,23 +259,22 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const handleChange = useCallback(
     (time: string, selectedValue: string) => {
       const selectedOption =
-        patternsOptions?.find((option) => option.value === selectedValue) ||
+        patternsOptions.find((option) => option.value === selectedValue) ||
         null;
       setSchedule((prevSchedule) => ({
         ...prevSchedule,
         [time]: selectedOption,
       }));
+      handleSelectPattern(selectedValue);
     },
-    [patterns, patternsOptions]
+    [patternsOptions]
   );
 
   const handlePlanChange = (newValue: SingleValue<Option>) => {
-    console.log("handlePlanChange called with:", newValue);
-
     if (newValue) {
       setSelectedPlan(newValue);
       const plan = plans?.find(
-        (plan) => plan?.name.toLowerCase() === newValue.value.toLowerCase()
+        (p) => p.name.toLowerCase() === newValue.value.toLowerCase()
       );
       if (plan) {
         const fullSchedule: ScheduleData = {};
@@ -306,29 +289,18 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         setSchedule(fullSchedule);
         setCustomDate(plan.customDate ? new Date(plan.customDate) : null);
       } else {
-        // Fallback to current schedule if plan not found
         setSchedule((prev) => ({ ...prev }));
         setCustomDate(dayType.value === "custom" ? customDate : null);
       }
     }
   };
 
-  useEffect(() => {
-    console.log("dayType changed:", dayType);
-    handlePlanChange({
-      value: dayType?.value.toUpperCase(),
-      label: dayType?.label.toUpperCase(),
-    });
-  }, [dayType, plans]);
-
   const handleDayTypeChange = (newValue: SingleValue<Option>) => {
     if (newValue) {
       setDayType(newValue);
-
       const plan = plans?.find(
-        (plan) => plan?.name.toLowerCase() === newValue.value.toLowerCase()
+        (p) => p.name.toLowerCase() === newValue.value.toLowerCase()
       );
-
       if (plan) {
         handlePlanChange({
           value: newValue.value.toUpperCase(),
@@ -343,11 +315,9 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         timeSegments.forEach((time) => {
           emptySchedule[time] = null;
         });
-
         setSchedule(emptySchedule);
         setSelectedPlan(null);
       }
-
       if (newValue.value !== "custom") {
         setCustomDate(null);
       }
@@ -363,16 +333,19 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       return;
     }
     const existingPlan = plans?.find(
-      (plan) => plan.name.toUpperCase() === dayType.value.toUpperCase()
+      (p) => p.name.toUpperCase() === dayType.value.toUpperCase()
     );
     if (existingPlan) {
       const userResponse = confirm(
-        `A plan for ${existingPlan?.name} exist, do you want to override?`
+        `A plan for ${existingPlan.name} exists, do you want to override?`
       );
-      if (!userResponse) return;
+      if (!userResponse) {
+        emitToastMessage("Schedule save cancelled", "info");
+        return;
+      }
     }
     try {
-      const { data } = await HttpRequest.post("/plans", {
+      await HttpRequest.post("/plans", {
         id: Date.now().toString(),
         deviceId: params.deviceId,
         email,
@@ -380,61 +353,27 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         dayType: dayType.value,
         name: dayType.value.toUpperCase(),
         customDate:
-          dayType.value === "custom" ? customDate || undefined : undefined,
+          dayType.value === "custom" ? customDate?.toISOString() : undefined,
       });
-      emitToastMessage(data.message, "success");
-
-      const savedPlan = {
-        name: data.plan?.name || dayType.value.toUpperCase(),
-        schedule: data.plan?.schedule || schedule,
-        customDate:
-          data.plan?.customDate ||
-          (dayType.value === "custom" ? customDate : null),
-      };
-
-      // Update selectedPlan and schedule
-      const updatedPlan = {
+      dispatch(getUserPlan(email));
+      setSelectedPlan({
         value: dayType.value.toUpperCase(),
         label: dayType.label.toUpperCase(),
-      };
-      setSelectedPlan(updatedPlan);
-
-      // Update schedule state with saved plan's schedule
+      });
       const fullSchedule: ScheduleData = {};
       timeSegments.forEach((time) => {
-        fullSchedule[time] = savedPlan.schedule[time]
-          ? {
-              value: savedPlan.schedule[time].value,
-              label: savedPlan.schedule[time].label,
-            }
+        fullSchedule[time] = schedule[time]
+          ? { value: schedule[time]!.value, label: schedule[time]!.label }
           : null;
       });
-
       setSchedule(fullSchedule);
-
-      setCustomDate(
-        savedPlan.customDate ? new Date(savedPlan.customDate) : null
-      );
-
-      // Refresh plans in the background
-      await dispatch(getUserPlan());
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "An error occurred",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
-  useEffect(() => {
-    dispatch(getUserPlan());
-    if (!currentDeviceInfoData?.JunctionId) {
-      dispatch(getUserDeviceInfoData(params.deviceId));
-    }
-  }, []);
-
   const handleUpload = async () => {
-    // Ensure the datyTpe and existing plan are selected and the same
     if (dayType.value.toLowerCase() !== selectedPlan?.value.toLowerCase()) {
       emitToastMessage(
         "Day type and selected existing plan must be the same",
@@ -442,51 +381,42 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       return;
     }
-    //
-
-    try {
-      const plan = plans?.find(
-        (plan) => plan.name.toLowerCase() === dayType.value.toLowerCase()
-      );
-
-      // Compare the pattern of plan.schedule and schedule to see if there's any difference, if there is difference, trigger an error for the user to save the schedule
-      if (plan) {
-        for (const timeSegmentKey of Object.keys(schedule)) {
-          const timeSegment = schedule[timeSegmentKey];
-          if (plan.schedule[timeSegmentKey]?.label !== timeSegment?.label) {
-            emitToastMessage(
-              `There's a difference between the current schedule and the selected plan at ${timeSegmentKey}, save the schedule before uploading.`,
-              "error"
-            );
-            return;
-          }
-        }
-      }
-
-      if (!plan || !plan.schedule) {
-        console.error("Invalid plan or missing schedule");
-        return emitToastMessage(
-          "This is a new plan, you have to save it prior to uploading",
+    const plan = plans?.find(
+      (p) => p.name.toLowerCase() === dayType.value.toLowerCase()
+    );
+    if (!plan) {
+      emitToastMessage("Please save the schedule before uploading", "error");
+      return;
+    }
+    for (const timeSegmentKey of Object.keys(schedule)) {
+      if (
+        plan.schedule[timeSegmentKey]?.label !== schedule[timeSegmentKey]?.label
+      ) {
+        emitToastMessage(
+          `Schedule mismatch at ${timeSegmentKey}. Save the schedule before uploading.`,
           "error"
         );
+        return;
       }
-      // Final confirmation before uploading
-      const confirmResult = confirm(
-        `Are you sure you want to upload "${dayType.value}" plan?`
-      );
-      if (!confirmResult) return emitToastMessage("Upload cancelled", "error");
-      const socket = getWebSocket();
+    }
+    const confirmResult = confirm(
+      `Are you sure you want to upload "${dayType.label}" plan?`
+    );
+    if (!confirmResult) {
+      emitToastMessage("Upload cancelled", "info");
+      return;
+    }
+    try {
       setIsUploadingSchedule(true);
       const sendMessage = (
-        startSegmentKey: any,
-        endSegmentKey: any,
-        timeSegment: any
+        startSegmentKey: string,
+        endSegmentKey: string,
+        timeSegment: Option
       ) => {
         const [startHours, startMinutes] = startSegmentKey
           .split(":")
           .map(Number);
         const [endHours, endMinutes] = endSegmentKey.split(":").map(Number);
-
         const startTime = `${String(startHours).padStart(2, "0")}:${String(
           startMinutes
         ).padStart(2, "0")}`;
@@ -495,8 +425,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         ).padStart(2, "0")}`;
         endTime = endTime === "00:00" ? "23:59" : endTime;
         const timeSegmentString = `@${startTime}-${endTime}`;
-
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
           socket.send(
             JSON.stringify({
               event: "upload_request",
@@ -504,7 +433,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                 DeviceID: params.deviceId,
                 email,
                 plan: plan.name,
-                ...(plan?.name.toUpperCase() === "CUSTOM" && {
+                ...(plan.name.toUpperCase() === "CUSTOM" && {
                   customDateUnix: customDate?.getTime(),
                 }),
                 timeSegmentString,
@@ -512,64 +441,52 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
               },
             })
           );
-
-          socket.onmessage = (event: MessageEvent) => {
+          const handleFeedback = (event: MessageEvent) => {
             const feedback = JSON.parse(event.data);
             if (feedback.event === "ping_received") return;
+            if (feedback.event !== "upload_feedback") return;
             if (
-              feedback?.event === "upload_feedback" &&
-              feedback.payload.Plan === plan.name &&
-              feedback.payload.Period === startSegmentKey
+              feedback.payload?.Plan === plan.name &&
+              feedback.payload?.Period === startSegmentKey
             ) {
-              console.log("Upload success for time segment:", feedback);
-              resolve();
+              if (feedback.payload?.error) {
+                reject(new Error(feedback.payload.message));
+              } else {
+                resolve();
+              }
+              socket.removeEventListener("message", handleFeedback);
             }
           };
+          socket.addEventListener("message", handleFeedback);
         });
       };
-
-      // Track the last valid time segment value and its key
-      let lastValidSegment = null;
-      let lastStartKey = null;
-
+      let lastValidSegment: Option | null = null;
+      let lastStartKey: string | null = null;
       for (const timeSegmentKey of Object.keys(plan.schedule)) {
-        let timeSegment = plan.schedule[timeSegmentKey];
-
-        // If the current segment has a value, send the previous accumulated range and start a new one
-        if (timeSegment && timeSegment.value && timeSegment.value !== "None") {
-          // If there's a previous segment without values, send it
-          if (lastValidSegment && lastStartKey !== timeSegmentKey) {
-            console.log(
-              `Uploading accumulated time segment from ${lastStartKey} to ${timeSegmentKey}`
-            );
+        const timeSegment = plan.schedule[timeSegmentKey];
+        if (timeSegment?.value && timeSegment.value !== "None") {
+          if (
+            lastValidSegment &&
+            lastStartKey &&
+            lastStartKey !== timeSegmentKey
+          ) {
             await sendMessage(lastStartKey, timeSegmentKey, lastValidSegment);
           }
-
-          // Update the last valid segment and its start key
           lastValidSegment = timeSegment;
           lastStartKey = timeSegmentKey;
         }
       }
-
-      // If there's any remaining segment that needs to be uploaded till the end of the day
       if (lastValidSegment && lastStartKey) {
-        await sendMessage(lastStartKey, "23:59", lastValidSegment);
+        await sendMessage(lastStartKey, "00:00", lastValidSegment);
       }
-      emitToastMessage(
-        `All segments uploaded for plan: ${plan.name}`,
-        "success"
-      );
       setIsUploadingSchedule(false);
-      console.log(`All segments uploaded for plan: ${plan.name}`);
     } catch (error: any) {
-      emitToastMessage(error?.response?.data?.message, "error");
+      setIsUploadingSchedule(false);
+      emitToastMessage(error.message || "Failed to upload schedule", "error");
     }
   };
 
-  const socket = getWebSocket();
-
   const handleDownload = async () => {
-    getWebSocket();
     setIsDownloadingSchedule(true);
     const sendMessage = () => {
       socket.send(
@@ -585,27 +502,22 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
     } else {
-      socket.onopen = () => {
-        sendMessage();
-      };
+      socket.onopen = () => sendMessage();
     }
   };
 
   function generatePatternName(config: Pattern["config"]): string {
     const parts: string[] = [];
-
     if (config.blinkEnabled) {
       parts.push(
         `Blink${config.blinkTimeGreenToRed}${config.blinkTimeRedToGreen}`
       );
     }
-
     if (config.amberEnabled) {
       parts.push(
         `Amber${config.amberDurationGreenToRed}${config.amberDurationRedToGreen}`
       );
     }
-
     if (config.configuredPhases[0]?.duration >= 20) {
       parts.push("Peak");
     } else if (config.configuredPhases[0]?.duration >= 10) {
@@ -613,7 +525,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     } else {
       parts.push("OffPeak");
     }
-
     return parts.join("_") || "Default";
   }
 
@@ -627,24 +538,18 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       blinkTimeRedToGreen: 1,
       configuredPhases: [] as Pattern["config"]["configuredPhases"],
     };
-
     let currentPhaseIndex = 0;
-
-    patternArray.forEach((line, index) => {
+    patternArray.forEach((line) => {
       const pattern = line.trim();
       const match = pattern.match(/\*(\d+|X)\*(.*?)#/);
       if (!match) return;
-
       const [_, duration, signalString] = match;
-
       if (duration === "X") {
         config.blinkEnabled = true;
       }
-
       if (duration !== "X" && signalString.includes("A")) {
         config.amberEnabled = true;
       }
-
       if (
         duration !== "X" &&
         !signalString.includes("X") &&
@@ -660,78 +565,84 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         currentPhaseIndex++;
       }
     });
-
-    const pattern: Pattern = {
-      name: generatePatternName(config),
-      config,
-    };
-
-    return pattern;
+    return { name: generatePatternName(config), config };
   }
 
   useEffect(() => {
-    const socket = getWebSocket();
+    dispatch(getUserPlan(email));
+    if (!currentDeviceInfoData?.JunctionId) {
+      dispatch(getUserDeviceInfoData(params.deviceId));
+    }
+    handlePlanChange({
+      value: dayType.value.toUpperCase(),
+      label: dayType.label.toUpperCase(),
+    });
+  }, [dispatch, email, params.deviceId, dayType]);
 
+  useEffect(() => {
     const handleDataFeedback = async (event: MessageEvent) => {
       const feedback = JSON.parse(event.data);
-      if (feedback.event !== "download_feedback") return;
-      setIsDownloadingSchedule(false);
-
-      if (feedback.payload.error) {
-        emitToastMessage("Could not download schedule from device", "error");
-      } else {
-        emitToastMessage(
-          "Schedule downloaded from hardware successfully! Saving...",
-          "success"
-        );
-        const numToDay: { [key: number]: string } = {
-          0: "MONDAY",
-          1: "TUESDAY",
-          2: "WEDNESDAY",
-          3: "THURSDAY",
-          4: "FRIDAY",
-          5: "SATURDAY",
-          6: "SUNDAY",
-        };
-        const Plan = numToDay[feedback?.payload?.Plan];
-
-        const patterns = feedback?.payload.Program.map((prog: any) => ({
-          period: prog.period.slice(0, 5),
-          ...parsePattern(prog.pattern),
-        }));
-
-        const newPlan = {
-          id: Date.now().toString(),
-          email,
-          data: patterns,
-          dayType: Plan.toLowerCase(),
-          name: Plan.toUpperCase(),
-        };
-        console.log("New Plans", newPlan);
-
-        try {
-          const {
-            data: { message, plan },
-          } = await HttpRequest.put("/plans", newPlan);
-          dispatch(getUserPlan());
-          dispatch(getUserPattern());
-          handlePlanChange({
-            value: plan.dayType.toUpperCase(),
-            label: plan.dayType.toUpperCase(),
-          });
-          emitToastMessage(message, "success");
-        } catch (error) {
-          emitToastMessage("Could not save downloaded schedule", "error");
+      if (feedback.event === "ping_received") return;
+      if (feedback.payload?.DeviceID !== params.deviceId) return;
+      if (feedback.event === "download_feedback") {
+        setIsDownloadingSchedule(false);
+        if (feedback.payload?.error) {
+          emitToastMessage(
+            feedback.payload.message ||
+              "Could not download schedule from device",
+            "error"
+          );
+        } else {
+          const numToDay: { [key: number]: string } = {
+            0: "MONDAY",
+            1: "TUESDAY",
+            2: "WEDNESDAY",
+            3: "THURSDAY",
+            4: "FRIDAY",
+            5: "SATURDAY",
+            6: "SUNDAY",
+          };
+          const planName =
+            numToDay[feedback.payload.Plan] || dayType.value.toUpperCase();
+          const patterns = feedback.payload.Program.map((prog: any) => ({
+            period: prog.period.slice(0, 5),
+            ...parsePattern(prog.pattern),
+          }));
+          const newPlan = {
+            id: Date.now().toString(),
+            email,
+            data: patterns,
+            dayType: planName.toLowerCase(),
+            name: planName.toUpperCase(),
+            schedule: patterns.reduce((acc: ScheduleData, p: any) => {
+              acc[p.period] = { value: p.name.toLowerCase(), label: p.name };
+              return acc;
+            }, {}),
+          };
+          try {
+            await HttpRequest.put("/plans", newPlan);
+            dispatch(getUserPlan(email));
+            dispatch(getUserPattern(email));
+            handlePlanChange({ value: planName, label: planName });
+          } catch (error: any) {
+            const message = error?.response?.data?.message || `Request failed`;
+            emitToastMessage(message, "error");
+          }
         }
+      } else if (feedback.event === "error") {
+        setIsUploadingSchedule(false);
+        setIsDownloadingSchedule(false);
+        emitToastMessage(
+          feedback.payload?.message || "An error occurred",
+          "error"
+        );
       }
     };
-
-    socket?.addEventListener("message", handleDataFeedback);
-
+    socket.addEventListener("message", handleDataFeedback);
     return () => {
-      socket?.removeEventListener("message", handleDataFeedback);
+      socket.removeEventListener("message", handleDataFeedback);
     };
-  }, []);
+  }, [dispatch, email, params.deviceId, dayType, socket]);
 
   return (
     <div className="schedule__container">
@@ -769,22 +680,17 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
               </tr>
             </thead>
             <tbody>
-              {timeSegments?.map((time) => (
+              {timeSegments.map((time) => (
                 <tr key={time}>
                   <td className="schedule__time">{time}</td>
                   <td className="schedule__select">
                     <Select
                       onChange={(
-                        newValue: SingleValue<string | Option>,
-                        actionMeta: ActionMeta<string | Option>
+                        newValue: SingleValue<Option>,
+                        actionMeta: ActionMeta<Option>
                       ) => {
-                        const selectedValue =
-                          typeof newValue === "string"
-                            ? newValue
-                            : newValue?.value || "";
-
+                        const selectedValue = newValue?.value || "";
                         handleChange(time, selectedValue);
-                        handleSelectPattern(selectedValue);
                       }}
                       options={patternsOptions}
                       value={schedule[time] || null}
@@ -800,124 +706,119 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           </table>
         </div>
         <div className="schedule__actions">
-          <button onClick={saveSchedule} className="schedule__button">
+          <button
+            onClick={saveSchedule}
+            className="schedule__button"
+            disabled={isUploadingSchedule || isDownloadingSchedule}
+          >
             Save Schedule
           </button>
-
           <button
-            onClick={() => {
-              handleUpload();
-            }}
+            onClick={handleUpload}
             className="schedule__button"
+            disabled={isUploadingSchedule || isDownloadingSchedule}
           >
-            {isUploadingSchedule ? "Uploading" : " Upload to Device"}
+            {isUploadingSchedule ? "Uploading..." : "Upload to Device"}
           </button>
           <button
-            onClick={() => {
-              handleDownload();
-            }}
+            onClick={handleDownload}
             className="schedule__button"
+            disabled={isUploadingSchedule || isDownloadingSchedule}
           >
-            {isDownloadingSchedule ? "Downloading" : "Download from Device"}
+            {isDownloadingSchedule ? "Downloading..." : "Download from Device"}
           </button>
         </div>
       </div>
-
-      {/* Right div to show selected pattern and phases */}
       <div className="schedule__right">
         {rightBoxContent === "patterns" && (
           <>
             <div className="patterns__selected">
               <h3>Phases in "{selectedPattern?.name}"</h3>
-
               <DragDropContext onDragEnd={handleDragEndEdit}>
                 <Droppable droppableId="selected-phases">
                   {(provided) => (
                     <ul {...provided.droppableProps} ref={provided.innerRef}>
-                      {updatedPatternPhases?.map((phaseInstance, index) => (
+                      {updatedPatternPhases.map((phaseInstance, index) => (
                         <Draggable
-                          key={phaseInstance?.id}
-                          draggableId={`${phaseInstance?.id}`}
+                          key={phaseInstance.id}
+                          draggableId={`${phaseInstance.id}`}
                           index={index}
                         >
-                          {(provided) => {
-                            return (
-                              <li
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                <div className="row">
-                                  <h3>{phaseInstance?.name}</h3>
-                                  <form onSubmit={phaseFormik.handleSubmit}>
-                                    {phaseToConfigure &&
-                                    phaseToConfigure?.id ===
-                                      phaseInstance?.id ? (
-                                      <>
-                                        <input
-                                          id="duration"
-                                          name="duration"
-                                          type="number"
-                                          value={phaseFormik.values.duration}
-                                          onChange={phaseFormik.handleChange}
-                                          onBlur={phaseFormik.handleBlur}
-                                        />
-                                        <button
-                                          type="submit"
-                                          disabled={
-                                            !phaseFormik.values.duration ||
-                                            !phaseFormik.dirty
+                          {(provided) => (
+                            <li
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
+                              <div className="row">
+                                <h3>{phaseInstance.name}</h3>
+                                <form onSubmit={phaseFormik.handleSubmit}>
+                                  {phaseToConfigure &&
+                                  phaseToConfigure.id === phaseInstance.id ? (
+                                    <>
+                                      <input
+                                        id="duration"
+                                        name="duration"
+                                        type="number"
+                                        value={phaseFormik.values.duration}
+                                        onChange={phaseFormik.handleChange}
+                                        onBlur={phaseFormik.handleBlur}
+                                        autoFocus
+                                      />
+                                      <button
+                                        type="submit"
+                                        disabled={
+                                          !phaseFormik.values.duration ||
+                                          !phaseFormik.dirty
+                                        }
+                                      >
+                                        Save
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {configuredPhases?.find(
+                                        (p) => p.id === phaseInstance.id
+                                      )?.duration ? (
+                                        <span>
+                                          Dur:{" "}
+                                          {
+                                            configuredPhases.find(
+                                              (p) => p.id === phaseInstance.id
+                                            )?.duration
                                           }
-                                        >
-                                          Save
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <>
+                                        </span>
+                                      ) : null}
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleConfigurePhase(
+                                            phaseInstance.id,
+                                            phaseInstance.name
+                                          )
+                                        }
+                                      >
                                         {configuredPhases?.find(
-                                          (p) => p?.id === phaseInstance?.id
-                                        )?.duration ? (
-                                          <span>
-                                            Dur:{" "}
-                                            {
-                                              configuredPhases?.find(
-                                                (p) =>
-                                                  p?.id === phaseInstance?.id
-                                              )?.duration
-                                            }
-                                          </span>
-                                        ) : null}
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleConfigurePhase(
-                                              phaseInstance?.id,
-                                              phaseInstance?.name
-                                            )
-                                          }
-                                        >
-                                          {configuredPhases?.find(
-                                            (p) => p?.id === phaseInstance?.id
-                                          )?.duration
-                                            ? "Edit Duration"
-                                            : "Set Duration"}
-                                        </button>
-                                      </>
-                                    )}
-                                  </form>
-                                  <button
-                                    onClick={() =>
-                                      handleRemovePhaseFromSelectedPhases(
-                                        phaseInstance?.id
-                                      )
-                                    }
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </li>
-                            );
-                          }}
+                                          (p) => p.id === phaseInstance.id
+                                        )?.duration
+                                          ? "Edit Duration"
+                                          : "Set Duration"}
+                                      </button>
+                                    </>
+                                  )}
+                                </form>
+                                <button
+                                  onClick={() =>
+                                    handleRemovePhaseFromSelectedPhases(
+                                      phaseInstance.id
+                                    )
+                                  }
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </li>
+                          )}
                         </Draggable>
                       ))}
                       {provided.placeholder}
@@ -941,8 +842,11 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
               </h2>
               <ul className="patterns__availablePhases">
                 {phases?.map((phase: any, index: any) => (
-                  <li className={`patterns__availablePhases--item`} key={index}>
-                    <h3>{phase?.name}</h3>
+                  <li
+                    className="patterns__availablePhases--item"
+                    key={phase._id || index}
+                  >
+                    <h3>{phase.name}</h3>
                     <div>
                       <button onClick={() => handleAvailablePhaseSelect(phase)}>
                         Add

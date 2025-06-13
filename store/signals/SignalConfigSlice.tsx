@@ -1,4 +1,5 @@
 import { Signal } from "@/components/IntersectionComponent/Intersection";
+import { emitToastMessage } from "@/utils/toastFunc";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface SignalState {
@@ -111,10 +112,7 @@ const signalConfigSlice = createSlice({
       const { direction, signalType, color } = action.payload;
       state.landingPageSignals = state.landingPageSignals.map((signal) =>
         signal.direction === direction
-          ? {
-              ...signal,
-              [signalType]: color,
-            }
+          ? { ...signal, [signalType]: color }
           : signal
       );
     },
@@ -123,6 +121,15 @@ const signalConfigSlice = createSlice({
       action: PayloadAction<"red" | "yellow" | "green">
     ) {
       state.countDownColor = action.payload;
+    },
+    handleManualControlFeedback(
+      state,
+      action: PayloadAction<{ event: string; message: string }>
+    ) {
+      emitToastMessage(
+        action.payload.message,
+        action.payload.event === "error" ? "error" : "success"
+      );
     },
   },
 });
@@ -141,5 +148,6 @@ export const {
   setLandingPageSignals,
   setLandingPageInitialSignals,
   updateCountDownColor,
+  handleManualControlFeedback,
 } = signalConfigSlice.actions;
 export default signalConfigSlice.reducer;

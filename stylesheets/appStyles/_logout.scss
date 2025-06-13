@@ -2,43 +2,34 @@
   backdrop-filter: blur(0.9rem);
   background-color: rgba($color-white, 1);
   text-align: center;
-  padding: 8rem 10rem;
-  width: 55vw;
-
-  @media screen and (max-width: 1200px) {
-    width: 60vw;
-  }
-  @media screen and (max-width: 700px) {
-    width: 70vw;
-  }
-  @media screen and (max-width: 500px) {
-    width: 85vw;
-  }
+  margin: 0 auto;
+  border-radius: 0.75rem;
 
   &-text {
-    font-size: 2.5rem;
-    text-align: center;
+    font-size: 1.25rem;
     color: $color-yellow;
+    margin-bottom: 1.5rem;
   }
 
   &-buttons {
-    margin-top: 4rem;
+    margin-top: 1.5rem;
     display: flex;
     justify-content: space-between;
+    gap: 1rem;
 
     & button {
-      flex-basis: 43%;
-      padding: 2rem 0;
+      flex: 1;
+      padding: 0.75rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
       cursor: pointer;
-      font-size: 2rem;
-      letter-spacing: 0.1rem;
-      font-weight: bold;
-      box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.5);
-      transition: all 0.3s;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 5px rgba($color-yellow, 0.3);
 
       &:hover {
-        transform: translateY(2px);
-        box-shadow: 0 0.1rem 0.1rem 0.1rem rgba($color-yellow, 0.2);
+        transform: translateY(1px);
+        box-shadow: 0 2px 3px rgba($color-yellow, 0.2);
       }
     }
 
@@ -46,9 +37,10 @@
       background-color: $color-yellow;
       color: $color-white;
     }
+
     &__button2 {
-      background-color: rgba($color-white, 0.8);
-      border: 0.2rem solid $color-yellow;
+      background-color: rgba($color-white, 0.9);
+      border: 2px solid $color-yellow;
       color: $color-yellow;
     }
   }

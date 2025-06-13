@@ -29,7 +29,6 @@ instance.interceptors.request.use(
       token = userToken;
     }
 
-    // Set Authorization header
     config.headers = {
       ...config.headers,
       Authorization: token ? `Bearer ${token}` : undefined,

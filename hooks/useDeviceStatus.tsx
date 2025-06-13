@@ -1,13 +1,13 @@
 import { getWebSocket } from "@/app/dashboard/websocket";
-import { updateDeviceAvailability } from "@/store/devices/UserDeviceSlice";
+import {
+  updateDeviceAvailability,
+  handleWsFeedback,
+} from "@/store/devices/UserDeviceSlice";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "./reduxHook";
+import { handleManualControlFeedback } from "@/store/signals/SignalConfigSlice";
 
-interface DeviceStatus {
-  id: string;
-  status: boolean;
-}
 interface DeviceStatus {
   id: string;
   status: boolean;
@@ -37,7 +37,11 @@ export const useDeviceStatus = () => {
           return [...prevStatuses, { id, status, lastSeen }];
         }
       });
-      dispatch(updateDeviceAvailability({ DeviceID: id, status }));
+      dispatch(updateDeviceAvailability({ DeviceID: id, Status: status }));
+      emitToastMessage(
+        `Device ${id} is ${status ? "online" : "offline"}.`,
+        "info"
+      );
     };
 
     const handleWebSocketMessage = (event: MessageEvent) => {
@@ -54,7 +58,7 @@ export const useDeviceStatus = () => {
         timeoutMap[deviceId] = setTimeout(() => {
           updateDeviceStatus(deviceId, false, new Date().toISOString());
           dispatch(
-            updateDeviceAvailability({ DeviceID: deviceId, status: false })
+            updateDeviceAvailability({ DeviceID: deviceId, Status: false })
           );
         }, 30000);
       } else if (
@@ -65,6 +69,28 @@ export const useDeviceStatus = () => {
           message.source.id,
           message.source.status,
           message.source.lastSeen
+        );
+      } else if (message.event === "error") {
+        dispatch(
+          handleWsFeedback({ event: "error", message: message.message })
+        );
+      } else if (message.event === "intersection_control_success") {
+        dispatch(
+          handleWsFeedback({
+            event: "success",
+            message: `Action ${message.action} set to ${message.value} successfully.`,
+          })
+        );
+      } else if (message.event === "upload_request_success") {
+        dispatch(
+          handleWsFeedback({ event: "success", message: message.message })
+        );
+      } else if (message.event === "manual_control_success") {
+        dispatch(
+          handleManualControlFeedback({
+            event: "success",
+            message: message.message,
+          })
         );
       }
     };

@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import InformationInput from "../UI/Input/InformationInput";
@@ -6,9 +8,9 @@ import { useState } from "react";
 import { MdOutlineClose } from "react-icons/md";
 import HttpRequest from "@/store/services/HttpRequest";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
-import { emitToastMessage } from "@/utils/toastFunc";
-import { getUserDevice } from "@/store/devices/UserDeviceSlice";
 import { useAppDispatch } from "@/hooks/reduxHook";
+import { getUserDevice } from "@/store/devices/UserDeviceSlice";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface AddDeviceModalProps {
   closeModal: () => void;
@@ -27,11 +29,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
     isFetchingDeviceToBeAddedDetails,
     setIsFetchingDeviceToBeAddedDetails,
   ] = useState<boolean>(false);
-
-  const [isAddingDevice, setisAddingDevice] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
+  const [isAddingDevice, setIsAddingDevice] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string>("With ID");
 
   const user = GetItemFromLocalStorage("user");
@@ -40,21 +38,20 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
     if (!deviceId) return;
     setIsFetchingDeviceToBeAddedDetails(true);
     try {
-      const { data } = await HttpRequest.get(
+      const response = await HttpRequest.get(
         `/devices/${deviceId}/${user.email}`
       );
-      if (data.device === undefined) {
+      if (!response.data.device) {
+        setDeviceToBeAddedDetails(null);
         return;
       }
-      console.log("Confirm Id", data);
-      setDeviceToBeAddedDetails(data.device);
-      emitToastMessage(data.message, "success");
+      setDeviceToBeAddedDetails(response.data.device);
       setIsFetchingDeviceToBeAddedDetails(false);
     } catch (error: any) {
-      console.log("Confirm device Id eror", error);
       setDeviceToBeAddedDetails(null);
-      emitToastMessage(error?.response.data.message, "error");
       setIsFetchingDeviceToBeAddedDetails(false);
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -64,42 +61,35 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
       deviceId: "",
     },
     validationSchema: Yup.object().shape({
-      deviceId: Yup.string().required("Device Id is required"),
+      deviceId: Yup.string().required("Device ID is required"),
     }),
     validateOnChange: true,
     validateOnBlur: true,
     validateOnMount: true,
-    onSubmit: async (values, actions) => {
+    onSubmit: async (values) => {
       const { deviceId } = values;
       if (!deviceToBeAddedDetails?.type) {
-        emitToastMessage("Please enter Valid ID", "error");
+        emitToastMessage("Please enter a valid Device ID", "error");
         return;
       }
       try {
-        setisAddingDevice(true);
-        const { data } = await HttpRequest.post("/devices", {
+        setIsAddingDevice(true);
+        await HttpRequest.post("/devices", {
           deviceId,
           deviceType: deviceToBeAddedDetails?.type,
           email: user.email,
         });
-        console.log("User add device response", data);
-        setSuccessMessage(data.message);
-        emitToastMessage(data.message, "success");
-        closeModal();
         dispatch(getUserDevice(user.email));
-        setisAddingDevice(false);
+        closeModal();
       } catch (error: any) {
-        console.log("User add device error", error);
-        emitToastMessage(error?.response.data.message, "error");
-        setisAddingDevice(false);
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       } finally {
-        setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 7000);
+        setIsAddingDevice(false);
       }
     },
   });
+
   const addingDeviceOptions = ["With ID", "QR", "Buy"];
 
   const renderForm = () => {
@@ -115,35 +105,34 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
                   type="text"
                   name="deviceId"
                   value={formik.values.deviceId}
-                  onChange={(e) => {
-                    formik.handleChange(e);
-                  }}
+                  onChange={formik.handleChange}
                   onBlur={(e) => {
                     formik.handleBlur(e);
-                    // if (!formik.errors.deviceId && formik.touched.deviceId) getDeviceToBeAddedDetail(formik.values.deviceId);
+                    if (!formik.errors.deviceId && formik.touched.deviceId) {
+                      getDeviceToBeAddedDetail(formik.values.deviceId);
+                    }
                   }}
                   inputErrorMessage={formik.errors.deviceId}
                   invalid={!!formik.errors.deviceId && formik.touched.deviceId}
                   placeholder="Enter the Device ID"
                 />
-                {
-                  <button
-                    className="addDeviceOverlay__verify"
-                    disabled={
-                      !!formik.errors.deviceId && formik.touched.deviceId
-                    }
-                    type="button"
-                    onClick={() =>
-                      getDeviceToBeAddedDetail(formik.values.deviceId)
-                    }
-                  >
-                    {isFetchingDeviceToBeAddedDetails
-                      ? "Verifying..."
-                      : "Verify ID"}
-                  </button>
-                }
+                <button
+                  className="addDeviceOverlay__verify"
+                  disabled={
+                    isFetchingDeviceToBeAddedDetails ||
+                    !!formik.errors.deviceId ||
+                    !formik.touched.deviceId
+                  }
+                  type="button"
+                  onClick={() =>
+                    getDeviceToBeAddedDetail(formik.values.deviceId)
+                  }
+                >
+                  {isFetchingDeviceToBeAddedDetails
+                    ? "Verifying..."
+                    : "Verify ID"}
+                </button>
               </div>
-
               {deviceToBeAddedDetails?.type && (
                 <InformationInput
                   id="deviceType"
@@ -159,10 +148,6 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
                   placeholder={deviceToBeAddedDetails?.type}
                   readOnly
                 />
-              )}
-              {errorMessage && <p className="signup-error">{errorMessage}</p>}
-              {successMessage && (
-                <p className="signup-success">{successMessage}</p>
               )}
               <Button
                 type="submit"
@@ -218,4 +203,5 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
     </div>
   );
 };
+
 export default AddDeviceModal;

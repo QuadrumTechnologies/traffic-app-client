@@ -1,3 +1,5 @@
+"use client";
+
 import { ChangeEvent, useEffect, useState } from "react";
 import CheckBox from "../UI/CheckBox/CheckBox";
 import { useAppSelector, useAppDispatch } from "@/hooks/reduxHook";
@@ -18,7 +20,7 @@ import { getUserPhase } from "@/store/devices/UserDeviceSlice";
 
 interface BoxOneProps {}
 
-const BoxOne: React.FC<BoxOneProps> = ({}) => {
+const BoxOne: React.FC<BoxOneProps> = () => {
   const email = GetItemFromLocalStorage("user")?.email;
   const dispatch = useAppDispatch();
   const [checked, setChecked] = useState<number>(1);
@@ -38,62 +40,66 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
   };
   const phasesToShow = showSearchedResult ? searchedResult : phases;
 
-  // Function to handle selecting a phase to update Intersection UI
   const handlePhasePreview = (phaseName: string, signalString: string) => {
     setActiveOrLastAddedPhase(phaseName);
     dispatch(setSignalString(signalString));
     dispatch(setSignalState());
   };
 
-  // Function to delete a single phase
   const handleDeletePhase = async (phaseName: string) => {
     const confirmResult = confirm(
       `Are you sure you want to delete "${phaseName}" phase?`
     );
-
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("Phase deletion cancelled", "info");
+      return;
+    }
     const phase = phases?.find((p) => p.name === phaseName);
     const phaseId = phase?._id;
 
     try {
-      const { data } = await HttpRequest.delete(`/phases/${phaseId}/${email}`);
-      emitToastMessage(data.message, "success");
+      const response = await HttpRequest.delete(`/phases/${phaseId}/${email}`);
       dispatch(getUserPhase(email));
       setActiveOrLastAddedPhase(phaseName);
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
-  // Function to delete all phases
   const handleDeleteAllPhases = async () => {
     const confirmResult = confirm(
       "Are you sure you want to delete ALL phases? This action cannot be undone."
     );
-
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("All phases deletion cancelled", "info");
+      return;
+    }
 
     try {
-      const { data } = await HttpRequest.delete(`/phases/all/${email}`);
-      emitToastMessage(data.message, "success");
+      const response = await HttpRequest.delete(`/phases/all/${email}`);
       dispatch(getUserPhase(email));
       setActiveOrLastAddedPhase("");
       setSearchedResult([]);
       setShowSearchedResult(false);
       setInputtedPhaseName("");
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to delete all phases",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
   useEffect(() => {
-    dispatch(getUserPhase(email));
+    if (email) {
+      dispatch(getUserPhase(email));
+    }
     dispatch(closePreviewCreatedPatternPhase());
     dispatch(setIsIntersectionConfigurable(true));
-  }, [dispatch]);
+
+    return () => {
+      dispatch(closePreviewCreatedPatternPhase());
+    };
+  }, [dispatch, email]);
 
   return (
     <div className="boxOne">
@@ -102,7 +108,6 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
           <div className="phases__header">
             <h2>Available Phase(s)</h2>
             <form
-              action=""
               onSubmit={(e: any) => {
                 e.preventDefault();
                 searchPhaseByName(inputtedPhaseName);
@@ -143,7 +148,7 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
                 className={`phases__item ${
                   activeOrLastAddedPhase === phase.name && "active"
                 }`}
-                key={index}
+                key={phase._id || index}
               >
                 <h3>{phase.name}</h3>
                 <div>
@@ -176,8 +181,10 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
         onChecked={async (e: ChangeEvent<HTMLInputElement>) => {
           if (!e.target.checked) {
             const password = prompt("Please enter your password to proceed");
-
-            if (!password) return;
+            if (!password) {
+              emitToastMessage("Password verification cancelled", "info");
+              return;
+            }
 
             const reason = `Device ${
               !checked ? "Enable Conflicts Check" : "Disable Conflicts Check"
@@ -190,20 +197,18 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
                 password,
               });
               dispatch(allowConflictConfig(true));
-              emitToastMessage("Conflict check is disabled", "success");
-              return setChecked(0);
+              setChecked(0);
             } catch (error: any) {
-              emitToastMessage(error?.response.data.message, "error");
-              return;
+              const message =
+                error?.response?.data?.message || `Request failed`;
+              emitToastMessage(message, "error");
             }
+          } else {
+            setChecked(1);
+            dispatch(setSignalStringToAllRed());
+            dispatch(setSignalState());
+            dispatch(allowConflictConfig(false));
           }
-
-          // If checkbox is checked, clear signal and reset state
-          setChecked(1);
-          dispatch(setSignalStringToAllRed());
-          dispatch(setSignalState());
-          dispatch(allowConflictConfig(false));
-          emitToastMessage("Signal configuration cleared", "success");
         }}
       />
       {!phases || phases?.length === 0 ? (
@@ -263,4 +268,5 @@ const BoxOne: React.FC<BoxOneProps> = ({}) => {
     </div>
   );
 };
+
 export default BoxOne;

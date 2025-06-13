@@ -18,8 +18,8 @@ const positions = {
     700: { top: 22, left: 39.5 },
     600: { top: 22, left: 39.8 },
     500: { top: 22, left: 39 },
-    400: { top: 22, left: 39.3 },
-    300: { top: 22, left: 39 },
+    400: { top: 22, left: 35.2 },
+    300: { top: 60, left: 5 },
   },
   E: {
     1600: { top: 36, left: 71 },
@@ -33,8 +33,8 @@ const positions = {
     800: { top: 36, left: 66 },
     700: { top: 36, left: 66 },
     600: { top: 36, left: 66 },
-    500: { top: 36, left: 66 },
-    400: { top: 36, left: 66 },
+    500: { top: 36, left: 67.6 },
+    400: { top: 36, left: 73 },
     300: { top: 36, left: 66 },
   },
   S: {
@@ -65,8 +65,8 @@ const positions = {
     800: { top: 50.4, left: 30.5 },
     700: { top: 50.4, left: 30.5 },
     600: { top: 50.4, left: 30.5 },
-    500: { top: 50.4, left: 30.5 },
-    400: { top: 50.4, left: 30.5 },
+    500: { top: 50.4, left: 29 },
+    400: { top: 50.4, left: 23 },
     300: { top: 50.4, left: 30.5 },
   },
 };
@@ -154,16 +154,19 @@ const breakpoints = [
   1600, 1500, 1400, 1300, 1200, 1100, 1000, 900, 800, 700, 600, 500, 400, 300,
 ];
 
-const getResponsiveValue = <T,>(
+const getResponsiveValue = (
   direction: "N" | "E" | "S" | "W",
-  values: Record<"N" | "E" | "S" | "W", Record<number, T>>,
+  values: any,
   screenWidth: number | undefined
-): T => {
+) => {
+  if (!screenWidth) {
+    return values[direction][600]; // Default to 600 for undefined screenWidth
+  }
   const closestBreakpoint =
     breakpoints.find(
-      (bp) => screenWidth && screenWidth >= bp - 99 && screenWidth <= bp + 99
-    ) || 1400;
-
+      (bp) => screenWidth >= bp - 100 && screenWidth <= bp + 100
+    ) || breakpoints[breakpoints.length - 1]; // Fallback to smallest breakpoint
+  console.log(`ScreenWidth: ${screenWidth}, Breakpoint: ${closestBreakpoint}`); // Debugging
   return values[direction][closestBreakpoint];
 };
 
@@ -182,12 +185,15 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
   } = useAppSelector((state) => state.signalConfig);
 
   const [screenWidth, setScreenWidth] = useState<number | undefined>(undefined);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setScreenWidth(window.innerWidth);
-      const handleResize = () => setScreenWidth(window.innerWidth);
+      const handleResize = () => {
+        setScreenWidth(window.innerWidth);
+        console.log(`Window resized to: ${window.innerWidth}`); // Debugging
+      };
       window.addEventListener("resize", handleResize);
-
       return () => window.removeEventListener("resize", handleResize);
     }
   }, []);

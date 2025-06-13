@@ -1,3 +1,5 @@
+"use client";
+
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import InformationInput from "../UI/Input/InformationInput";
@@ -8,7 +10,6 @@ import { deviceTypes } from "@/utils/deviceTypes";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import HttpRequest from "@/store/services/HttpRequest";
 import SelectField, { Option } from "../UI/SelectField/SelectField";
-import { emitToastMessage } from "@/utils/toastFunc";
 import { useAppDispatch } from "@/hooks/reduxHook";
 import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
 
@@ -28,12 +29,9 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
   closeModal,
 }) => {
   const dispatch = useAppDispatch();
-  const [isAddingDevice, setisAddingDevice] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [isAddingDevice, setIsAddingDevice] = useState(false);
 
   const adminUser = GetItemFromLocalStorage("adminUser");
-
   const device = deviceTypes.find(
     (dev) => dev.department === adminUser.department
   );
@@ -45,7 +43,7 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
 
   const formik = useFormik<FormValuesType>({
     initialValues: {
-      deviceType: `${device?.type}`,
+      deviceType: device?.type || "",
       deviceId: "",
       deviceStatus: null,
       ownerEmail: "",
@@ -61,18 +59,16 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
         })
         .nullable()
         .required("Please select a device status"),
-      ownerEmail: Yup.string().when("deviceStatus", {
-        is: (deviceStatus: Option | null) =>
-          deviceStatus?.value === "purchased",
+      ownerEmail: Yup.string().when("deviceStatus.value", {
+        is: "purchased",
         then: () =>
           Yup.string()
             .email("Invalid email")
             .required("Owner email is required when device is purchased"),
         otherwise: () => Yup.string().notRequired(),
       }),
-      purchasedDate: Yup.date().when("deviceStatus", {
-        is: (deviceStatus: Option | null) =>
-          deviceStatus?.value === "purchased",
+      purchasedDate: Yup.date().when("deviceStatus.value", {
+        is: "purchased",
         then: () =>
           Yup.date().required(
             "Purchase date is required when device is purchased"
@@ -83,33 +79,26 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
     validateOnChange: true,
     validateOnBlur: true,
     validateOnMount: true,
-    onSubmit: async (values, actions) => {
+    onSubmit: async (values) => {
       const { deviceType, deviceId, deviceStatus, ownerEmail, purchasedDate } =
         values;
       try {
-        setisAddingDevice(true);
-        const { data } = await HttpRequest.post("/admin/devices", {
+        setIsAddingDevice(true);
+        await HttpRequest.post("/admin/devices", {
           deviceId,
           deviceType,
           adminEmail: adminUser.email,
-          deviceStatus,
+          deviceStatus: deviceStatus?.value,
           ownerEmail,
           purchasedDate,
         });
-        setSuccessMessage(data.message);
-        emitToastMessage(data.message, "success");
-        closeModal();
         dispatch(getAdminDevice(device));
-        setisAddingDevice(false);
+        closeModal();
       } catch (error: any) {
-        console.log("Admin add device error", error);
-        emitToastMessage(error?.response.data.message, "error");
-        setisAddingDevice(false);
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       } finally {
-        setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 7000);
+        setIsAddingDevice(false);
       }
     },
   });
@@ -119,25 +108,23 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
       <div className="" onClick={closeModal}>
         <MdOutlineClose className="addDeviceOverlay-icon" />
       </div>
-
       <h2 className="addDeviceOverlay-text">Add Device</h2>
       <form onSubmit={formik.handleSubmit}>
         <InformationInput
           id="deviceType"
           type="text"
           name="deviceType"
-          value={device?.type}
+          value={formik.values.deviceType}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           inputErrorMessage={formik.errors.deviceType}
           invalid={!!formik.errors.deviceType && formik.touched.deviceType}
-          placeholder={device?.type}
+          placeholder="Device Type"
           readOnly
         />
-
         <InformationInput
           id="deviceId"
-          type="test"
+          type="text"
           name="deviceId"
           value={formik.values.deviceId}
           onChange={formik.handleChange}
@@ -146,7 +133,6 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
           invalid={!!formik.errors.deviceId && formik.touched.deviceId}
           placeholder="Enter the Device ID"
         />
-
         <div style={{ marginBottom: "2rem" }}>
           <SelectField
             label="Select Device Status"
@@ -155,8 +141,10 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
             options={options}
             placeholder="Has the device been purchased?"
           />
+          {formik.touched.deviceStatus && formik.errors.deviceStatus && (
+            <p className="signup-error">{formik.errors.deviceStatus}</p>
+          )}
         </div>
-
         {formik.values.deviceStatus?.value === "purchased" && (
           <div className="addDeviceOverlay__status">
             <InformationInput
@@ -186,9 +174,6 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
             />
           </div>
         )}
-        {errorMessage && <p className="signup-error">{errorMessage}</p>}
-        {successMessage && <p className="signup-success">{successMessage}</p>}
-
         <Button type="submit" disabled={isAddingDevice || !formik.isValid}>
           {isAddingDevice ? "Adding..." : "Add"}
         </Button>
@@ -196,4 +181,5 @@ const AdminAddDeviceModal: React.FC<AdminAddDeviceModalProps> = ({
     </div>
   );
 };
+
 export default AdminAddDeviceModal;

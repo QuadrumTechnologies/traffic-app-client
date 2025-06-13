@@ -8,9 +8,7 @@ type LogoutModalProps = {
 const LogoutModal: React.FC<LogoutModalProps> = ({ onClose }) => {
   const url = usePathname();
 
-  const pathToNavigateTo = url.includes("/level_adviser")
-    ? "/level_adviser"
-    : "/";
+  const pathToNavigateTo = url.includes("/admin") ? "/admin/login" : "/login";
 
   const logout = useLogoutFunc();
 

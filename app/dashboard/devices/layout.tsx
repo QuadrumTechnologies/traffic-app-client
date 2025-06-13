@@ -11,15 +11,15 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  useDeviceStatus();
+
   return (
     <SendUserDeviceRequests>
       <div>
         <button
           className="dashboard-back__button"
           type="button"
-          onClick={() => {
-            router.back();
-          }}
+          onClick={() => router.back()}
         >
           <IoArrowBack />
           <span>Back</span>

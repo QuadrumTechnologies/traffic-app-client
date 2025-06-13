@@ -22,15 +22,18 @@ const SendAdminUserDeviceRequests: React.FC<
   );
 
   useEffect(() => {
-    (async () => {
+    if (deviceType) {
       dispatch(getAdminDevice(deviceType));
-    })();
-  }, [dispatch]);
-
-  useEffect(() => {
+    }
     initializeWebSocket();
-  }, []);
+
+    const socket = initializeWebSocket();
+    return () => {
+      socket.close();
+    };
+  }, [dispatch, deviceType]);
 
   return children;
 };
+
 export default SendAdminUserDeviceRequests;

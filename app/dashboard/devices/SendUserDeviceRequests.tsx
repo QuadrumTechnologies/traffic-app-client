@@ -8,6 +8,7 @@ import {
 } from "@/store/devices/UserDeviceSlice";
 import React, { useEffect } from "react";
 import { initializeWebSocket } from "../websocket";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface SendUserDeviceRequestsProps {
   children: React.ReactNode;
@@ -20,15 +21,28 @@ const SendUserDeviceRequests: React.FC<SendUserDeviceRequestsProps> = ({
 
   useEffect(() => {
     (async () => {
-      dispatch(getUserDevice());
-      dispatch(getUserPhase());
-      dispatch(getUserPattern());
+      try {
+        await Promise.all([
+          dispatch(getUserDevice()).unwrap(),
+          dispatch(getUserPhase()).unwrap(),
+          dispatch(getUserPattern()).unwrap(),
+        ]);
+      } catch (error) {
+        emitToastMessage("Failed to fetch initial device data.", "error");
+      }
     })();
   }, [dispatch]);
 
   useEffect(() => {
-    initializeWebSocket();
+    const ws = initializeWebSocket();
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, []);
-  return children;
+
+  return <>{children}</>;
 };
+
 export default SendUserDeviceRequests;

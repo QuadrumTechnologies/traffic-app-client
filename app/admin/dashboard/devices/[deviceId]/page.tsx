@@ -18,39 +18,37 @@ import { formatRtcDate, formatRtcTime, getDeviceStatus } from "@/utils/misc";
 import {
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
-  getUserDeviceInfoData,
-  updateDeviceAvailability,
   addCurrentDeviceStateData,
+  getUserDeviceInfoData,
   getUserDeviceStateData,
+  updateDeviceAvailability,
 } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
 
 interface DeviceDetailsProps {
-  params: any;
+  params: { deviceId: string };
 }
+
 export interface DeviceConfigItem {
   iconName: string;
   label: string;
   value: string;
 }
+
 export interface IntersectionConfigItem {
   label: string;
   value: string;
 }
 
-function formatUnixTimestamp(unixTimestamp: number) {
+function formatUnixTimestamp(unixTimestamp: number): string {
   const date = new Date(unixTimestamp * 1000);
-
   date.setHours(date.getHours() - 1);
-
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-
   const hours = String(date.getHours()).padStart(2, "0");
   const minutes = String(date.getMinutes()).padStart(2, "0");
   const seconds = String(date.getSeconds()).padStart(2, "0");
-
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
 
@@ -58,15 +56,13 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
   const [showAutoMode, setShowAutoMode] = useState<boolean>(
-    deviceActiveStateData?.Auto
+    deviceActiveStateData?.Auto ?? false
   );
-
   const dispatch = useAppDispatch();
-
-  getWebSocket();
-
   const statuses = useDeviceStatus();
-
+  const { isIntersectionConfigurable } = useAppSelector(
+    (state) => state.signalConfig
+  );
   const deviceId = params.deviceId;
   const icon =
     getDeviceStatus(statuses, deviceId) ||
@@ -74,20 +70,16 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
       ? "ON"
       : "OFF";
 
-  const { isIntersectionConfigurable } = useAppSelector(
-    (state) => state.signalConfig
-  );
-
   useEffect(() => {
-    setShowAutoMode(deviceActiveStateData?.Auto);
+    setShowAutoMode(deviceActiveStateData?.Auto ?? false);
   }, [deviceActiveStateData]);
 
   useEffect(() => {
     dispatch(setIsIntersectionConfigurable(false));
-    dispatch(getUserDeviceStateData(params.deviceId));
-  }, [dispatch, isIntersectionConfigurable]);
+    dispatch(getUserDeviceStateData(deviceId));
+    dispatch(getUserDeviceInfoData(deviceId));
+  }, [dispatch, deviceId]);
 
-  // Fetch Device Config Data
   useEffect(() => {
     const socket = getWebSocket();
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
@@ -100,34 +92,23 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         typeof initialDuration === "string"
           ? parseInt(initialDuration, 10)
           : initialDuration;
-      let isBlink = timeLeft === 0 || initialDuration === "X";
-      console.log(
-        "Starting Countdown",
-        initialDuration,
-        timeLeft,
-        signalString,
-        isBlink
-      );
+      const isBlink = timeLeft === 0 || initialDuration === "X";
 
       if (countdownInterval) {
         clearInterval(countdownInterval);
+        countdownInterval = null;
       }
 
-      // Check for Amber signal
       if (signalString.includes("A")) {
         dispatch(
-          previewCreatedPatternPhase({
-            duration: timeLeft,
-            signalString: signalString,
-          })
+          previewCreatedPatternPhase({ duration: timeLeft, signalString })
         );
         dispatch(setSignalState());
-
         countdownInterval = setTimeout(() => {
           clearInterval(countdownInterval!);
           countdownInterval = null;
           dispatch(closePreviewCreatedPatternPhase());
-        }, timeLeft * 1000); // Amber signal shown for `Countdown` seconds
+        }, timeLeft * 1000);
         return;
       }
 
@@ -138,14 +119,10 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
       }
 
       countdownInterval = setInterval(() => {
-        // Handle Normal Signal
         if (timeLeft > 0) {
           timeLeft -= 1;
           dispatch(
-            previewCreatedPatternPhase({
-              duration: timeLeft,
-              signalString: signalString,
-            })
+            previewCreatedPatternPhase({ duration: timeLeft, signalString })
           );
           dispatch(setSignalState());
         } else {
@@ -155,22 +132,15 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         }
       }, 1000);
     };
+
     const handleDataFeedback = (event: MessageEvent) => {
       const feedback = JSON.parse(event.data);
       if (feedback.event === "ping_received") return;
+      if (feedback.payload?.DeviceID !== deviceId) return;
 
-      console.log("Feedback", feedback);
-
-      // I will Set the status to off anytme I fetch the state and the device power is off
-      dispatch(
-        updateDeviceAvailability({
-          DeviceID: feedback.payload.DeviceID,
-          Status: true,
-        })
-      );
       switch (feedback.event) {
         case "info_feedback":
-          if (feedback.payload.error) {
+          if (feedback.payload?.error) {
             dispatch(
               addCurrentDeviceInfoData({
                 North: { Bat: "", Temp: "" },
@@ -185,7 +155,10 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                 DeviceID: "",
               })
             );
-            emitToastMessage("Could not fetch device info data", "error");
+            emitToastMessage(
+              feedback.payload?.message || "Could not fetch device info data",
+              "error"
+            );
           } else {
             dispatch(addCurrentDeviceInfoData(feedback.payload));
           }
@@ -197,8 +170,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             clearInterval(countdownInterval);
             countdownInterval = null;
           }
-
-          if (feedback.payload.error) {
+          if (feedback.payload?.error) {
             dispatch(
               addCurrentDeviceSignalData({
                 Countdown: "",
@@ -206,21 +178,18 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                 DeviceID: "",
               })
             );
-            emitToastMessage("Could not fetch device signal data", "error");
-          } else {
-            console.log(
-              "Current Phase and Countdown",
-              feedback.payload.Countdown,
-              feedback.payload.Phase
+            emitToastMessage(
+              feedback.payload?.message || "Could not fetch device signal data",
+              "error"
             );
-
+          } else {
             startCountdown(feedback.payload.Countdown, feedback.payload.Phase);
             dispatch(addCurrentDeviceSignalData(feedback.payload));
           }
           break;
 
         case "state_feedback":
-          if (feedback.payload.error) {
+          if (feedback.payload?.error) {
             dispatch(
               addCurrentDeviceStateData({
                 DeviceID: "",
@@ -233,76 +202,65 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
                 Restart: false,
               })
             );
-            emitToastMessage("Could not fetch device state data", "error");
+            emitToastMessage(
+              feedback.payload?.message || "Could not fetch device state data",
+              "error"
+            );
           } else {
             dispatch(addCurrentDeviceStateData(feedback.payload));
           }
           break;
 
+        case "error":
+          emitToastMessage(
+            feedback.payload?.message || "An error occurred",
+            "error"
+          );
+          break;
+
         default:
           console.log("Unhandled event type:", feedback.event);
       }
-    };
 
-    socket?.addEventListener("message", handleDataFeedback);
-
-    return () => {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
-      socket?.removeEventListener("message", handleDataFeedback);
-      dispatch(closePreviewCreatedPatternPhase());
-    };
-  }, [dispatch, deviceActiveStateData]);
-
-  // Fetch Intersection Config Data
-  useEffect(() => {
-    dispatch(getUserDeviceInfoData(params.deviceId));
-
-    // Fetch Device State Data
-    const socket = getWebSocket();
-
-    const sendStateMessage = () => {
-      socket.send(
-        JSON.stringify({
-          event: "state_request",
-          payload: {
-            DeviceID: params.deviceId,
-          },
+      dispatch(
+        updateDeviceAvailability({
+          DeviceID: feedback.payload?.DeviceID,
+          Status: !feedback.payload?.error,
         })
       );
     };
 
-    const sendInfoMessage = () => {
+    socket.addEventListener("message", handleDataFeedback);
+
+    const sendRequests = () => {
+      socket.send(
+        JSON.stringify({
+          event: "state_request",
+          payload: { DeviceID: deviceId },
+        })
+      );
       socket.send(
         JSON.stringify({
           event: "info_request",
-          payload: {
-            DeviceID: params.deviceId,
-          },
+          payload: { DeviceID: deviceId },
         })
       );
     };
 
     if (socket.readyState === WebSocket.OPEN) {
-      sendStateMessage();
-      // sendInfoMessage();
+      sendRequests();
     } else {
-      socket.onopen = () => {
-        sendStateMessage();
-        // sendInfoMessage();
-      };
+      socket.onopen = () => sendRequests();
     }
-    console.log("Params", params.deviceId);
-    dispatch(getUserDeviceStateData(params.deviceId));
-    // dispatch(getUserDeviceInfoData(params.deviceId));
 
     return () => {
-      if (socket) {
-        socket.close();
+      socket.removeEventListener("message", handleDataFeedback);
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
       }
+      dispatch(closePreviewCreatedPatternPhase());
     };
-  }, []);
+  }, [dispatch, deviceId, showAutoMode]);
 
   const deviceConfigItems: DeviceConfigItem[] = [
     {
@@ -315,27 +273,17 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
       label: "Time",
       value: formatRtcTime(formatUnixTimestamp(+currentDeviceInfoData?.Rtc)),
     },
-    {
-      iconName: "wifi",
-      label: "WiFi Status",
-      value: icon,
-    },
+    { iconName: "wifi", label: "WiFi Status", value: icon },
   ];
+
   const intersectionConfigItems: IntersectionConfigItem[] = [
-    {
-      label: "Name",
-      value: currentDeviceInfoData?.JunctionId || "Nill",
-    },
-    {
-      label: "Active Plan",
-      value: currentDeviceInfoData?.Plan || "Nill",
-    },
-    {
-      label: "Period",
-      value: currentDeviceInfoData?.Period || "Nill",
-    },
+    { label: "Name", value: currentDeviceInfoData?.JunctionId || "N/A" },
+    { label: "Active Plan", value: currentDeviceInfoData?.Plan || "N/A" },
+    { label: "Period", value: currentDeviceInfoData?.Period || "N/A" },
   ];
+
   const directions = ["North", "East", "West", "South"] as const;
+
   return (
     <section className="device">
       <div className="device__left">
@@ -391,7 +339,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         <div className="device__right--bottom">
           <IntersectionConfiguration
             intersectionConfigItems={intersectionConfigItems}
-            deviceId={params.deviceId}
+            deviceId={deviceId}
             userType="admin"
           />
         </div>

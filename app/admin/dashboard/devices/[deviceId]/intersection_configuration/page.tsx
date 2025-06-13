@@ -7,7 +7,7 @@ import { setSignalState } from "@/store/signals/SignalConfigSlice";
 import TabsContainer from "@/components/TabsComponents/TabsContainer";
 
 interface IntersectionConfigurationPageProps {
-  params: any;
+  params: { deviceId: string };
 }
 
 const IntersectionConfigurationPage: React.FC<
@@ -26,7 +26,7 @@ const IntersectionConfigurationPage: React.FC<
   return (
     <section className="intersectionConfigPage">
       <h2 className="intersectionConfigPage__header">
-        {currentDeviceInfoData?.JunctionId}
+        {currentDeviceInfoData?.JunctionId || "Intersection"}
       </h2>
       <div className="intersectionConfigPage__box">
         <div className="intersectionConfigPage__box--left">

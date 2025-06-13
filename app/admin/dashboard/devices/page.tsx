@@ -5,7 +5,6 @@ import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { FaPlus } from "react-icons/fa";
-import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
@@ -25,13 +24,10 @@ const AdminDevices = () => {
   const { devices, isFetchingDevices } = useAppSelector(
     (state) => state.adminDevice
   );
-
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
   const pathname = usePathname();
   const router = useRouter();
-
-  console.log("AdminDevices Rendered", devices, statuses);
 
   const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
   const [hoveredDeviceId, setHoveredDeviceId] = useState<string | null>(null);
@@ -56,7 +52,6 @@ const AdminDevices = () => {
 
   const assignDeviceHandler = async () => {
     const ownerEmail = prompt("Enter the email of the new device owner:");
-
     if (!ownerEmail || !/^\S+@\S+\.\S+$/.test(ownerEmail)) {
       emitToastMessage("Invalid email address. Please try again.", "error");
       return;
@@ -68,30 +63,39 @@ const AdminDevices = () => {
         ownerEmail,
         purchasedDate: new Date().toISOString(),
       });
-      emitToastMessage("Device successfully assigned!", "success");
-      dispatch(getAdminDevice(deviceType));
+      if (deviceType) {
+        dispatch(getAdminDevice(deviceType));
+      }
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
   const toggleDeviceStatus = async (action: string) => {
     const newStatus = action === "disable" ? "disabled" : "active";
-
-    await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/status`, {
-      status: newStatus,
-    });
-
-    emitToastMessage(`Device ${newStatus} successfully`, "success");
+    try {
+      await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/status`, {
+        status: newStatus,
+      });
+      if (deviceType) {
+        dispatch(getAdminDevice(deviceType));
+      }
+    } catch (error: any) {
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
+    }
   };
 
   const confirmAction = async (action: string) => {
     const password = prompt(
       `Device ${selectedDeviceId} will be ${action}. Please enter your password to proceed`
     );
-    if (!password) return;
+    if (!password) {
+      emitToastMessage("Password verification cancelled", "info");
+      return;
+    }
 
-    // Audit log reason
     const reason = `Device ${selectedDeviceId} will be ${action}. Admin action taken.`;
 
     try {
@@ -103,22 +107,12 @@ const AdminDevices = () => {
 
       if (action === "delete") {
         await HttpRequest.delete(`/admin/devices/${selectedDeviceId}`);
-        dispatch(getAdminDevice(deviceType));
-        emitToastMessage("Device deleted successfully", "success");
       } else if (action === "recall" || action === "unrecalled") {
         await HttpRequest.patch(`/admin/devices/${selectedDeviceId}/recall`, {
           recall: action === "recall",
         });
-        dispatch(getAdminDevice(deviceType));
-        emitToastMessage(
-          `Device ${
-            action === "recall" ? "recalled" : "unrecalled"
-          } successfully`,
-          "success"
-        );
       } else if (action === "disable" || action === "enable") {
         await toggleDeviceStatus(action);
-        dispatch(getAdminDevice(deviceType));
       } else if (action === "restore") {
         await HttpRequest.patch(
           `/admin/devices/${selectedDeviceId}/availability`,
@@ -126,11 +120,13 @@ const AdminDevices = () => {
             restore: true,
           }
         );
+      }
+      if (deviceType) {
         dispatch(getAdminDevice(deviceType));
-        emitToastMessage("Device restored successfully", "success");
       }
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -175,12 +171,8 @@ const AdminDevices = () => {
               <div className="devices-item__icon-wrapper">
                 <CgProfile
                   className="devices-item__icon devices-item-profile"
-                  onMouseEnter={() => {
-                    setHoveredDeviceId(device.deviceId);
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredDeviceId(null);
-                  }}
+                  onMouseEnter={() => setHoveredDeviceId(device.deviceId)}
+                  onMouseLeave={() => setHoveredDeviceId(null)}
                 />
                 {hoveredDeviceId === device.deviceId &&
                   device?.deviceStatus && (
@@ -227,11 +219,9 @@ const AdminDevices = () => {
                       <p>Online</p>
                     </div>
                   ) : (
-                    <>
-                      <div className="devices_off">
-                        <p>Offline</p>
-                      </div>
-                    </>
+                    <div className="devices_off">
+                      <p>Offline</p>
+                    </div>
                   )}
                 </div>
                 <div
@@ -332,8 +322,13 @@ const AdminDevices = () => {
                         if (
                           device?.userDevice &&
                           !device?.userDevice?.isRecalled
-                        )
-                          return alert("Please recall device before deleting.");
+                        ) {
+                          emitToastMessage(
+                            "Please recall device before deleting.",
+                            "error"
+                          );
+                          return;
+                        }
                         confirmAction("delete");
                         setShowOptions(false);
                       }}

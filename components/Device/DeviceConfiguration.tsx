@@ -15,27 +15,28 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
   deviceConfigItems,
   deviceId,
 }) => {
-  const { devices } = useAppSelector((state) => state.adminDevice);
+  const { devices } = useAppSelector((state) =>
+    usePathname().includes("admin") ? state.adminDevice : state.userDevice
+  );
   const router = useRouter();
   const pathname = usePathname();
 
   const handleRedirectionToDevicePage = () => {
     const device = devices.find((device) => device.deviceId === deviceId);
-    if (!device && pathname.includes("admin")) {
-      alert("Device not found.");
+    if (!device) {
+      emitToastMessage("Device not found.", "error");
       return;
     }
-
-    if (!device?.userDevice?.allowAdminSupport && pathname.includes("admin")) {
+    if (pathname.includes("admin") && !device?.userDevice?.allowAdminSupport) {
       emitToastMessage(
         "Admin support is not enabled for this device.",
         "error"
       );
       return;
     }
-
     router.push(`${pathname}/device_configuration`);
   };
+
   return (
     <section className="deviceConfiguration">
       <div className="deviceConfiguration__header">
@@ -44,9 +45,8 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
           Configure
         </button>
       </div>
-
       <ul className="deviceConfiguration__list">
-        {deviceConfigItems.map((item: DeviceConfigItem, index: any) => (
+        {deviceConfigItems.map((item: DeviceConfigItem, index: number) => (
           <DeviceConfigurationItem key={index} item={item} />
         ))}
       </ul>

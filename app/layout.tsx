@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import "./globals.css";
 import "@/stylesheets/main.scss";
 import ReduxProvider from "./ReduxProvider";
 import { ToastContainer } from "react-toastify";

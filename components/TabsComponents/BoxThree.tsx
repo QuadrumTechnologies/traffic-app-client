@@ -28,7 +28,7 @@ interface BoxThreeProps {}
 
 const BoxThree: React.FC<BoxThreeProps> = () => {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams<{ deviceId: string }>();
   const pathname = usePathname();
   const newPathname =
     pathname.slice(0, pathname.lastIndexOf("/")) + "/schedule";
@@ -40,6 +40,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
   const [inputtedPlanName, setInputtedPlanName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isUploading, setIsUploading] = useState<string | null>(null);
 
   const searchPlanByName = (planName: string) => {
     const matchedPhases = plans.filter((plan) =>
@@ -66,28 +67,20 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     return dayOrder.indexOf(a.name) - dayOrder.indexOf(b.name);
   });
 
-  useEffect(() => {
-    if (email) {
-      setIsLoading(true);
-      dispatch(getUserPlan(email)).finally(() => setIsLoading(false));
-      dispatch(closePreviewCreatedPatternPhase());
-    }
-  }, [dispatch, email]);
-
   const handleDeletePlan = async (planId: string, planName: string) => {
     const confirmResult = confirm(
       `Are you sure you want to delete "${planName}" plan?`
     );
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("Plan deletion cancelled", "info");
+      return;
+    }
     try {
-      const { data } = await HttpRequest.delete(`/plans/${planId}/${email}`);
-      emitToastMessage(data.message, "success");
+      const response = await HttpRequest.delete(`/plans/${planId}/${email}`);
       dispatch(getUserPlan(email));
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to delete plan",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+    emitToastMessage(message, "error");
     }
   };
 
@@ -95,20 +88,20 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     const confirmResult = confirm(
       "Are you sure you want to delete ALL plans? This action cannot be undone."
     );
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("All plans deletion cancelled", "info");
+      return;
+    }
 
     try {
-      const { data } = await HttpRequest.delete(`/plans/all/${email}`);
-      emitToastMessage(data.message, "success");
+      const response = await HttpRequest.delete(`/plans/all/${email}`);
       dispatch(getUserPlan(email));
       setSearchedResult([]);
       setShowSearchedResult(false);
       setInputtedPlanName("");
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to delete all plans",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+    emitToastMessage(message, "error");
     }
   };
 
@@ -121,7 +114,10 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       const confirmResult = confirm(
         `Are you sure you want to upload "${planName}" plan?`
       );
-      if (!confirmResult) return;
+      if (!confirmResult) {
+        emitToastMessage("Plan upload cancelled", "info");
+        return;
+      }
     }
 
     try {
@@ -131,6 +127,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
         return;
       }
 
+      setIsUploading(planId);
       const socket = getWebSocket();
 
       const sendMessage = (
@@ -142,7 +139,6 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
           .split(":")
           .map(Number);
         const [endHours, endMinutes] = endSegmentKey.split(":").map(Number);
-
         const startTime = `${String(startHours).padStart(2, "0")}:${String(
           startMinutes
         ).padStart(2, "0")}`;
@@ -152,7 +148,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
         endTime = endTime === "00:00" ? "23:59" : endTime;
         const timeSegmentString = `@${startTime}-${endTime}`;
 
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
           socket.send(
             JSON.stringify({
               event: "upload_request",
@@ -166,16 +162,23 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
             })
           );
 
-          socket.onmessage = (event: MessageEvent) => {
+          const handleFeedback = (event: MessageEvent) => {
             const feedback = JSON.parse(event.data);
+            if (feedback.event === "ping_received") return;
             if (feedback.event !== "upload_feedback") return;
             if (
               feedback.payload.Plan === plan.name &&
               feedback.payload.Period === startSegmentKey
             ) {
-              resolve();
+              if (feedback.payload.error) {
+                reject(new Error(feedback.payload.message));
+              } else {
+                resolve();
+              }
+              socket.removeEventListener("message", handleFeedback);
             }
           };
+          socket.addEventListener("message", handleFeedback);
         });
       };
 
@@ -198,15 +201,14 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
 
       if (lastValidSegment && lastStartKey) {
-        await sendMessage(lastStartKey, "23:59", lastValidSegment);
+        await sendMessage(lastStartKey, "00:00", lastValidSegment);
       }
 
-      emitToastMessage(`Plan "${plan.name}" uploaded successfully`, "success");
+      setIsUploading(null);
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to upload plan",
-        "error"
-      );
+      setIsUploading(null);
+      const message = error?.response?.data?.message || `Request failed`;
+    emitToastMessage(message, "error"); or WebSocket feedback
     }
   };
 
@@ -214,7 +216,10 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     const confirmResult = confirm(
       "Are you sure you want to upload all the plans?"
     );
-    if (!confirmResult) return;
+    if (!confirmResult) {
+      emitToastMessage("All plans upload cancelled", "info");
+      return;
+    }
 
     try {
       for (const plan of plans || []) {
@@ -222,14 +227,34 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
           await handleUploadPlan(plan.id, plan.name, false);
         }
       }
-      emitToastMessage("All plans uploaded successfully!", "success");
     } catch (error: any) {
-      emitToastMessage(
-        error?.response?.data?.message || "Failed to upload all plans",
-        "error"
-      );
+      const message = error?.response?.data?.message || `Request failed`;
+    emitToastMessage(message, "error");
     }
   };
+
+  useEffect(() => {
+    if (email) {
+      setIsLoading(true);
+      dispatch(getUserPlan(email)).finally(() => setIsLoading(false));
+      dispatch(closePreviewCreatedPatternPhase());
+    }
+
+    const socket = getWebSocket();
+    const handleFeedback = (event: MessageEvent) => {
+      const feedback = JSON.parse(event.data);
+      if (feedback.event === "ping_received") return;
+      if (feedback.payload?.DeviceID !== params.deviceId) return;
+      if (feedback.event === "upload_feedback" && feedback.payload.error) {
+        emitToastMessage(feedback.payload.message, "error");
+        setIsUploading(null);
+      }
+    };
+    socket?.addEventListener("message", handleFeedback);
+    return () => {
+      socket?.removeEventListener("message", handleFeedback);
+    };
+  }, [dispatch, email, params.deviceId]);
 
   return (
     <div className="boxThree">
@@ -267,8 +292,13 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
                     <div>
                       <button
                         onClick={() => handleUploadPlan(plan.id, plan.name)}
+                        disabled={isUploading === plan.id}
                       >
-                        <MdUpload />
+                        {isUploading === plan.id ? (
+                          <LoadingSpinner color="blue" />
+                        ) : (
+                          <MdUpload />
+                        )}
                       </button>
                       <button
                         onClick={() => handleDeletePlan(plan.id, plan.name)}

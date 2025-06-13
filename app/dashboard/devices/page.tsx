@@ -27,14 +27,13 @@ export interface DeviceStatus {
 }
 
 const UserDevices = () => {
-  const { devices, isFetchingDevices, deviceAvailability } = useAppSelector(
+  const { devices, isFetchingDevices } = useAppSelector(
     (state) => state.userDevice
   );
 
   getWebSocket();
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
-
   const pathname = usePathname();
   const router = useRouter();
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
@@ -52,15 +51,16 @@ const UserDevices = () => {
   };
 
   const confirmAction = async () => {
+    if (!selectedDeviceId) return;
+
     const password = prompt(
       `Device ${selectedDeviceId} will be moved to trash for 30 days. After this period, it will be permanently deleted. Admins can delete it permanently at any time. Enter your password to continue.`
     );
 
-    const reason = `Device ${selectedDeviceId} moved to trash by user`;
-
     if (!password) return;
 
     const user = GetItemFromLocalStorage("user");
+    const reason = `Device ${selectedDeviceId} moved to trash by user`;
 
     try {
       await HttpRequest.post("/confirm-password", {
@@ -74,9 +74,8 @@ const UserDevices = () => {
       });
 
       dispatch(getUserDevice());
-      emitToastMessage(`Device moved to trash successfully`, "success");
     } catch (error: any) {
-      emitToastMessage(error?.response.data.message, "error");
+      // Error handling is managed by HttpRequest.ts via toast
     }
   };
 
@@ -85,7 +84,7 @@ const UserDevices = () => {
   return (
     <aside className="devices">
       <div className="devices-header">
-        <h2 className="page-header">My Devices </h2>{" "}
+        <h2 className="page-header">My Devices</h2>
         <button onClick={() => setShowAddDeviceModal(true)}>
           <FaPlus /> Add New
         </button>
@@ -196,4 +195,5 @@ const UserDevices = () => {
     </aside>
   );
 };
+
 export default UserDevices;

@@ -25,7 +25,7 @@ import { emitToastMessage } from "@/utils/toastFunc";
 import { usePathname } from "next/navigation";
 
 interface DeviceConfigurationPageProps {
-  params: any;
+  params: { deviceId: string };
 }
 
 const BRIGHTNESS_LEVELS = [20, 40, 60, 80, 100];
@@ -42,12 +42,8 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const {
-    devices,
-    deviceAvailability,
-    currentDeviceInfoData,
-    deviceActiveStateData,
-  } = useAppSelector((state) => state.userDevice);
+  const { devices, currentDeviceInfoData, deviceActiveStateData } =
+    useAppSelector((state) => state.userDevice);
 
   const [sliderValue, setSliderValue] = useState<number>(
     deviceActiveStateData?.SignalLevel || 20
@@ -72,6 +68,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   useEffect(() => {
     if (!params?.deviceId) return;
     fetchDeviceAdminSupportStatus();
+    dispatch(getUserDeviceStateData(params.deviceId));
   }, [params.deviceId, dispatch]);
 
   useEffect(() => {
@@ -79,10 +76,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   }, [deviceActiveStateData?.SignalLevel]);
 
   const handleRequest = async (action: string, payloadValue?: any) => {
-    const device = devices?.find(
-      (device) => device.deviceId === params.deviceId
-    );
-
     if (!device) {
       emitToastMessage("Device not found.", "error");
       return;
@@ -93,7 +86,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       const password = prompt("Please enter your password to proceed");
       if (!password) return;
 
-      // Audit log reason based on action
       const reason = `Device ${params.deviceId} ${
         action === "Reset!" ? "hard reset" : action.toLowerCase()
       } action requested by user`;
@@ -107,18 +99,14 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
           reason,
           password,
         });
-        emitToastMessage("Password verified", "success");
         SetItemToLocalStorage("isPasswordVerified", {
           isPasswordVerified: true,
           time: Date.now(),
         });
       } catch (error: any) {
-        const errorMessage =
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to verify password.";
-        emitToastMessage(errorMessage, "error");
         return;
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       }
     }
 
@@ -138,26 +126,16 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
           payload,
         })
       );
+      setTimeout(() => {
+        dispatch(getUserDeviceStateData(params.deviceId));
+      }, 500);
     };
 
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
-      setTimeout(() => {
-        dispatch(getUserDeviceStateData(params.deviceId));
-      }, 500);
     } else {
-      socket.onopen = () => {
-        sendMessage();
-        setTimeout(() => {
-          dispatch(getUserDeviceStateData(params.deviceId));
-        }, 500);
-      };
+      socket.onopen = () => sendMessage();
     }
-
-    SetItemToLocalStorage("isPasswordVerified", {
-      isPasswordVerified: true,
-      time: Date.now(),
-    });
   };
 
   const handleSignalPowerToggle = () => {
@@ -220,17 +198,12 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     setAdminSupport(newStatus);
     try {
       setIsSubmitting(true);
-      const response = await HttpRequest.patch(
-        `/user-devices/${params.deviceId}`,
-        {
-          allowAdminSupport: newStatus,
-        }
-      );
-      setAdminSupport(response.data.data.allowAdminSupport);
-      emitToastMessage("Admin support status updated.", "success");
+      await HttpRequest.patch(`/user-devices/${params.deviceId}`, {
+        allowAdminSupport: newStatus,
+      });
+      setAdminSupport(newStatus);
     } catch (error) {
-      console.error("Error updating toggle", error);
-      emitToastMessage("Failed to update admin support status.", "error");
+      setAdminSupport(!newStatus); // Revert on error
     } finally {
       setIsSubmitting(false);
     }
@@ -268,10 +241,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
             minimumBatteryLevel: values.minimumBatteryLevel,
           }
         );
-        emitToastMessage("Configuration updated successfully!", "success");
       } catch (error: any) {
-        console.error("Error updating configuration", error);
-        emitToastMessage("Failed to update configuration.", "error");
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       } finally {
         setIsSubmitting(false);
         actions.setSubmitting(false);
@@ -339,7 +311,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   type="text"
                   name="deviceId"
                   label="Device ID"
-                  value={params.deviceId || deviceAvailability?.DeviceID || ""}
+                  value={params.deviceId || ""}
                   readOnly
                 />
                 <NormalInput
@@ -350,9 +322,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   value={device?.secretKey || ""}
                   passwordIcon={true}
                   showPassword={showPassword}
-                  updatePasswordVisibility={() => {
-                    setShowPassword((prev) => !prev);
-                  }}
+                  updatePasswordVisibility={() =>
+                    setShowPassword((prev) => !prev)
+                  }
                   readOnly
                 />
                 <NormalInput
@@ -387,9 +359,9 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   value={currentDeviceInfoData?.JunctionPassword || ""}
                   passwordIcon={true}
                   showPassword={showIntersectionPassword}
-                  updatePasswordVisibility={() => {
-                    setShowIntersectionPassword((prev) => !prev);
-                  }}
+                  updatePasswordVisibility={() =>
+                    setShowIntersectionPassword((prev) => !prev)
+                  }
                   readOnly
                 />
                 <NormalInput

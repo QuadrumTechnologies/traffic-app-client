@@ -34,44 +34,34 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   deviceId,
   userType,
 }) => {
-  let devices: any[] | null = [];
-
-  if (userType === "admin") {
-    const { devices: adminDevices } = useAppSelector(
-      (state) => state.adminDevice
-    );
-    devices = devices.concat(adminDevices);
-  } else {
-    const { devices: userDevices } = useAppSelector(
-      (state) => state.userDevice
-    );
-    devices = devices.concat(userDevices);
-  }
-
+  const { devices } = useAppSelector((state) =>
+    userType === "admin" ? state.adminDevice : state.userDevice
+  );
+  const { deviceActiveStateData, currentDeviceInfoData } = useAppSelector(
+    (state) => state.userDevice
+  );
+  const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
-  const { deviceActiveStateData } = useAppSelector((state) => state.userDevice);
-  const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
-  const [showManualMoreConfig, setShowManualMoreConfig] =
-    useState<boolean>(false);
-  const [initialSignalStrings, setInitialSignlStrings] = useState("");
   const params = useParams();
   const email = GetItemFromLocalStorage("user")?.email;
+
+  const [showManualMoreConfig, setShowManualMoreConfig] =
+    useState<boolean>(false);
+  const [initialSignalStrings, setInitialSignalStrings] = useState("");
 
   useEffect(() => {
     dispatch(setManualMode(!deviceActiveStateData?.Auto));
     setShowManualMoreConfig(!deviceActiveStateData?.Auto);
-  }, [deviceActiveStateData]);
+  }, [dispatch, deviceActiveStateData?.Auto]);
 
   const handleRequest = async (action: string) => {
     const device = devices?.find((device) => device.deviceId === deviceId);
-
     if (!device) {
       emitToastMessage("Device not found.", "error");
       return;
     }
-
     if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
       emitToastMessage(
         "Admin support is not enabled for this device.",
@@ -83,28 +73,27 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     const isPasswordVerified = GetItemFromLocalStorage("isPasswordVerified");
     if (!isPasswordVerified || Date.now() - isPasswordVerified.time > 180000) {
       const password = prompt("Please enter your password to proceed");
-
-      if (!password) return;
-
-      // Audit log reason
+      if (!password) {
+        emitToastMessage("Password verification cancelled.", "info");
+        return;
+      }
       const reason = `Device ${deviceId} ${action} action requested by user`;
-
       try {
         const endpoint = pathname.includes("admin")
           ? "/admin/confirm-password"
           : "/confirm-password";
         await HttpRequest.post(endpoint, {
-          email: GetItemFromLocalStorage("user").email,
+          email,
           reason,
           password,
         });
-        emitToastMessage("Password verified", "success");
         SetItemToLocalStorage("isPasswordVerified", {
           isPasswordVerified: true,
           time: Date.now(),
         });
       } catch (error: any) {
-        emitToastMessage(error?.response.data.message, "error");
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
         return;
       }
     }
@@ -113,48 +102,34 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       dispatch(setManualMode(true));
       setShowManualMoreConfig(true);
       dispatch(closePreviewCreatedPatternPhase());
-    }
-
-    if (action === "Auto") {
+    } else if (action === "Auto") {
       dispatch(setManualMode(false));
       setShowManualMoreConfig(false);
     }
 
     const socket = getWebSocket();
-
     const sendMessage = () => {
       socket.send(
         JSON.stringify({
           event: "intersection_control_request",
-          payload: { action: action, DeviceID: deviceId },
+          payload: { action, DeviceID: deviceId },
         })
       );
+      setTimeout(() => {
+        dispatch(getUserDeviceStateData(deviceId));
+      }, 500);
     };
 
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
-      setTimeout(() => {
-        dispatch(getUserDeviceStateData(deviceId));
-      }, 500);
     } else {
-      socket.onopen = () => {
-        sendMessage();
-        setTimeout(() => {
-          dispatch(getUserDeviceStateData(deviceId));
-        }, 500);
-      };
+      socket.onopen = () => sendMessage();
     }
 
     SetItemToLocalStorage("isPasswordVerified", {
       isPasswordVerified: true,
       time: Date.now(),
     });
-
-    return () => {
-      if (socket) {
-        socket.close();
-      }
-    };
   };
 
   const getAdjacentPedestrianSignal = (
@@ -162,7 +137,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     direction: "N" | "E" | "S" | "W"
   ): "R" | "G" | "X" => {
     let adjacentDirection: "N" | "E" | "S" | "W";
-
     switch (direction) {
       case "S":
         adjacentDirection = "E";
@@ -179,11 +153,9 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       default:
         adjacentDirection = "N";
     }
-
     const adjacentSignal = signals.find(
       (signal) => signal.direction === adjacentDirection
     );
-
     return adjacentSignal ? adjacentSignal.pedestrian : "X";
   };
 
@@ -196,7 +168,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
             landingPageSignals,
             signal.direction
           );
-
           return `${signal.direction}${signal.left}${signal.straight}${signal.right}${signal.bike}${signal.pedestrian}${adjacentPedestrian}`;
         })
         .join("") +
@@ -206,8 +177,8 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   useEffect(() => {
     const initialStrings = encodeSignals();
-    setInitialSignlStrings(initialStrings);
-  }, []);
+    setInitialSignalStrings(initialStrings);
+  }, [landingPageSignals]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -218,33 +189,29 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       amberDurationGreenToRed: 3,
     },
     validationSchema: Yup.object({
-      blinkTimeGreenToRed: Yup.number().when(
-        "blinkEnabled",
-        (blinkEnabled, schema) =>
-          blinkEnabled
-            ? schema
-                .min(0, "Blink time must be at least 0")
-                .max(5, "Blink time must be at most 5")
-                .required("Blink time is required")
-            : schema.notRequired()
-      ),
-      amberDurationGreenToRed: Yup.number().when(
-        "amberEnabled",
-        (amberEnabled, schema) =>
-          amberEnabled
-            ? schema
-                .min(0, "Amber duration must be at least 0")
-                .max(5, "Amber duration must be at most 5")
-                .required("Amber duration is required")
-            : schema.notRequired()
-      ),
+      blinkTimeGreenToRed: Yup.number().when("blinkEnabled", {
+        is: true,
+        then: () =>
+          Yup.number()
+            .min(0, "Blink time must be at least 0")
+            .max(5, "Blink time must be at most 5")
+            .required("Blink time is required"),
+        otherwise: () => Yup.number().notRequired(),
+      }),
+      amberDurationGreenToRed: Yup.number().when("amberEnabled", {
+        is: true,
+        then: () =>
+          Yup.number()
+            .min(0, "Amber duration must be at least 0")
+            .max(5, "Amber duration must be at most 5")
+            .required("Amber duration is required"),
+        otherwise: () => Yup.number().notRequired(),
+      }),
     }),
     onSubmit: async (values) => {
       try {
         const encodedSignals = encodeSignals();
-
         const socket = getWebSocket();
-
         const sendMessage = () => {
           socket.send(
             JSON.stringify({
@@ -254,52 +221,73 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
                 initialSignalStrings,
                 signalString: encodedSignals,
                 duration: 30,
-                blinkEnabled: !`${initialSignalStrings}`.includes("G")
+                blinkEnabled: !initialSignalStrings.includes("G")
                   ? false
                   : values.blinkEnabled,
-                blinkTimeGreenToRed: !`${initialSignalStrings}`.includes("G")
+                blinkTimeGreenToRed: !initialSignalStrings.includes("G")
                   ? 0
                   : values.blinkTimeGreenToRed,
-                amberEnabled: !`${initialSignalStrings}`.includes("G")
+                amberEnabled: !initialSignalStrings.includes("G")
                   ? false
                   : values.amberEnabled,
-                amberDurationGreenToRed: !`${initialSignalStrings}`.includes(
-                  "G"
-                )
+                amberDurationGreenToRed: !initialSignalStrings.includes("G")
                   ? 0
                   : values.amberDurationGreenToRed,
               },
             })
           );
         };
-
         if (socket.readyState === WebSocket.OPEN) {
           sendMessage();
         } else {
-          socket.onopen = () => {
-            sendMessage();
-          };
+          socket.onopen = () => sendMessage();
         }
-        const updatedSignalString = encodeSignals();
-        setInitialSignlStrings(updatedSignalString);
-        emitToastMessage("Manual state set for 30seconds", "success");
+        setInitialSignalStrings(encodedSignals);
+        dispatch(getUserDeviceStateData(deviceId));
       } catch (error: any) {
-        emitToastMessage(
-          error?.response?.data?.message || "An error occurred",
-          "error"
-        );
+        const message = error?.response?.data?.message || `Request failed`;
+        emitToastMessage(message, "error");
       }
     },
   });
 
+  useEffect(() => {
+    const socket = getWebSocket();
+    const handleFeedback = (event: MessageEvent) => {
+      const feedback = JSON.parse(event.data);
+      if (feedback.event === "ping_received") return;
+      if (feedback.payload?.DeviceID !== deviceId) return;
+      switch (feedback.event) {
+        case "intersection_control_feedback":
+          if (feedback.payload.error) {
+            emitToastMessage(feedback.payload.message, "error");
+          } else {
+            dispatch(getUserDeviceStateData(deviceId));
+          }
+          break;
+        case "signal_feedback":
+          if (feedback.payload.error) {
+            emitToastMessage(feedback.payload.message, "error");
+          } else {
+            dispatch(getUserDeviceStateData(deviceId));
+          }
+          break;
+        default:
+          console.log("Unhandled event:", feedback.event);
+      }
+    };
+    socket?.addEventListener("message", handleFeedback);
+    return () => {
+      socket?.removeEventListener("message", handleFeedback);
+    };
+  }, [dispatch, deviceId]);
+
   const handleRedirectionToDevicePage = () => {
     const device = devices.find((device) => device.deviceId === deviceId);
-
     if (!device) {
       emitToastMessage("Device not found.", "error");
       return;
     }
-
     if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
       emitToastMessage(
         "Admin support is not enabled for this device.",
@@ -307,7 +295,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       );
       return;
     }
-
     router.push(`${pathname}/intersection_configuration`);
     dispatch(setManualMode(false));
     dispatch(setIsIntersectionConfigurable(true));
@@ -321,26 +308,23 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           Configure
         </button>
       </div>
-
       <ul className="intersectionConfiguration__list">
         {intersectionConfigItems.map(
-          (item: IntersectionConfigItem, index: any) => (
+          (item: IntersectionConfigItem, index: number) => (
             <IntersectionConfigurationItem key={index} item={item} />
           )
         )}
       </ul>
-
       <div>
         <h2>Commands Control</h2>
         <div className="intersectionConfiguration__commands">
           <button
             onClick={() => {
-              const action =
-                deviceActiveStateData?.Auto === true ? "Manual" : "Auto";
+              const action = deviceActiveStateData?.Auto ? "Manual" : "Auto";
               handleRequest(action);
             }}
           >
-            {deviceActiveStateData?.Auto === true
+            {deviceActiveStateData?.Auto
               ? "Switch to Manual"
               : "Switch to Auto"}
           </button>
@@ -353,7 +337,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
             onSubmit={formik.handleSubmit}
             className="patterns__selected--form"
           >
-            {`${initialSignalStrings}`.includes("G") && (
+            {initialSignalStrings.includes("G") && (
               <div>
                 <h3>Blink and Amber Configuration</h3>
                 <div className="patterns__selected--title">
@@ -367,36 +351,32 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
                     />
                     Enable Blink
                   </label>
-
                   {formik.values.blinkEnabled && (
-                    <>
-                      <div className="patterns__selected--item">
-                        <label>Blink Time (Green to Red)</label>
-                        <input
-                          type="number"
-                          name="blinkTimeGreenToRed"
-                          value={formik.values.blinkTimeGreenToRed}
-                          min={0}
-                          max={5}
-                          onChange={(e) => {
-                            const value = Math.max(
-                              0,
-                              Math.min(5, Number(e.target.value))
-                            );
-                            formik.setFieldValue("blinkTimeGreenToRed", value);
-                          }}
-                          onBlur={formik.handleBlur}
-                          autoFocus
-                        />
-                        {formik.touched.blinkTimeGreenToRed &&
-                          formik.errors.blinkTimeGreenToRed && (
-                            <div>{formik.errors.blinkTimeGreenToRed}</div>
-                          )}
-                      </div>
-                    </>
+                    <div className="patterns__selected--item">
+                      <label>Blink Time (Green to Red)</label>
+                      <input
+                        type="number"
+                        name="blinkTimeGreenToRed"
+                        value={formik.values.blinkTimeGreenToRed}
+                        min={0}
+                        max={5}
+                        onChange={(e) => {
+                          const value = Math.max(
+                            0,
+                            Math.min(5, Number(e.target.value))
+                          );
+                          formik.setFieldValue("blinkTimeGreenToRed", value);
+                        }}
+                        onBlur={formik.handleBlur}
+                        autoFocus
+                      />
+                      {formik.touched.blinkTimeGreenToRed &&
+                        formik.errors.blinkTimeGreenToRed && (
+                          <div>{formik.errors.blinkTimeGreenToRed}</div>
+                        )}
+                    </div>
                   )}
                 </div>
-
                 <div className="patterns__selected--title">
                   <label>
                     <input
@@ -408,35 +388,32 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
                     />
                     Enable Amber
                   </label>
-
                   {formik.values.amberEnabled && (
-                    <>
-                      <div className="patterns__selected--item">
-                        <label>Amber Duration (Green to Red)</label>
-                        <input
-                          type="number"
-                          name="amberDurationGreenToRed"
-                          value={formik.values.amberDurationGreenToRed}
-                          min={0}
-                          max={5}
-                          onChange={(e) => {
-                            const value = Math.max(
-                              0,
-                              Math.min(5, Number(e.target.value))
-                            );
-                            formik.setFieldValue(
-                              "amberDurationGreenToRed",
-                              value
-                            );
-                          }}
-                          onBlur={formik.handleBlur}
-                        />
-                        {formik.touched.amberDurationGreenToRed &&
-                          formik.errors.amberDurationGreenToRed && (
-                            <div>{formik.errors.amberDurationGreenToRed}</div>
-                          )}
-                      </div>
-                    </>
+                    <div className="patterns__selected--item">
+                      <label>Amber Duration (Green to Red)</label>
+                      <input
+                        type="number"
+                        name="amberDurationGreenToRed"
+                        value={formik.values.amberDurationGreenToRed}
+                        min={0}
+                        max={5}
+                        onChange={(e) => {
+                          const value = Math.max(
+                            0,
+                            Math.min(5, Number(e.target.value))
+                          );
+                          formik.setFieldValue(
+                            "amberDurationGreenToRed",
+                            value
+                          );
+                        }}
+                        onBlur={formik.handleBlur}
+                      />
+                      {formik.touched.amberDurationGreenToRed &&
+                        formik.errors.amberDurationGreenToRed && (
+                          <div>{formik.errors.amberDurationGreenToRed}</div>
+                        )}
+                    </div>
                   )}
                 </div>
               </div>
