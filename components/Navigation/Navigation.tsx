@@ -28,6 +28,7 @@ const Navigation = () => {
   }, []);
 
   useEffect(() => {
+    // Get
     const userToken = getItemFromCookie("token");
     const adminToken = getItemFromCookie("adminToken");
 
