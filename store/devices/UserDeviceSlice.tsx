@@ -6,7 +6,11 @@ interface DirectionData {
   Bat: string;
   Temp: string;
 }
-
+interface DeviceStatus {
+  id: string;
+  status: boolean;
+  lastSeen: string | null;
+}
 interface InitialStateTypes {
   devices: any[];
   phases: any[];
@@ -18,6 +22,7 @@ interface InitialStateTypes {
   isFetchingPhases: boolean;
   isFetchingPatterns: boolean;
   isFetchingPlans: boolean;
+  deviceStatuses: DeviceStatus[];
   currentDeviceInfoData: {
     North: DirectionData;
     East: DirectionData;
@@ -67,6 +72,7 @@ const initialState: InitialStateTypes = {
   isFetchingPhases: false,
   isFetchingPatterns: false,
   isFetchingPlans: false,
+  deviceStatuses: [],
   currentDeviceInfoData: {
     North: { Bat: "", Temp: "" },
     East: { Bat: "", Temp: "" },
@@ -232,10 +238,35 @@ const UserDeviceSlice = createSlice({
     addCurrentDeviceStateData: (state, action) => {
       state.deviceActiveStateData = action.payload;
     },
+    updateDeviceStatus: (state, action: { payload: DeviceStatus }) => {
+      const { id, status, lastSeen } = action.payload;
+      const existingStatus = state.deviceStatuses.find((s) => s.id === id);
+      if (existingStatus) {
+        existingStatus.status = status;
+        existingStatus.lastSeen = lastSeen;
+      } else {
+        state.deviceStatuses.push({ id, status, lastSeen });
+      }
+      state.deviceAvailability = { DeviceID: id, Status: status };
+      console.log("Updated device status:", state.deviceStatuses);
+    },
     updateDeviceAvailability: (state, action) => {
       console.log("Updating device availability:", action.payload);
-
       state.deviceAvailability = action.payload;
+      const { DeviceID, Status } = action.payload;
+      const existingStatus = state.deviceStatuses.find(
+        (s) => s.id === DeviceID
+      );
+      if (existingStatus) {
+        existingStatus.status = Status;
+        existingStatus.lastSeen = Status ? null : new Date().toISOString();
+      } else {
+        state.deviceStatuses.push({
+          id: DeviceID,
+          status: Status,
+          lastSeen: Status ? null : new Date().toISOString(),
+        });
+      }
     },
     handleWsFeedback: (state, action) => {
       state.wsFeedback = action.payload;
@@ -315,6 +346,7 @@ export const {
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
   updateDeviceAvailability,
+  updateDeviceStatus,
   addCurrentDeviceStateData,
   handleWsFeedback,
 } = UserDeviceSlice.actions;
