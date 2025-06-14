@@ -56,8 +56,12 @@ export const useDeviceStatus = () => {
         }
 
         if (existingStatus) {
+          console.log("Updating existing status for device:", id);
+          console.log("Previous statuses:", prevStatuses);
           return prevStatuses.map((s) => (s.id === id ? newStatus : s));
         } else {
+          console.log("Adding new status for device:", id);
+          console.log("Previous statuses:", prevStatuses);
           return [...prevStatuses, newStatus];
         }
       });

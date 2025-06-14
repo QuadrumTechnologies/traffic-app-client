@@ -233,6 +233,8 @@ const UserDeviceSlice = createSlice({
       state.deviceActiveStateData = action.payload;
     },
     updateDeviceAvailability: (state, action) => {
+      console.log("Updating device availability:", action.payload);
+
       state.deviceAvailability = action.payload;
     },
     handleWsFeedback: (state, action) => {
