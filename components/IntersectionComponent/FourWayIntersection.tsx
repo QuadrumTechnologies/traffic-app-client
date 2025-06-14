@@ -167,13 +167,12 @@ const getResponsiveValue = (
   screenWidth: number | undefined
 ) => {
   if (!screenWidth) {
-    return values[direction][600]; // Default to 600 for undefined screenWidth
+    return values[direction][1400];
   }
   const closestBreakpoint =
     breakpoints.find(
       (bp) => screenWidth >= bp - 100 && screenWidth <= bp + 100
-    ) || breakpoints[breakpoints.length - 1]; // Fallback to smallest breakpoint
-  console.log(`ScreenWidth: ${screenWidth}, Breakpoint: ${closestBreakpoint}`); // Debugging
+    ) || breakpoints[breakpoints.length - 1];
   return values[direction][closestBreakpoint];
 };
 

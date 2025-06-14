@@ -21,7 +21,7 @@ export const initializeWebSocket = () => {
           isAdmin = window.location.pathname.startsWith("/admin");
         }
         const loggedInUser = isAdmin ? adminUser : user;
-        console.log("Logged in user:", loggedInUser, isAdmin);
+        console.log("Sending identify event with user:", loggedInUser);
 
         ws_socket.send(
           JSON.stringify({
@@ -31,6 +31,11 @@ export const initializeWebSocket = () => {
             isAdmin,
           })
         );
+        console.log("Sent identify message:", {
+          clientType: "web_app",
+          userEmail: loggedInUser.email || null,
+          isAdmin,
+        });
       } else {
         console.error("WebSocket connection is not open.");
       }
