@@ -288,6 +288,14 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
     <section className="device">
       <div className="device__left">
         <FourWayIntersection editable={isIntersectionConfigurable} />
+        <div className="intersectionConfiguration__commands">
+          <IntersectionConfiguration
+            intersectionConfigItems={intersectionConfigItems}
+            deviceId={deviceId}
+            showCommandsOnly={true}
+            userType="admin"
+          />
+        </div>
       </div>
       <div className="device__right">
         <div className="device__right--top">
@@ -341,6 +349,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
             intersectionConfigItems={intersectionConfigItems}
             deviceId={deviceId}
             userType="admin"
+            showCommandsOnly={false}
           />
         </div>
       </div>
