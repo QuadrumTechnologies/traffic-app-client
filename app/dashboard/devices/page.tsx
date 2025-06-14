@@ -30,7 +30,7 @@ const UserDevices = () => {
   const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
     (state) => state.userDevice
   );
-
+  getWebSocket();
   const dispatch = useAppDispatch();
   useDeviceStatus();
   const pathname = usePathname();
