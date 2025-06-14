@@ -249,7 +249,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       setRightBoxContent(null);
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+      emitToastMessage(message, "error");
     }
   };
 
@@ -371,7 +371,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       setCustomDate(dayType.value === "custom" ? customDate : null);
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+      emitToastMessage(message, "error");
     }
   };
 
@@ -493,7 +493,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     } catch (error: any) {
       setIsUploadingSchedule(false);
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error"); or WebSocket feedback
+      emitToastMessage(message, "error");
     }
   };
 
@@ -643,9 +643,10 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                 value: newPlan.dayType.toUpperCase(),
                 label: newPlan.dayType.toUpperCase(),
               });
-            } catch (error) {
-              const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+            } catch (error: any) {
+              const message =
+                error?.response?.data?.message || `Request failed`;
+              emitToastMessage(message, "error");
             }
           }
           break;

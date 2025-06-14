@@ -80,7 +80,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       dispatch(getUserPlan(email));
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+      emitToastMessage(message, "error");
     }
   };
 
@@ -101,7 +101,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       setInputtedPlanName("");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+      emitToastMessage(message, "error");
     }
   };
 
@@ -208,7 +208,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     } catch (error: any) {
       setIsUploading(null);
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error"); or WebSocket feedback
+      emitToastMessage(message, "error");
     }
   };
 
@@ -229,7 +229,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
-    emitToastMessage(message, "error");
+      emitToastMessage(message, "error");
     }
   };
 

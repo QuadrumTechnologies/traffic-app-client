@@ -57,7 +57,7 @@ const ResetModal: React.FC<ResetModalProps> = ({ device, closeModal }) => {
         );
         formik.resetForm();
         closeModal();
-      } catch (error) {
+      } catch (error: any) {
         const message = error?.response?.data?.message || `Request failed`;
         emitToastMessage(message, "error");
       } finally {
