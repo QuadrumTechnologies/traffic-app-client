@@ -28,7 +28,7 @@ const Navigation = () => {
   }, []);
 
   useEffect(() => {
-    // Get Logged in user details from cookies
+    // Get Logged in user details from cookies for
     const userToken = getItemFromCookie("token");
     const adminToken = getItemFromCookie("adminToken");
 
