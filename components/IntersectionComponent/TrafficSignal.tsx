@@ -80,18 +80,18 @@ const SignalLight = styled.div<{
   }
   @media screen and (max-width: 500px) {
     margin: 1.1px;
-    width: 1.4rem;
-    height: 1.4rem;
+    width: 1.3rem;
+    height: 1.3rem;
   }
   @media screen and (max-width: 400px) {
     margin: 1.1px;
-    width: 1.4rem;
-    height: 1.4rem;
+    width: 1.2rem;
+    height: 1.2rem;
   }
   @media screen and (max-width: 300px) {
     margin: 0.8px;
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.2rem;
+    height: 1.2rem;
   }
 `;
 
@@ -123,14 +123,10 @@ const PedestrianSignalLight = styled.div<{
     height: 0.9rem;
   }
   @media screen and (max-width: 500px) {
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 0.8rem;
+    height: 0.8rem;
   }
   @media screen and (max-width: 400px) {
-    width: 1rem;
-    height: 1rem;
-  }
-  @media screen and (max-width: 300px) {
     width: 0.7rem;
     height: 0.7rem;
     font-size: 0.8rem;

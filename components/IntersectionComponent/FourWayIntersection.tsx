@@ -2,7 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import IntersectionDisplay from "./Intersection";
-import { useAppSelector } from "@/hooks/reduxHook";
+import { useAppSelector, useAppDispatch } from "@/hooks/reduxHook";
+import {
+  setSignalStringToAllRed,
+  setSignalStringToAllAmber,
+  setSignalStringToAllBlank,
+  setSignalState,
+} from "@/store/signals/SignalConfigSlice";
+import { usePathname } from "next/navigation";
 
 const positions = {
   N: {
@@ -183,7 +190,8 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
     manualMode,
     countDownColor,
   } = useAppSelector((state) => state.signalConfig);
-
+  const dispatch = useAppDispatch();
+  const pathname = usePathname();
   const [screenWidth, setScreenWidth] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -222,6 +230,8 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
     [trafficSignals, screenWidth]
   );
 
+  const isIntersectionConfig = pathname.includes("/intersection_configuration");
+
   return (
     <>
       <IntersectionDisplay
@@ -232,6 +242,37 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
         manualMode={manualMode}
         createdPatternPhasePreviewing={createdPatternPhasePreviewing}
       />
+      {isIntersectionConfig && (
+        <div className="phases__buttonBox">
+          <button
+            className="phases__clear"
+            onClick={() => {
+              dispatch(setSignalStringToAllRed());
+              dispatch(setSignalState());
+            }}
+          >
+            All Red
+          </button>
+          <button
+            className="phases__clear"
+            onClick={() => {
+              dispatch(setSignalStringToAllAmber());
+              dispatch(setSignalState());
+            }}
+          >
+            All Yellow
+          </button>
+          <button
+            className="phases__clear"
+            onClick={() => {
+              dispatch(setSignalStringToAllBlank());
+              dispatch(setSignalState());
+            }}
+          >
+            All Blank
+          </button>
+        </div>
+      )}
     </>
   );
 };

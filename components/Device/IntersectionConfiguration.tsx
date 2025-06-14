@@ -11,6 +11,10 @@ import {
   closePreviewCreatedPatternPhase,
   setIsIntersectionConfigurable,
   setManualMode,
+  setSignalStringToAllRed,
+  setSignalStringToAllAmber,
+  setSignalStringToAllBlank,
+  setSignalState,
 } from "@/store/signals/SignalConfigSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
 import HttpRequest from "@/store/services/HttpRequest";
@@ -27,19 +31,17 @@ interface DeviceConfigurationProps {
   intersectionConfigItems: IntersectionConfigItem[];
   deviceId: string;
   userType?: string;
+  showCommandsOnly?: boolean;
 }
 
 const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   intersectionConfigItems,
   deviceId,
   userType,
+  showCommandsOnly = false,
 }) => {
-  const { devices } = useAppSelector((state) =>
-    userType === "admin" ? state.adminDevice : state.userDevice
-  );
-  const { deviceActiveStateData, currentDeviceInfoData } = useAppSelector(
-    (state) => state.userDevice
-  );
+  const { devices, deviceActiveStateData, currentDeviceInfoData } =
+    useAppSelector((state) => state.userDevice);
   const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -64,7 +66,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     }
     if (userType === "admin" && !device?.userDevice?.allowAdminSupport) {
       emitToastMessage(
-        "Admin support is not enabled for this device.",
+        "Admin support is not(enabled for this device.",
         "error"
       );
       return;
@@ -300,6 +302,159 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     dispatch(setIsIntersectionConfigurable(true));
   };
 
+  if (showCommandsOnly) {
+    return (
+      <div
+      // style={{
+      //   display: "flex",
+      //   justifyContent: "flex-center",
+      //   alignItems: "center",
+      //   flexDirection: "column",
+      //   width: "100%",
+      // }}
+      >
+        <div>
+          <h2>Commands Control</h2>
+          <div className="intersectionConfiguration__commands">
+            <button
+              onClick={() => {
+                const action = deviceActiveStateData?.Auto ? "Manual" : "Auto";
+                handleRequest(action);
+              }}
+            >
+              {deviceActiveStateData?.Auto
+                ? "Switch to Manual"
+                : "Switch to Auto"}
+            </button>
+            <button onClick={() => handleRequest("Hold")}>Hold</button>
+            <button onClick={() => handleRequest("Next")}>Next</button>
+            <button onClick={() => handleRequest("Reboot")}>Reboot</button>
+          </div>
+          {showManualMoreConfig && (
+            <div className="phases__buttonBox">
+              <button
+                className="phases__clear"
+                onClick={() => {
+                  dispatch(setSignalStringToAllRed());
+                  dispatch(setSignalState());
+                }}
+              >
+                All Red
+              </button>
+              <button
+                className="phases__clear"
+                onClick={() => {
+                  dispatch(setSignalStringToAllAmber());
+                  dispatch(setSignalState());
+                }}
+              >
+                All Yellow
+              </button>
+              <button
+                className="phases__clear"
+                onClick={() => {
+                  dispatch(setSignalStringToAllBlank());
+                  dispatch(setSignalState());
+                }}
+              >
+                All Blank
+              </button>
+            </div>
+          )}
+          {showManualMoreConfig && (
+            <form
+              onSubmit={formik.handleSubmit}
+              className="patterns__selected--form"
+            >
+              {initialSignalStrings.includes("G") && (
+                <div>
+                  <h3>Blink and Amber Configuration</h3>
+                  <div className="patterns__selected--title">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="blinkEnabled"
+                        checked={formik.values.blinkEnabled}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                      />
+                      Enable Blink
+                    </label>
+                    {formik.values.blinkEnabled && (
+                      <div className="patterns__selected--item">
+                        <label>Blink Time (Green to Red)</label>
+                        <input
+                          type="number"
+                          name="blinkTimeGreenToRed"
+                          value={formik.values.blinkTimeGreenToRed}
+                          min={0}
+                          max={5}
+                          onChange={(e) => {
+                            const value = Math.max(
+                              0,
+                              Math.min(5, Number(e.target.value))
+                            );
+                            formik.setFieldValue("blinkTimeGreenToRed", value);
+                          }}
+                          onBlur={formik.handleBlur}
+                          autoFocus
+                        />
+                        {formik.touched.blinkTimeGreenToRed &&
+                          formik.errors.blinkTimeGreenToRed && (
+                            <div>{formik.errors.blinkTimeGreenToRed}</div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="patterns__selected--title">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="amberEnabled"
+                        checked={formik.values.amberEnabled}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                      />
+                      Enable Amber
+                    </label>
+                    {formik.values.amberEnabled && (
+                      <div className="patterns__selected--item">
+                        <label>Amber Duration (Green to Red)</label>
+                        <input
+                          type="number"
+                          name="amberDurationGreenToRed"
+                          value={formik.values.amberDurationGreenToRed}
+                          min={0}
+                          max={5}
+                          onChange={(e) => {
+                            const value = Math.max(
+                              0,
+                              Math.min(5, Number(e.target.value))
+                            );
+                            formik.setFieldValue(
+                              "amberDurationGreenToRed",
+                              value
+                            );
+                          }}
+                          onBlur={formik.handleBlur}
+                        />
+                        {formik.touched.amberDurationGreenToRed &&
+                          formik.errors.amberDurationGreenToRed && (
+                            <div>{formik.errors.amberDurationGreenToRed}</div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <Button type="submit">Send Signal</Button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="intersectionConfiguration">
       <div className="intersectionConfiguration__header">
@@ -315,113 +470,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           )
         )}
       </ul>
-      <div>
-        <h2>Commands Control</h2>
-        <div className="intersectionConfiguration__commands">
-          <button
-            onClick={() => {
-              const action = deviceActiveStateData?.Auto ? "Manual" : "Auto";
-              handleRequest(action);
-            }}
-          >
-            {deviceActiveStateData?.Auto
-              ? "Switch to Manual"
-              : "Switch to Auto"}
-          </button>
-          <button onClick={() => handleRequest("Hold")}>Hold</button>
-          <button onClick={() => handleRequest("Next")}>Next</button>
-          <button onClick={() => handleRequest("Reboot")}>Reboot</button>
-        </div>
-        {showManualMoreConfig && (
-          <form
-            onSubmit={formik.handleSubmit}
-            className="patterns__selected--form"
-          >
-            {initialSignalStrings.includes("G") && (
-              <div>
-                <h3>Blink and Amber Configuration</h3>
-                <div className="patterns__selected--title">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="blinkEnabled"
-                      checked={formik.values.blinkEnabled}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                    />
-                    Enable Blink
-                  </label>
-                  {formik.values.blinkEnabled && (
-                    <div className="patterns__selected--item">
-                      <label>Blink Time (Green to Red)</label>
-                      <input
-                        type="number"
-                        name="blinkTimeGreenToRed"
-                        value={formik.values.blinkTimeGreenToRed}
-                        min={0}
-                        max={5}
-                        onChange={(e) => {
-                          const value = Math.max(
-                            0,
-                            Math.min(5, Number(e.target.value))
-                          );
-                          formik.setFieldValue("blinkTimeGreenToRed", value);
-                        }}
-                        onBlur={formik.handleBlur}
-                        autoFocus
-                      />
-                      {formik.touched.blinkTimeGreenToRed &&
-                        formik.errors.blinkTimeGreenToRed && (
-                          <div>{formik.errors.blinkTimeGreenToRed}</div>
-                        )}
-                    </div>
-                  )}
-                </div>
-                <div className="patterns__selected--title">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="amberEnabled"
-                      checked={formik.values.amberEnabled}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                    />
-                    Enable Amber
-                  </label>
-                  {formik.values.amberEnabled && (
-                    <div className="patterns__selected--item">
-                      <label>Amber Duration (Green to Red)</label>
-                      <input
-                        type="number"
-                        name="amberDurationGreenToRed"
-                        value={formik.values.amberDurationGreenToRed}
-                        min={0}
-                        max={5}
-                        onChange={(e) => {
-                          const value = Math.max(
-                            0,
-                            Math.min(5, Number(e.target.value))
-                          );
-                          formik.setFieldValue(
-                            "amberDurationGreenToRed",
-                            value
-                          );
-                        }}
-                        onBlur={formik.handleBlur}
-                      />
-                      {formik.touched.amberDurationGreenToRed &&
-                        formik.errors.amberDurationGreenToRed && (
-                          <div>{formik.errors.amberDurationGreenToRed}</div>
-                        )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            <Button type="submit">Send Signal</Button>
-          </form>
-        )}
-      </div>
     </section>
   );
 };

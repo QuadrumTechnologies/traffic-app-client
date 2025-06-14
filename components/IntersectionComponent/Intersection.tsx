@@ -83,7 +83,7 @@ const PhaseContainer = styled.form`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 20%;
+  width: 350px;
   background-color: #ffffff;
   padding: 1rem;
   border-radius: 0.4rem;
@@ -152,7 +152,7 @@ const AddPhaseIcon = styled(motion.div)`
   }
   @media screen and (max-width: 900px) {
     top: 42.9%;
-    left: 47%;
+    left: 46%;
   }
   @media screen and (max-width: 500px) {
     top: 43%;
