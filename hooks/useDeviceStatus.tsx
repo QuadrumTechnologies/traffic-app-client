@@ -80,7 +80,6 @@ export const useDeviceStatus = () => {
         if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
           return;
         }
-        console.log("Updating device status for ping:", deviceId);
 
         updateDeviceStatus(deviceId, true, null);
 

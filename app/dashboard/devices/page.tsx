@@ -45,6 +45,7 @@ const UserDevices = () => {
     setShowOptions(false);
   };
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
+  console.log("Device statuses:", statuses);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
@@ -112,6 +113,7 @@ const UserDevices = () => {
       <div className="devices-list">
         {devices?.map((device: any, index) => {
           const status = getDeviceStatus(statuses, device.deviceId);
+          console.log("Device status:", status);
           return (
             <div
               key={index}
