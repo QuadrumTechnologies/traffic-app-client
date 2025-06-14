@@ -53,12 +53,14 @@ export const useDeviceStatus = () => {
           return [...prevStatuses, newStatus];
         }
       });
+      console.log("Updating device status:", id, status, lastSeen);
 
       dispatch(updateDeviceAvailability({ DeviceID: id, Status: status }));
     };
 
     const handleWebSocketMessage = (event: MessageEvent) => {
       const message = JSON.parse(event.data);
+      console.log("WebSocket message received:", message);
 
       if (
         message.event === "ping_received" &&
@@ -66,10 +68,13 @@ export const useDeviceStatus = () => {
       ) {
         const deviceId = message.source.id;
 
+        console.log("Ping received for device:", deviceId, deviceIds);
+
         // Skip if not admin and device not in user's devices
         if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
           return;
         }
+        console.log("Updating device status for ping:", deviceId);
 
         updateDeviceStatus(deviceId, true, null);
 
@@ -87,6 +92,7 @@ export const useDeviceStatus = () => {
         if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
           return;
         }
+        console.log("Device status update received:", message);
 
         updateDeviceStatus(
           deviceId,
