@@ -113,7 +113,6 @@ const UserDevices = () => {
       <div className="devices-list">
         {devices?.map((device: any, index) => {
           const status = getDeviceStatus(statuses, device.deviceId);
-          console.log("Device status:", status);
           return (
             <div
               key={index}

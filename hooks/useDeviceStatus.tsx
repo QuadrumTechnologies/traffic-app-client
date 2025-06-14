@@ -36,7 +36,6 @@ export const useDeviceStatus = () => {
       setStatuses((prevStatuses) => {
         const existingStatus = prevStatuses.find((s) => s.id === id);
         const newStatus = { id, status, lastSeen };
-        console.log("Updating device status:", newStatus, existingStatus);
 
         // Only emit toast if status has changed
         if (existingStatus && existingStatus.status !== status) {
@@ -141,6 +140,6 @@ export const useDeviceStatus = () => {
       Object.values(timeoutMap).forEach(clearTimeout);
     };
   }, [dispatch, userEmail, isAdmin, deviceIds]);
-
+  console.log("Device statuses in hook:", statuses);
   return statuses;
 };
