@@ -36,14 +36,22 @@ export const useDeviceStatus = () => {
       setStatuses((prevStatuses) => {
         const existingStatus = prevStatuses.find((s) => s.id === id);
         const newStatus = { id, status, lastSeen };
+        console.log("Updating device status:", newStatus, existingStatus);
 
         // Only emit toast if status has changed
         if (existingStatus && existingStatus.status !== status) {
+          console.log(
+            "Status change detected:",
+            existingStatus.status,
+            "->",
+            status
+          );
           emitToastMessage(
             `Device ${id} is ${status ? "online" : "offline"}.`,
             "info"
           );
         } else if (!existingStatus && status) {
+          console.log("New device online:", id);
           emitToastMessage(`Device ${id} is online.`, "info");
         }
 
@@ -53,14 +61,12 @@ export const useDeviceStatus = () => {
           return [...prevStatuses, newStatus];
         }
       });
-      console.log("Updating device status:", id, status, lastSeen);
 
       dispatch(updateDeviceAvailability({ DeviceID: id, Status: status }));
     };
 
     const handleWebSocketMessage = (event: MessageEvent) => {
       const message = JSON.parse(event.data);
-      console.log("WebSocket message received:", message);
 
       if (
         message.event === "ping_received" &&
