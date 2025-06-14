@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import Button from "@/components/UI/Button/Button";
 import bg from "@/public/images/tra.avif";
 import InformationInput from "@/components/UI/Input/InformationInput";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface ResetPasswordProps {
   params: { resetPasswordToken: string };
@@ -18,14 +19,8 @@ interface ResetPasswordProps {
 const ResetPassword: React.FC<ResetPasswordProps> = ({ params }) => {
   const router = useRouter();
 
-  // State managements
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
 
-  // Yup schema configurations
   const validationSchema = Yup.object().shape({
     password: Yup.string()
       .required("Password is required")
@@ -38,7 +33,6 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ params }) => {
       .oneOf([Yup.ref("password"), ""], "Passwords does not match"),
   });
 
-  // Formik validation configurations
   const formik = useFormik({
     initialValues: {
       password: "",
@@ -58,19 +52,14 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ params }) => {
             confirmPassword,
           }
         );
-        // Login
+        emitToastMessage(response.data.message, "success");
         router.push("/");
       } catch (error: any) {
-        setShowError(() => ({
-          hasError: true,
-          message: `${error?.response?.data.message} Try again.`,
-        }));
+        const errorMessage =
+          error?.response?.data.message || "A network error occurred";
+        emitToastMessage(errorMessage, "error");
       } finally {
-        // Enabling the submitting of the form again
         actions.setSubmitting(false);
-        setTimeout(() => {
-          setShowError(() => ({ hasError: false, message: "" }));
-        }, 7000);
       }
     },
   });
@@ -125,15 +114,9 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ params }) => {
             showPassword={showPassword}
             updatePasswordVisibility={updatePasswordVisibility}
           />
-
-          {showError.hasError && (
-            <p className="signup-error">{showError.message}</p>
-          )}
-
           <Button type="submit">
             {formik.isSubmitting ? <LoadingSpinner /> : "Reset Password"}
           </Button>
-
           <button
             className="forgot-card__button update-container__button"
             type="button"

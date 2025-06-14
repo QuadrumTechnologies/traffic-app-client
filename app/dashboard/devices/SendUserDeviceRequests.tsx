@@ -27,8 +27,13 @@ const SendUserDeviceRequests: React.FC<SendUserDeviceRequestsProps> = ({
           dispatch(getUserPhase()).unwrap(),
           dispatch(getUserPattern()).unwrap(),
         ]);
-      } catch (error) {
-        emitToastMessage("Failed to fetch initial device data.", "error");
+      } catch (error: any) {
+        const message =
+          typeof error === "string"
+            ? error
+            : error?.message || "Failed to fetch initial device data.";
+
+        emitToastMessage(message, "error");
       }
     })();
   }, [dispatch]);

@@ -233,11 +233,13 @@ const AdminDevices = () => {
                     color: "#888",
                   }}
                 >
-                  {device?.userDevice?.lastSeen
-                    ? `Last seen: ${dayjs(device.userDevice.lastSeen).format(
+                  {!status?.status && device?.userDevice?.lastSeen
+                    ? `Last seen: ${dayjs(device?.userDevice?.lastSeen).format(
                         "YYYY-MM-DD HH:mm:ss"
                       )}`
-                    : "Last seen: Device has never connected"}
+                    : !status?.status && !device?.userDevice?.lastSeen
+                    ? "Last seen: Never connected"
+                    : null}
                 </div>
               </div>
 

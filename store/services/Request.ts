@@ -1,5 +1,5 @@
 import { getItemFromCookie } from "@/utils/cookiesFunc";
-import axios, { InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -45,7 +45,8 @@ const Request = async (options: any) => {
   try {
     const response = await instance(options);
     return response;
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as AxiosError;
     return Promise.reject(error);
   }
 };

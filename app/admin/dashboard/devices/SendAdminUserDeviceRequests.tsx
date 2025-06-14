@@ -5,6 +5,7 @@ import { useAppDispatch } from "@/hooks/reduxHook";
 import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
 import { deviceTypes } from "@/utils/deviceTypes";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
+import { emitToastMessage } from "@/utils/toastFunc";
 import React, { useEffect } from "react";
 
 interface SendAdminUserDeviceRequestsProps {
@@ -22,18 +23,31 @@ const SendAdminUserDeviceRequests: React.FC<
   );
 
   useEffect(() => {
-    if (deviceType) {
-      dispatch(getAdminDevice(deviceType));
-    }
-    initializeWebSocket();
+    let socket: WebSocket | null = null;
 
-    const socket = initializeWebSocket();
+    (async () => {
+      try {
+        if (deviceType) {
+          await dispatch(getAdminDevice(deviceType)).unwrap();
+        }
+        socket = initializeWebSocket();
+      } catch (error: any) {
+        const message =
+          typeof error === "string"
+            ? error
+            : error?.message || "Failed to fetch initial device data.";
+        emitToastMessage(message, "error");
+      }
+    })();
+
     return () => {
-      socket.close();
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
   }, [dispatch, deviceType]);
 
-  return children;
+  return <>{children}</>;
 };
 
 export default SendAdminUserDeviceRequests;

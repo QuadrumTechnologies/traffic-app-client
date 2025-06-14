@@ -75,7 +75,8 @@ const UserDevices = () => {
 
       dispatch(getUserDevice());
     } catch (error: any) {
-      // Error handling is managed by HttpRequest.ts via toast
+      const message = error?.response?.data?.message || `Request failed`;
+      emitToastMessage(message, "error");
     }
   };
 
@@ -157,11 +158,13 @@ const UserDevices = () => {
                     color: "#888",
                   }}
                 >
-                  {device?.lastSeen
+                  {!status?.status && device?.lastSeen
                     ? `Last seen: ${dayjs(device?.lastSeen).format(
                         "YYYY-MM-DD HH:mm:ss"
                       )}`
-                    : "Last seen: Device has never connected"}
+                    : !status?.status && !device?.lastSeen
+                    ? "Last seen: Never connected"
+                    : null}
                 </div>
               </div>
               <div className="deviceConfigPage__menu">

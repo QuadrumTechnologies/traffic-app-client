@@ -5,61 +5,60 @@ import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import HttpRequest from "@/store/services/HttpRequest";
-import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
-import Button from "@/components/UI/Button/Button";
 import bg from "@/public/images/tra.avif";
 import InformationInput from "@/components/UI/Input/InformationInput";
+import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
+import Button from "@/components/UI/Button/Button";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 interface ReactivateAccountProps {}
 
 const ReactivateAccount: React.FC<ReactivateAccountProps> = () => {
   const router = useRouter();
 
-  // State managements
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
-  // Yup schema configurations
   const validationSchema = Yup.object().shape({
-    email: Yup.string().required("Email is required").email(),
+    email: Yup.string()
+      .required("Email is required")
+      .email("Invalid email address"),
+    password: Yup.string().required("Password is required"),
   });
 
-  // Formik validation configurations
   const formik = useFormik({
     initialValues: {
       email: "",
+      password: "",
     },
     validationSchema,
     validateOnChange: true,
     validateOnBlur: true,
     validateOnMount: false,
     async onSubmit(values, actions) {
-      const { email } = values;
+      const { email, password } = values;
       try {
         const response = await HttpRequest.patch(
-          `/auth/admin/reactivateAccount/`,
+          `/auth/admin/reactivateAccount`,
           {
             email,
+            password,
           }
         );
-
-        router.push("/");
+        emitToastMessage(response.data.message, "success");
+        router.push("/admin/login");
       } catch (error: any) {
-        setShowError(() => ({
-          hasError: true,
-          message: `${error?.response?.data.message} Try again.`,
-        }));
+        const errorMessage =
+          error?.response?.data.message || "A network error occurred";
+        emitToastMessage(errorMessage, "error");
       } finally {
-        // Enabling the submitting of the form again
         actions.setSubmitting(false);
-        setTimeout(() => {
-          setShowError(() => ({ hasError: false, message: "" }));
-        }, 7000);
       }
     },
   });
+
+  const updatePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   return (
     <section
@@ -71,7 +70,7 @@ const ReactivateAccount: React.FC<ReactivateAccountProps> = () => {
       <div className="forgot-card">
         <h3 className="forgot-card__heading">Reactivate Account</h3>
         <p className="forgot-card__para">
-          Enter your email to reactivate your account
+          Enter your email and password to reactivate your account
         </p>
         <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
           <InformationInput
@@ -86,15 +85,24 @@ const ReactivateAccount: React.FC<ReactivateAccountProps> = () => {
             onBlur={formik.handleBlur}
             value={formik.values.email}
           />
-
-          {showError.hasError && (
-            <p className="signup-error">{showError.message}</p>
-          )}
-
+          <InformationInput
+            id="password"
+            label="Password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            invalid={formik.errors.password && formik.touched.password}
+            inputErrorMessage={formik.errors.password}
+            placeholder=""
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            value={formik.values.password}
+            passwordIcon={true}
+            showPassword={showPassword}
+            updatePasswordVisibility={updatePasswordVisibility}
+          />
           <Button type="submit">
             {formik.isSubmitting ? <LoadingSpinner /> : "Reactivate"}
           </Button>
-
           <button
             className="forgot-card__button update-container__button"
             type="button"

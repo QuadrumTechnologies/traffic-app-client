@@ -1,4 +1,6 @@
 import { emitToastMessage } from "@/utils/toastFunc";
+import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
+import { usePathname } from "next/navigation";
 
 let ws_socket: WebSocket | null = null;
 let retryCount = 0;
@@ -12,10 +14,21 @@ export const initializeWebSocket = () => {
       console.log("WebSocket connection established");
       retryCount = 0;
       if (ws_socket?.readyState === WebSocket.OPEN) {
+        const user = GetItemFromLocalStorage("user") || {};
+        const adminUser = GetItemFromLocalStorage("adminUser") || {};
+        let isAdmin = false;
+        if (typeof window !== "undefined") {
+          isAdmin = window.location.pathname.startsWith("/admin");
+        }
+        const loggedInUser = isAdmin ? adminUser : user;
+        console.log("Logged in user:", loggedInUser, isAdmin);
+
         ws_socket.send(
           JSON.stringify({
             event: "identify",
             clientType: "web_app",
+            userEmail: loggedInUser.email || null,
+            isAdmin,
           })
         );
       } else {

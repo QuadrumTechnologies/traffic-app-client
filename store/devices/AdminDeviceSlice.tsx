@@ -15,25 +15,31 @@ const initialState: InitialStateTypes = {
 
 export const getAdminDevice = createAsyncThunk(
   "adminDevice/getAdminDevice",
-  async (deviceType: any) => {
-    const { data } = await HttpRequest.get(
-      `/admin/devices/${deviceType?.department}`
-    );
-    const filteredDevices = data.data.devices.map((device: any) => ({
-      deviceId: device.deviceId,
-      email: device.userDevice?.email,
-      status: device.userDevice?.status,
-      allowAdminSupport: device.userDevice?.allowAdminSupport,
-      isTrash: device.userDevice?.isTrash,
-      deletedAt: device.userDevice?.deletedAt,
-    }));
+  async (deviceType: any, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(
+        `/admin/devices/${deviceType?.department}`
+      );
+      const filteredDevices = data.data.devices.map((device: any) => ({
+        deviceId: device.deviceId,
+        email: device.userDevice?.email,
+        status: device.userDevice?.status,
+        allowAdminSupport: device.userDevice?.allowAdminSupport,
+        isTrash: device.userDevice?.isTrash,
+        deletedAt: device.userDevice?.deletedAt,
+      }));
 
-    setItemToCookie(
-      "adminDevices",
-      JSON.stringify(filteredDevices),
-      60 * 60 * 24
-    );
-    return data;
+      setItemToCookie(
+        "adminDevices",
+        JSON.stringify(filteredDevices),
+        60 * 60 * 24
+      );
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch admin devices"
+      );
+    }
   }
 );
 
@@ -50,8 +56,9 @@ const AdminDeviceSlice = createSlice({
         state.devices = action.payload?.data?.devices || [];
         state.isFetchingDevices = false;
       })
-      .addCase(getAdminDevice.rejected, (state) => {
+      .addCase(getAdminDevice.rejected, (state, action) => {
         state.isFetchingDevices = false;
+        emitToastMessage(action.payload as string, "error");
       });
   },
 });

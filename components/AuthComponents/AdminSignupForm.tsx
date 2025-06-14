@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -8,6 +10,7 @@ import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 import HttpRequest from "@/store/services/HttpRequest";
 import Link from "next/link";
 import PasswordModal from "../Modals/PasswordModal";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 export interface UserData {
   email: string;
@@ -20,15 +23,7 @@ const AdminSignUpForm = () => {
 
   const allowedEmail = process.env.NEXT_PUBLIC_EMAIL_USERNAME;
 
-  // State managements
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string>("");
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
-
-  // Password Modal requirements
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [requirements, setRequirements] = useState([
     { text: "At least 6 characters", isValid: false },
@@ -62,7 +57,6 @@ const AdminSignUpForm = () => {
     setRequirements(newRequirements);
   };
 
-  // Yup schema configurations
   const validationSchema = Yup.object().shape({
     name: Yup.string()
       .required("Name is required")
@@ -70,9 +64,7 @@ const AdminSignUpForm = () => {
         "full-name",
         "Name must include both first name and last name",
         (value) => {
-          if (!value) {
-            return false;
-          }
+          if (!value) return false;
           return value.trim().split(" ").length >= 2;
         }
       ),
@@ -97,7 +89,6 @@ const AdminSignUpForm = () => {
       .oneOf([Yup.ref("password"), ""], "Passwords does not match"),
   });
 
-  // Formik validation configurations
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -121,22 +112,14 @@ const AdminSignUpForm = () => {
           confirmPassword,
           password,
         });
-        setSuccessMessage(
-          "You have signup successfully, kindly check your mail for verification link"
-        );
+        emitToastMessage(response.data.message, "success");
+        router.push("/admin/login");
       } catch (error: any) {
-        console.log("error", error);
-        setShowError(() => ({
-          hasError: true,
-          message: `${error?.response?.data.message}.`,
-        }));
+        const errorMessage =
+          error?.response?.data.message || "A network error occurred";
+        emitToastMessage(errorMessage, "error");
       } finally {
         actions.setSubmitting(false);
-        setTimeout(() => {
-          setShowError(() => ({ hasError: false, message: "" }));
-          setSuccessMessage("");
-          router.push("/admin/login");
-        }, 7000);
       }
     },
   });
@@ -198,7 +181,6 @@ const AdminSignUpForm = () => {
           />
           <PasswordModal requirements={requirements} show={showPasswordModal} />
         </div>
-
         <InputField
           id="confirmPassword"
           label="Confirm Password"
@@ -216,18 +198,11 @@ const AdminSignUpForm = () => {
           showPassword={showPassword}
           updatePasswordVisibility={updatePasswordVisibility}
         />
-
         <div className="login-box">
           <Link href="/reactivate_account" className="login-link">
             Reactivate Account?
           </Link>
         </div>
-
-        {showError.hasError && (
-          <p className="signup-error">{showError.message}</p>
-        )}
-        {successMessage && <p className="signup-success">{successMessage}</p>}
-
         <section>
           <Button id="btn__submit" type="submit" disabled={!formik.isValid}>
             {formik.isSubmitting ? <LoadingSpinner color="white" /> : "Sign Up"}
@@ -240,4 +215,5 @@ const AdminSignUpForm = () => {
     </section>
   );
 };
+
 export default AdminSignUpForm;

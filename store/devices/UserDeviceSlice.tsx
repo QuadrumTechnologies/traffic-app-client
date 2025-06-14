@@ -107,49 +107,85 @@ const initialState: InitialStateTypes = {
 
 export const getUserDevice = createAsyncThunk(
   "userDevice/getUserDevice",
-  async (email?: string) => {
-    const { data } = await HttpRequest.get(`/devices`);
-    return data;
+  async (_: string | undefined, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/devices`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch devices"
+      );
+    }
   }
 );
 
 export const getUserPhase = createAsyncThunk(
   "userDevice/getUserPhase",
-  async (email?: string) => {
-    const { data } = await HttpRequest.get(`/phases`);
-    return data;
+  async (_: string | undefined, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/phases`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch phases"
+      );
+    }
   }
 );
 
 export const getUserPattern = createAsyncThunk(
   "userDevice/getUserPattern",
-  async (email?: string) => {
-    const { data } = await HttpRequest.get(`/patterns`);
-    return data;
+  async (_: string | undefined, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/patterns`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch patterns"
+      );
+    }
   }
 );
 
 export const getUserPlan = createAsyncThunk(
   "userDevice/getUserPlan",
-  async (email?: string) => {
-    const { data } = await HttpRequest.get(`/plans`);
-    return data;
+  async (_: string | undefined, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/plans`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch plans"
+      );
+    }
   }
 );
 
 export const getUserDeviceInfoData = createAsyncThunk(
   "userDevice/getUserDeviceInfoData",
-  async (deviceId: string) => {
-    const { data } = await HttpRequest.get(`/info/${deviceId}`);
-    return data;
+  async (deviceId: string, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/info/${deviceId}`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch device info"
+      );
+    }
   }
 );
 
 export const getUserDeviceStateData = createAsyncThunk(
   "userDevice/getUserDeviceStateData",
-  async (deviceId: string) => {
-    const { data } = await HttpRequest.get(`/state/${deviceId}`);
-    return data;
+  async (deviceId: string, { rejectWithValue }) => {
+    try {
+      const { data } = await HttpRequest.get(`/state/${deviceId}`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to fetch device state"
+      );
+    }
   }
 );
 
@@ -216,8 +252,9 @@ const UserDeviceSlice = createSlice({
         state.devices = action.payload?.data?.devices || [];
         state.isFetchingDevices = false;
       })
-      .addCase(getUserDevice.rejected, (state) => {
+      .addCase(getUserDevice.rejected, (state, action) => {
         state.isFetchingDevices = false;
+        emitToastMessage(action.payload as string, "error");
       })
       .addCase(getUserPhase.pending, (state) => {
         state.isFetchingPhases = true;
@@ -226,8 +263,9 @@ const UserDeviceSlice = createSlice({
         state.phases = action.payload?.data?.phases?.reverse() || [];
         state.isFetchingPhases = false;
       })
-      .addCase(getUserPhase.rejected, (state) => {
+      .addCase(getUserPhase.rejected, (state, action) => {
         state.isFetchingPhases = false;
+        emitToastMessage(action.payload as string, "error");
       })
       .addCase(getUserPattern.pending, (state) => {
         state.isFetchingPatterns = true;
@@ -236,8 +274,9 @@ const UserDeviceSlice = createSlice({
         state.patterns = action.payload?.data?.patterns?.reverse() || [];
         state.isFetchingPatterns = false;
       })
-      .addCase(getUserPattern.rejected, (state) => {
+      .addCase(getUserPattern.rejected, (state, action) => {
         state.isFetchingPatterns = false;
+        emitToastMessage(action.payload as string, "error");
       })
       .addCase(getUserPlan.pending, (state) => {
         state.isFetchingPlans = true;
@@ -246,16 +285,23 @@ const UserDeviceSlice = createSlice({
         state.plans = action.payload?.data?.plans?.reverse() || [];
         state.isFetchingPlans = false;
       })
-      .addCase(getUserPlan.rejected, (state) => {
+      .addCase(getUserPlan.rejected, (state, action) => {
         state.isFetchingPlans = false;
+        emitToastMessage(action.payload as string, "error");
       })
       .addCase(getUserDeviceInfoData.fulfilled, (state, action) => {
         state.currentDeviceInfoData =
           action.payload?.data || state.currentDeviceInfoData;
       })
+      .addCase(getUserDeviceInfoData.rejected, (state, action) => {
+        emitToastMessage(action.payload as string, "error");
+      })
       .addCase(getUserDeviceStateData.fulfilled, (state, action) => {
         state.deviceActiveStateData =
           action.payload?.data || state.deviceActiveStateData;
+      })
+      .addCase(getUserDeviceStateData.rejected, (state, action) => {
+        emitToastMessage(action.payload as string, "error");
       });
   },
 });

@@ -13,18 +13,13 @@ import { useRouter } from "next/navigation";
 import InputField from "../UI/Input/Input";
 import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 import Button from "../UI/Button/Button";
-import InlineFeedback from "../UI/Input/InlineFeedback";
 import HttpRequest from "@/store/services/HttpRequest";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 const AdminLoginForm = () => {
   const router = useRouter();
 
-  // Show and Hide password state
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
 
   const initialValues = {
     email: "",
@@ -51,30 +46,21 @@ const AdminLoginForm = () => {
     };
     try {
       const response = await HttpRequest.post("/auth/admin/signin", reqObj);
+
       const {
-        data: { adminUser },
-        adminToken,
-        tokenExpiresIn,
+        data: { adminUser, adminToken, tokenExpiresIn },
       } = response.data;
 
       setItemToCookie("adminToken", adminToken, +tokenExpiresIn / 24);
       SetItemToLocalStorage("adminUser", adminUser);
-
+      emitToastMessage(response.data.message, "success");
       router.push("/admin/dashboard");
     } catch (error: any) {
-      console.log("login error", error);
       const errorMessage =
         error?.response?.data.message || "A network error occurred";
-
-      setShowError(() => ({
-        hasError: true,
-        message: `${errorMessage} Try again.`,
-      }));
+      emitToastMessage(errorMessage, "error");
     } finally {
       actions.setSubmitting(false);
-      setTimeout(() => {
-        setShowError(() => ({ hasError: false, message: "" }));
-      }, 7000);
     }
   };
 
@@ -131,9 +117,6 @@ const AdminLoginForm = () => {
                 Forgot Password?
               </Link>
             </div>
-            {showError.hasError && (
-              <InlineFeedback status="error" message={showError.message} />
-            )}
             <Button type="submit" disabled={!formik.isValid}>
               {formik.isSubmitting ? <LoadingSpinner /> : "Login"}
             </Button>

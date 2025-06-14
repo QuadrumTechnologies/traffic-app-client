@@ -10,14 +10,11 @@ import InformationInput from "@/components/UI/Input/InformationInput";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import Button from "@/components/UI/Button/Button";
 
+import { toast } from "react-toastify";
+import { emitToastMessage } from "@/utils/toastFunc";
+
 const ForgotPassword = () => {
   const router = useRouter();
-
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
-  const [successMessage, setSuccessMessage] = useState<string>("");
 
   // Yup schema configurations
   const validationSchema = Yup.object().shape({
@@ -35,26 +32,19 @@ const ForgotPassword = () => {
     validateOnChange: true,
     validateOnBlur: true,
     validateOnMount: false,
-    // Form submission
     async onSubmit(values, actions) {
       const { email } = values;
       try {
         const response = await HttpRequest.post("/auth/forgotPassword", {
           email,
         });
-        setSuccessMessage(response.data.message);
+        emitToastMessage(response.data.message, "success");
       } catch (error: any) {
-        setShowError(() => ({
-          hasError: true,
-          message: `${error?.response?.data.message} Try again.`,
-        }));
+        const errorMessage =
+          error?.response?.data.message || "A network error occurred";
+        emitToastMessage(errorMessage, "error");
       } finally {
-        // Enabling the submitting of the form again
         actions.setSubmitting(false);
-        setTimeout(() => {
-          setShowError(() => ({ hasError: false, message: "" }));
-          setSuccessMessage("");
-        }, 7000);
       }
     },
   });
@@ -84,11 +74,6 @@ const ForgotPassword = () => {
             value={formik.values.email}
             inputErrorMessage={formik.errors.email}
           />
-          {showError.hasError && (
-            <p className="signup-error">{showError.message}</p>
-          )}
-          {successMessage && <p className="signup-success">{successMessage}</p>}
-
           <Button type="submit">
             {formik.isSubmitting ? <LoadingSpinner /> : "Click To Reset"}
           </Button>

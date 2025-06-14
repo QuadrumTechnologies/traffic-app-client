@@ -5,8 +5,9 @@ import {
 } from "@/store/devices/UserDeviceSlice";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useState, useEffect } from "react";
-import { useAppDispatch } from "./reduxHook";
+import { useAppDispatch, useAppSelector } from "./reduxHook";
 import { handleManualControlFeedback } from "@/store/signals/SignalConfigSlice";
+import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 
 interface DeviceStatus {
   id: string;
@@ -18,6 +19,11 @@ export const useDeviceStatus = () => {
   const [statuses, setStatuses] = useState<DeviceStatus[]>([]);
   const dispatch = useAppDispatch();
   const timeoutMap: { [key: string]: NodeJS.Timeout } = {};
+  const user = GetItemFromLocalStorage("user") || {};
+  const userEmail = user.email || null;
+  const isAdmin = user.isAdmin || false;
+  const { devices } = useAppSelector((state) => state.userDevice);
+  const deviceIds = devices.map((device) => device.deviceId);
 
   useEffect(() => {
     const ws = getWebSocket();
@@ -29,19 +35,26 @@ export const useDeviceStatus = () => {
     ) => {
       setStatuses((prevStatuses) => {
         const existingStatus = prevStatuses.find((s) => s.id === id);
-        if (existingStatus) {
-          return prevStatuses.map((s) =>
-            s.id === id ? { ...s, status, lastSeen } : s
+        const newStatus = { id, status, lastSeen };
+
+        // Only emit toast if status has changed
+        if (existingStatus && existingStatus.status !== status) {
+          emitToastMessage(
+            `Device ${id} is ${status ? "online" : "offline"}.`,
+            "info"
           );
+        } else if (!existingStatus && status) {
+          emitToastMessage(`Device ${id} is online.`, "info");
+        }
+
+        if (existingStatus) {
+          return prevStatuses.map((s) => (s.id === id ? newStatus : s));
         } else {
-          return [...prevStatuses, { id, status, lastSeen }];
+          return [...prevStatuses, newStatus];
         }
       });
+
       dispatch(updateDeviceAvailability({ DeviceID: id, Status: status }));
-      emitToastMessage(
-        `Device ${id} is ${status ? "online" : "offline"}.`,
-        "info"
-      );
     };
 
     const handleWebSocketMessage = (event: MessageEvent) => {
@@ -52,21 +65,31 @@ export const useDeviceStatus = () => {
         message?.source.type === "hardware"
       ) {
         const deviceId = message.source.id;
+
+        // Skip if not admin and device not in user's devices
+        if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
+          return;
+        }
+
         updateDeviceStatus(deviceId, true, null);
 
         clearTimeout(timeoutMap[deviceId]);
         timeoutMap[deviceId] = setTimeout(() => {
           updateDeviceStatus(deviceId, false, new Date().toISOString());
-          dispatch(
-            updateDeviceAvailability({ DeviceID: deviceId, Status: false })
-          );
         }, 30000);
       } else if (
         message.event === "device_status" &&
         message?.source.type === "hardware"
       ) {
+        const deviceId = message.source.id;
+
+        // Skip if not admin and device not in user's devices
+        if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
+          return;
+        }
+
         updateDeviceStatus(
-          message.source.id,
+          deviceId,
           message.source.status,
           message.source.lastSeen
         );
@@ -102,7 +125,7 @@ export const useDeviceStatus = () => {
     return () => {
       Object.values(timeoutMap).forEach(clearTimeout);
     };
-  }, [dispatch]);
+  }, [dispatch, userEmail, isAdmin, deviceIds]);
 
   return statuses;
 };

@@ -13,18 +13,13 @@ import { useRouter } from "next/navigation";
 import InputField from "../UI/Input/Input";
 import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 import Button from "../UI/Button/Button";
-import InlineFeedback from "../UI/Input/InlineFeedback";
 import HttpRequest from "@/store/services/HttpRequest";
+import { emitToastMessage } from "@/utils/toastFunc";
 
 const LoginForm = () => {
   const router = useRouter();
 
-  // Show and Hide password state
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showError, setShowError] = useState<{
-    hasError: boolean;
-    message: string;
-  }>({ hasError: false, message: "" });
 
   const initialValues = {
     email: "",
@@ -51,32 +46,21 @@ const LoginForm = () => {
     };
     try {
       const response = await HttpRequest.post("/auth/signin", reqObj);
-      // Destructuring the response.data
+
       const {
-        data: { user },
-        token,
-        tokenExpiresIn,
+        data: { user, token, tokenExpiresIn },
       } = response.data;
 
-      // Setting item to local strorage and cookies
       setItemToCookie("token", token, +tokenExpiresIn / 24);
       SetItemToLocalStorage("user", user);
-
+      emitToastMessage(response.data.message, "success");
       router.push("/dashboard");
     } catch (error: any) {
-      console.log("login error", error);
       const errorMessage =
         error?.response?.data.message || "A network error occurred";
-
-      setShowError(() => ({
-        hasError: true,
-        message: `${errorMessage} Try again.`,
-      }));
+      emitToastMessage(errorMessage, "error");
     } finally {
       actions.setSubmitting(false);
-      setTimeout(() => {
-        setShowError(() => ({ hasError: false, message: "" }));
-      }, 7000);
     }
   };
 
@@ -133,9 +117,6 @@ const LoginForm = () => {
                 Forgot Password?
               </Link>
             </div>
-            {showError.hasError && (
-              <InlineFeedback status="error" message={showError.message} />
-            )}
             <Button type="submit" disabled={!formik.isValid}>
               {formik.isSubmitting ? <LoadingSpinner /> : "Login"}
             </Button>
