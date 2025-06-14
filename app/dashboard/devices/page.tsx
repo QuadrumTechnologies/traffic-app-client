@@ -27,12 +27,12 @@ export interface DeviceStatus {
 }
 
 const UserDevices = () => {
-  const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
+  const { devices, isFetchingDevices } = useAppSelector(
     (state) => state.userDevice
   );
-  getWebSocket();
+
   const dispatch = useAppDispatch();
-  useDeviceStatus();
+  const statuses = useDeviceStatus();
   const pathname = usePathname();
   const router = useRouter();
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
@@ -44,7 +44,7 @@ const UserDevices = () => {
     setShowOptions(false);
   };
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
-  console.log("Device statuses:", deviceStatuses);
+  console.log("Device statuses:", statuses);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
@@ -111,7 +111,7 @@ const UserDevices = () => {
       )}
       <div className="devices-list">
         {devices?.map((device: any, index) => {
-          const status = getDeviceStatus(deviceStatuses, device.deviceId);
+          const status = getDeviceStatus(statuses, device.deviceId);
           return (
             <div
               key={index}

@@ -54,7 +54,6 @@ export const useDeviceStatus = () => {
     const handleWebSocketMessage = (event: MessageEvent) => {
       try {
         const message = JSON.parse(event.data);
-        console.log("WebSocket message received in hook:", message);
 
         if (
           message.event === "ping_received" &&
@@ -87,7 +86,6 @@ export const useDeviceStatus = () => {
           if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
             return;
           }
-          console.log("Device status update received:", message);
 
           updateDeviceStatusHandler(
             deviceId,
@@ -135,6 +133,5 @@ export const useDeviceStatus = () => {
     };
   }, [dispatch, userEmail, isAdmin, deviceIds]);
 
-  console.log("Device statuses from Redux:", deviceStatuses);
-  return deviceStatuses; // Return Redux state for convenience
+  return deviceStatuses;
 };
