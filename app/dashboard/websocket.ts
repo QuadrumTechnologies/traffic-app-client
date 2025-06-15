@@ -1,14 +1,13 @@
+// websocket.ts
 import { emitToastMessage } from "@/utils/toastFunc";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 
-// Define types for user and adminUser objects
 interface User {
   email?: string;
   isAdmin?: boolean;
   [key: string]: unknown;
 }
 
-// Define type for the identify message payload
 interface IdentifyMessage {
   event: "identify";
   clientType: "web_app";
@@ -16,46 +15,78 @@ interface IdentifyMessage {
   isAdmin: boolean;
 }
 
-// Singleton WebSocket instance
+// Singleton WebSocket instance and retry state
 let ws_socket: WebSocket | null = null;
-let retryCount: number = 0;
-const maxRetries: number = 5;
+let retryCount = 0;
+const maxRetries = 5;
 
-// WebSocket URL with fallback
 const wsUrl: string =
-  process.env.NEXT_PUBLIC_BACKEND_WS ||
-  "wss://traffic-api.quadrumtechnologies.com/ws";
+  process.env.NEXT_PUBLIC_BACKEND_WS || "ws://localhost:3000/ws";
+
+export const sendIdentify = () => {
+  if (!ws_socket || ws_socket.readyState !== WebSocket.OPEN) {
+    console.warn("Cannot send identify: socket not open");
+    return;
+  }
+  let user: User = {};
+  let adminUser: User = {};
+  let isAdmin = false;
+  try {
+    user = GetItemFromLocalStorage("user") || {};
+    adminUser = GetItemFromLocalStorage("adminUser") || {};
+    if (typeof window !== "undefined") {
+      isAdmin = window.location.pathname.startsWith("/admin");
+    }
+  } catch (err) {
+    console.error("Error accessing localStorage:", err);
+    emitToastMessage("Failed to access user data.", "error");
+  }
+  const loggedInUser: User = isAdmin ? adminUser : user;
+  const identifyMessage: IdentifyMessage = {
+    event: "identify",
+    clientType: "web_app",
+    userEmail: loggedInUser.email || null,
+    isAdmin,
+  };
+  console.log("Sending identify event with user:", loggedInUser);
+  ws_socket.send(JSON.stringify(identifyMessage));
+};
 
 export const initializeWebSocket = (): WebSocket => {
-  // Prevent reinitialization if WebSocket is CONNECTING or OPEN
-  if (
-    ws_socket &&
-    (ws_socket.readyState === WebSocket.CONNECTING ||
-      ws_socket.readyState === WebSocket.OPEN)
-  ) {
-    console.log(
-      `WebSocket already initialized, readyState: ${ws_socket.readyState}`
-    );
-    return ws_socket;
+  // If ws_socket exists and is CONNECTING or OPEN, reuse but ensure identify is sent
+  if (ws_socket) {
+    if (ws_socket.readyState === WebSocket.OPEN) {
+      console.log("WebSocket already open; re-sending identify");
+      sendIdentify();
+      return ws_socket;
+    }
+    if (ws_socket.readyState === WebSocket.CONNECTING) {
+      console.log("WebSocket is connecting; will send identify on open");
+      // Attach/overwrite onopen so identify goes out once
+      const prevOnOpen = ws_socket.onopen;
+      ws_socket.onopen = (event) => {
+        if (prevOnOpen && ws_socket) prevOnOpen.call(ws_socket, event);
+        sendIdentify();
+      };
+      return ws_socket;
+    }
   }
 
-  // Validate WebSocket URL
   if (!wsUrl) {
     console.error("WebSocket URL is undefined. Check .env configuration.");
     emitToastMessage("WebSocket URL is not configured.", "error");
     throw new Error("WebSocket URL is undefined");
   }
-
   console.log(`Initializing WebSocket with URL: ${wsUrl}`);
 
   try {
     ws_socket = new WebSocket(wsUrl);
 
-    // Set timeout to detect if onopen doesn't fire
+    // Timeout if onopen doesn't fire
     const openTimeout = setTimeout(() => {
       if (ws_socket && ws_socket.readyState !== WebSocket.OPEN) {
         console.error(
-          `WebSocket did not open within 5 seconds, readyState: ${ws_socket.readyState}`
+          `WebSocket did not open within timeout. State: ${ws_socket.readyState}`
         );
         ws_socket.close();
         ws_socket = null;
@@ -65,46 +96,10 @@ export const initializeWebSocket = (): WebSocket => {
     ws_socket.onopen = () => {
       clearTimeout(openTimeout);
       console.log(
-        `WebSocket connection established, readyState: ${
-          ws_socket ? ws_socket.readyState : "null"
-        }`
+        `WebSocket connection established, readyState: ${ws_socket?.readyState}`
       );
       retryCount = 0;
-
-      if (ws_socket?.readyState === WebSocket.OPEN) {
-        let user: User = {};
-        let adminUser: User = {};
-        let isAdmin: boolean = false;
-
-        try {
-          user = GetItemFromLocalStorage("user") || {};
-          adminUser = GetItemFromLocalStorage("adminUser") || {};
-          if (typeof window !== "undefined") {
-            isAdmin = window.location.pathname.startsWith("/admin");
-          }
-        } catch (error) {
-          console.error("Error accessing localStorage:", error);
-          emitToastMessage("Failed to access user data.", "error");
-        }
-
-        const loggedInUser: User = isAdmin ? adminUser : user;
-        const identifyMessage: IdentifyMessage = {
-          event: "identify",
-          clientType: "web_app",
-          userEmail: loggedInUser.email || null,
-          isAdmin,
-        };
-
-        console.log("Sending identify event with user:", loggedInUser);
-        ws_socket.send(JSON.stringify(identifyMessage));
-        console.log("Sent identify message:", identifyMessage);
-      } else {
-        console.error(
-          `WebSocket connection is not open, readyState: ${
-            ws_socket ? ws_socket.readyState : "null"
-          }`
-        );
-      }
+      sendIdentify();
     };
 
     ws_socket.onclose = (event: CloseEvent) => {
@@ -114,7 +109,6 @@ export const initializeWebSocket = (): WebSocket => {
         wasClean: event.wasClean,
       });
       ws_socket = null;
-
       if (retryCount < maxRetries) {
         retryCount++;
         const delay = 5000 * retryCount;
@@ -153,6 +147,7 @@ export const initializeWebSocket = (): WebSocket => {
   }
 };
 
+// Return the singleton, initializing if needed
 export const getWebSocket = (): WebSocket => {
   const ws =
     ws_socket && ws_socket.readyState === WebSocket.OPEN
@@ -166,6 +161,7 @@ export const getWebSocket = (): WebSocket => {
   return ws;
 };
 
+// Close and reset the singleton
 export const closeWebSocket = (): void => {
   if (ws_socket && ws_socket.readyState !== WebSocket.CLOSED) {
     console.log("Closing WebSocket connection");

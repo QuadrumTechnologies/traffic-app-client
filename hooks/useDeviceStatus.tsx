@@ -29,25 +29,14 @@ export const useDeviceStatus = () => {
       lastSeen: string | null = null
     ) => {
       const existingStatus = deviceStatuses.find((s) => s.id === id);
-
-      // Emit toast if status has changed
       if (existingStatus && existingStatus.status !== status) {
-        console.log(
-          "Status change detected:",
-          existingStatus.status,
-          "->",
-          status
-        );
         emitToastMessage(
           `Device ${id} is ${status ? "online" : "offline"}.`,
           "info"
         );
       } else if (!existingStatus && status) {
-        console.log("New device online:", id);
         emitToastMessage(`Device ${id} is online.`, "info");
       }
-
-      // Dispatch to Redux
       dispatch(updateDeviceStatus({ id, status, lastSeen }));
     };
 
@@ -60,15 +49,10 @@ export const useDeviceStatus = () => {
           message?.source.type === "hardware"
         ) {
           const deviceId = message.source.id;
-
-          console.log("Ping received for device:", deviceId, deviceIds);
-
           if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
             return;
           }
-
           updateDeviceStatusHandler(deviceId, true, null);
-
           clearTimeout(timeoutMap[deviceId]);
           timeoutMap[deviceId] = setTimeout(() => {
             updateDeviceStatusHandler(
@@ -82,11 +66,9 @@ export const useDeviceStatus = () => {
           message?.source.type === "hardware"
         ) {
           const deviceId = message.source.id;
-
           if (!isAdmin && userEmail && !deviceIds.includes(deviceId)) {
             return;
           }
-
           updateDeviceStatusHandler(
             deviceId,
             message.source.status,
@@ -120,16 +102,29 @@ export const useDeviceStatus = () => {
       }
     };
 
+    // Attach listener when socket is open or on open
+    let openListener: (() => void) | null = null;
+    const setupListener = () => {
+      ws.addEventListener("message", handleWebSocketMessage);
+    };
+
     if (ws.readyState === WebSocket.OPEN) {
-      ws.onmessage = handleWebSocketMessage;
+      setupListener();
     } else {
-      ws.onopen = () => {
-        ws.onmessage = handleWebSocketMessage;
+      openListener = () => {
+        setupListener();
       };
+      ws.addEventListener("open", openListener);
     }
 
     return () => {
+      // Clear timeouts
       Object.values(timeoutMap).forEach(clearTimeout);
+      // Remove message listener
+      ws.removeEventListener("message", handleWebSocketMessage);
+      if (openListener) {
+        ws.removeEventListener("open", openListener);
+      }
     };
   }, [dispatch, userEmail, isAdmin, deviceIds]);
 
