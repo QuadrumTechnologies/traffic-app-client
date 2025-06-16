@@ -44,7 +44,6 @@ const UserDevices = () => {
     setShowOptions(false);
   };
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
-  console.log("Device statuses:", statuses);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);

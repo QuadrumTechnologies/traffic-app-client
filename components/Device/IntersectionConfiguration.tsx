@@ -119,7 +119,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       );
       setTimeout(() => {
         dispatch(getUserDeviceStateData(deviceId));
-      }, 500);
+      }, 2000);
     };
 
     if (socket.readyState === WebSocket.OPEN) {
@@ -264,14 +264,18 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           if (feedback.payload.error) {
             emitToastMessage(feedback.payload.message, "error");
           } else {
-            dispatch(getUserDeviceStateData(deviceId));
+            setTimeout(() => {
+              dispatch(getUserDeviceStateData(deviceId));
+            }, 2000);
           }
           break;
         case "signal_feedback":
           if (feedback.payload.error) {
             emitToastMessage(feedback.payload.message, "error");
           } else {
-            dispatch(getUserDeviceStateData(deviceId));
+            setTimeout(() => {
+              dispatch(getUserDeviceStateData(deviceId));
+            }, 2000);
           }
           break;
         default:
@@ -304,15 +308,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   if (showCommandsOnly) {
     return (
-      <div
-      // style={{
-      //   display: "flex",
-      //   justifyContent: "flex-center",
-      //   alignItems: "center",
-      //   flexDirection: "column",
-      //   width: "100%",
-      // }}
-      >
+      <div>
         <div>
           <h2>Commands Control</h2>
           <div className="intersectionConfiguration__commands">
