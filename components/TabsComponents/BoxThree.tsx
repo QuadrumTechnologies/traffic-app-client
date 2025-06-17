@@ -11,6 +11,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdUpload } from "react-icons/md";
+import { toast } from "react-toastify";
 import LoadingSpinner from "../UI/LoadingSpinner/LoadingSpinner";
 
 interface ScheduleSegment {
@@ -41,12 +42,13 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
   const [inputtedPlanName, setInputtedPlanName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isUploading, setIsUploading] = useState<string | null>(null);
+  const [isUploadingAll, setIsUploadingAll] = useState<boolean>(false);
 
   const searchPlanByName = (planName: string) => {
-    const matchedPhases = plans.filter((plan) =>
+    const matchedPlans = plans.filter((plan) =>
       plan.name.toLowerCase().includes(planName.toLowerCase())
     );
-    setSearchedResult(matchedPhases);
+    setSearchedResult(matchedPlans);
   };
 
   const plansToShow = showSearchedResult ? searchedResult : plans;
@@ -76,10 +78,11 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       return;
     }
     try {
-      const response = await HttpRequest.delete(`/plans/${planId}/${email}`);
+      await HttpRequest.delete(`/plans/${planId}/${email}`);
       dispatch(getUserPlan(email));
+      emitToastMessage(`Plan "${planName}" deleted successfully`, "success");
     } catch (error: any) {
-      const message = error?.response?.data?.message || `Request failed`;
+      const message = error?.response?.data?.message || "Request failed";
       emitToastMessage(message, "error");
     }
   };
@@ -94,13 +97,14 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     }
 
     try {
-      const response = await HttpRequest.delete(`/plans/all/${email}`);
+      await HttpRequest.delete(`/plans/all/${email}`);
       dispatch(getUserPlan(email));
       setSearchedResult([]);
       setShowSearchedResult(false);
       setInputtedPlanName("");
+      emitToastMessage("All plans deleted successfully", "success");
     } catch (error: any) {
-      const message = error?.response?.data?.message || `Request failed`;
+      const message = error?.response?.data?.message || "Request failed";
       emitToastMessage(message, "error");
     }
   };
@@ -120,6 +124,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
     }
 
+    let toastId: string | undefined; // Declare toastId outside try-catch
     try {
       const plan = plans.find((p) => p.id === planId);
       if (!plan || !plan.schedule) {
@@ -128,6 +133,10 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
 
       setIsUploading(planId);
+      toastId = emitToastMessage(`Uploading plan "${planName}"...`, "info", {
+        duration: false,
+      });
+
       const socket = getWebSocket();
 
       const sendMessage = (
@@ -167,6 +176,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
             if (feedback.event === "ping_received") return;
             if (feedback.event !== "upload_feedback") return;
             if (
+              feedback.payload &&
               feedback.payload.Plan === plan.name &&
               feedback.payload.Period === startSegmentKey
             ) {
@@ -205,10 +215,15 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
 
       setIsUploading(null);
+      emitToastMessage(`Plan "${planName}" uploaded successfully`, "success", {
+        duration: 3000,
+      });
+      if (toastId) toast.dismiss(toastId);
     } catch (error: any) {
       setIsUploading(null);
-      const message = error?.response?.data?.message || `Request failed`;
+      const message = error?.message || "Request failed";
       emitToastMessage(message, "error");
+      if (toastId) toast.dismiss(toastId);
     }
   };
 
@@ -222,14 +237,41 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     }
 
     try {
+      setIsUploadingAll(true);
+      const totalPlans = plans?.length || 0;
+      let uploadedCount = 0;
+      const toastId = emitToastMessage(
+        `Uploading ${uploadedCount}/${totalPlans} plans...`,
+        "info",
+        {
+          duration: false,
+        }
+      );
+
       for (const plan of plans || []) {
-        if (plan?.id && plan?.name) {
+        if (plan.id && plan.name) {
           await handleUploadPlan(plan.id, plan.name, false);
+          uploadedCount++;
+          emitToastMessage(
+            `Uploading ${uploadedCount}/${totalPlans} plans...`,
+            "info",
+            {
+              toastId,
+              duration: false,
+            }
+          );
         }
       }
+
+      emitToastMessage("All plans uploaded successfully", "success", {
+        duration: 3000,
+      });
+      toast.dismiss(toastId);
     } catch (error: any) {
-      const message = error?.response?.data?.message || `Request failed`;
+      const message = error?.message || "Request failed";
       emitToastMessage(message, "error");
+    } finally {
+      setIsUploadingAll(false);
     }
   };
 
@@ -259,7 +301,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
   return (
     <div className="boxThree">
       {isLoading ? (
-        <LoadingSpinner color="blue" />
+        <LoadingSpinner />
       ) : plans?.length > 0 ? (
         <>
           <div className="plans__header">
@@ -272,7 +314,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
             >
               <input
                 type="text"
-                placeholder="Find a plan by its name"
+                placeholder="Search for a plan by name"
                 value={inputtedPlanName}
                 onChange={(e) => {
                   setInputtedPlanName(e.target.value);
@@ -293,15 +335,27 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
                       <button
                         onClick={() => handleUploadPlan(plan.id, plan.name)}
                         disabled={isUploading === plan.id}
+                        title={
+                          isUploading === plan.id
+                            ? "Uploading..."
+                            : "Upload Plan"
+                        }
+                        aria-label={
+                          isUploading === plan.id
+                            ? "Uploading plan"
+                            : "Upload plan"
+                        }
                       >
                         {isUploading === plan.id ? (
-                          <LoadingSpinner color="blue" />
+                          <LoadingSpinner />
                         ) : (
                           <MdUpload />
                         )}
                       </button>
                       <button
                         onClick={() => handleDeletePlan(plan.id, plan.name)}
+                        title="Delete Plan"
+                        aria-label="Delete plan"
                       >
                         <FaTrashAlt />
                       </button>
@@ -311,31 +365,47 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
               ))
             ) : (
               <div className="plans__noResults">
-                No plans match your search.
+                No plans match your search criteria.
               </div>
             )}
           </ul>
         </>
       ) : (
         <div className="plans__noPlans">
-          You have not created any schedule yet.
+          You haven't created any schedules yet.
         </div>
       )}
       <div className="boxThree__actions">
-        <button onClick={() => router.push(newPathname)}>
-          Go to schedule page
+        <button
+          onClick={() => router.push(newPathname)}
+          aria-label="Go to schedule page"
+        >
+          Go to Schedule Page
         </button>
         <button
           onClick={handleUploadAllPlan}
-          disabled={isLoading || !plans || plans.length === 0}
+          disabled={isLoading || isUploadingAll || !plans || plans.length === 0}
+          title={isUploadingAll ? "Uploading All Plans..." : "Upload All Plans"}
+          aria-label={
+            isUploadingAll ? "Uploading all plans" : "Upload all plans"
+          }
         >
-          Upload All Plans
+          {isUploadingAll ? (
+            <>
+              <LoadingSpinner />
+              Uploading...
+            </>
+          ) : (
+            "Upload All Plans"
+          )}
         </button>
         <div>
           <button
             className="phases__deleteAll"
             onClick={handleDeleteAllPlans}
-            disabled={!plans || plans.length === 0}
+            disabled={isLoading || !plans || plans.length === 0}
+            title="Delete All Plans"
+            aria-label="Delete all plans"
           >
             Delete All Plans
           </button>

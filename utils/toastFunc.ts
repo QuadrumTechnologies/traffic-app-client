@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 
-export const emitToastMessageSolid = (
+export const emitToastMessageGradient = (
   message: string,
   type: "error" | "success" | "info" | "warning"
 ) => {
@@ -99,14 +99,17 @@ export const emitToastMessageSolid = (
   }
 };
 
-// Alternative version with solid colors (if you prefer no gradients)
 export const emitToastMessage = (
   message: string,
-  type: "error" | "success" | "info" | "warning"
-) => {
+  type: "error" | "success" | "info" | "warning",
+  options?: {
+    duration?: number | false;
+    toastId?: string;
+  }
+): string => {
   const commonStyles = {
     position: "top-right" as const,
-    autoClose: 5000,
+    autoClose: options?.duration ?? 5000,
     hideProgressBar: false,
     closeOnClick: true,
     pauseOnHover: true,
@@ -137,12 +140,27 @@ export const emitToastMessage = (
 
   const selectedColor = colors[type];
 
-  return toast[type](message, {
+  const toastOptions = {
     ...commonStyles,
+    toastId: options?.toastId,
+    autoClose: options?.duration ?? commonStyles.autoClose,
     style: {
       ...commonStyles.style,
       background: selectedColor.bg,
       color: selectedColor.color,
     },
-  });
+  };
+
+  if (options?.toastId && toast.isActive(options.toastId)) {
+    // Update existing toast
+    toast.update(options.toastId, {
+      render: message,
+      type,
+      ...toastOptions,
+    });
+    return options.toastId;
+  } else {
+    // Create new toast
+    return toast[type](message, toastOptions) as string;
+  }
 };

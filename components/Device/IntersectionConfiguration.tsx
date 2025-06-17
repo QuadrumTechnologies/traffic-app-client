@@ -49,6 +49,11 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const params = useParams();
   const email = GetItemFromLocalStorage("user")?.email;
 
+  console.log(
+    "IntersectionConfiguration Comp - Device Active State Data:",
+    deviceActiveStateData
+  );
+
   const [showManualMoreConfig, setShowManualMoreConfig] =
     useState<boolean>(false);
   const [initialSignalStrings, setInitialSignalStrings] = useState("");
