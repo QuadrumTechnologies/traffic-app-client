@@ -117,13 +117,14 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     const pattern = patterns?.find((p) => p.name === patternName);
 
     try {
-      const response = await HttpRequest.delete(
+      const { data } = await HttpRequest.delete(
         `/patterns/${pattern?.name}/${email}`
       );
       dispatch(getUserPattern(email));
       setUpdatedPatternPhases([]);
       setShowPatternPhases(null);
       setSelectedPattern(null);
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
@@ -140,7 +141,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     }
 
     try {
-      const response = await HttpRequest.delete(`/patterns/all/${email}`);
+      const { data } = await HttpRequest.delete(`/patterns/all/${email}`);
       dispatch(getUserPattern(email));
       setUpdatedPatternPhases([]);
       setSelectedPattern(null);
@@ -151,6 +152,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
       setActivePatternIndex(null);
       setActivePreviewPhase(null);
       stopPlayPhases();
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
@@ -174,7 +176,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
 
     const pattern = patterns.find((pattern) => pattern.name === patternName);
     try {
-      const response = await HttpRequest.post("/patterns", {
+      const { data } = await HttpRequest.post("/patterns", {
         ...pattern,
         email,
         name: newPatternName,
@@ -182,6 +184,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
       });
       dispatch(getUserPattern(email));
       dispatch(clearPhaseConfig());
+      emitToastMessage(data.message, "success");
       handleCancel();
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
@@ -326,7 +329,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
       });
 
       try {
-        const response = await HttpRequest.put(
+        const { data } = await HttpRequest.put(
           `/patterns/${selectedPattern.name}/${email}/`,
           {
             configuredPhases: configuredPhases,
@@ -334,6 +337,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
         );
         dispatch(getUserPattern(email));
         setAlreadyCreatedPatternPhaseToConfigure(null);
+        emitToastMessage(data.message, "success");
       } catch (error: any) {
         const message = error?.response?.data?.message || `Request failed`;
         emitToastMessage(message, "error");

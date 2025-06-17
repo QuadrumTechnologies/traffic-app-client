@@ -78,9 +78,10 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       return;
     }
     try {
-      await HttpRequest.delete(`/plans/${planId}/${email}`);
+      const { data } = await HttpRequest.delete(`/plans/${planId}/${email}`);
       dispatch(getUserPlan(email));
-      emitToastMessage(`Plan "${planName}" deleted successfully`, "success");
+      // emitToastMessage(`Plan "${planName}" deleted successfully`, "success");
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || "Request failed";
       emitToastMessage(message, "error");
@@ -97,12 +98,13 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
     }
 
     try {
-      await HttpRequest.delete(`/plans/all/${email}`);
+      const { data } = await HttpRequest.delete(`/plans/all/${email}`);
       dispatch(getUserPlan(email));
       setSearchedResult([]);
       setShowSearchedResult(false);
       setInputtedPlanName("");
-      emitToastMessage("All plans deleted successfully", "success");
+      // emitToastMessage("All plans deleted successfully", "success");\
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || "Request failed";
       emitToastMessage(message, "error");

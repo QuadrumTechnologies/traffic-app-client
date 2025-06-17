@@ -58,9 +58,10 @@ const BoxOne: React.FC<BoxOneProps> = () => {
     const phaseId = phase?._id;
 
     try {
-      const response = await HttpRequest.delete(`/phases/${phaseId}/${email}`);
+      const { data } = await HttpRequest.delete(`/phases/${phaseId}/${email}`);
       dispatch(getUserPhase(email));
       setActiveOrLastAddedPhase(phaseName);
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
@@ -77,12 +78,13 @@ const BoxOne: React.FC<BoxOneProps> = () => {
     }
 
     try {
-      const response = await HttpRequest.delete(`/phases/all/${email}`);
+      const { data } = await HttpRequest.delete(`/phases/all/${email}`);
       dispatch(getUserPhase(email));
       setActiveOrLastAddedPhase("");
       setSearchedResult([]);
       setShowSearchedResult(false);
       setInputtedPhaseName("");
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");

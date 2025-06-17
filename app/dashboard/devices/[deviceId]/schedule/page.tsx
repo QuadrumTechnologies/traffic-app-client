@@ -342,7 +342,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       if (!userResponse) return;
     }
     try {
-      await HttpRequest.post("/plans", {
+      const { data } = await HttpRequest.post("/plans", {
         id: Date.now().toString(),
         deviceId: params.deviceId,
         email,
@@ -369,6 +369,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       });
       setSchedule(fullSchedule);
       setCustomDate(dayType.value === "custom" ? customDate : null);
+      emitToastMessage(data.message, "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
