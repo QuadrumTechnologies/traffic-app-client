@@ -18,9 +18,9 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
-  useDeviceStatus();
 
   useEffect(() => {
+    useDeviceStatus();
     // Initialize WebSocket once when Layout mounts
     const ws = initializeWebSocket();
 

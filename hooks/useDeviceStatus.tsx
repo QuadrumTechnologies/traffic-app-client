@@ -74,6 +74,12 @@ export const useDeviceStatus = () => {
             message.source.status,
             message.source.lastSeen
           );
+          console.log(
+            "Device status update:",
+            deviceId,
+            message.source.status,
+            message.source.lastSeen
+          );
         } else if (message.event === "error") {
           dispatch(
             handleWsFeedback({ event: "error", message: message.message })
@@ -120,7 +126,6 @@ export const useDeviceStatus = () => {
     return () => {
       // Clear timeouts
       Object.values(timeoutMap).forEach(clearTimeout);
-      // Remove message listener
       ws.removeEventListener("message", handleWebSocketMessage);
       if (openListener) {
         ws.removeEventListener("open", openListener);

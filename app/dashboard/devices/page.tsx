@@ -27,12 +27,12 @@ export interface DeviceStatus {
 }
 
 const UserDevices = () => {
-  const { devices, isFetchingDevices } = useAppSelector(
+  const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
     (state) => state.userDevice
   );
 
   const dispatch = useAppDispatch();
-  const statuses = useDeviceStatus();
+  useDeviceStatus();
   const pathname = usePathname();
   const router = useRouter();
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
@@ -110,7 +110,7 @@ const UserDevices = () => {
       )}
       <div className="devices-list">
         {devices?.map((device: any, index) => {
-          const status = getDeviceStatus(statuses, device.deviceId);
+          const status = getDeviceStatus(deviceStatuses, device.deviceId);
           return (
             <div
               key={index}

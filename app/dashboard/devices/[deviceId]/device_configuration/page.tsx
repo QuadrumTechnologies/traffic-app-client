@@ -23,6 +23,7 @@ import {
 } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { usePathname } from "next/navigation";
+import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 
 interface DeviceConfigurationPageProps {
   params: { deviceId: string };
@@ -104,7 +105,6 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
           time: Date.now(),
         });
       } catch (error: any) {
-        return;
         const message = error?.response?.data?.message || `Request failed`;
         emitToastMessage(message, "error");
       }
@@ -148,6 +148,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
     if (!confirmReset) return;
     handleRequest("Power", newPowerState);
+    useDeviceStatus();
   };
 
   const handleBrightnessChange = (value: number | number[]) => {

@@ -240,7 +240,6 @@ const UserDeviceSlice = createSlice({
       } else {
         state.deviceStatuses.push({ id, status, lastSeen });
       }
-      console.log("Updated device status:", state.deviceStatuses);
     },
 
     handleWsFeedback: (state, action) => {

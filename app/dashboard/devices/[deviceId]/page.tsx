@@ -54,13 +54,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
     deviceActiveStateData?.Auto || false
   );
 
-  console.log(
-    "Device Detail Comp - Device Active State Data:",
-    deviceActiveStateData
-  );
-
   const dispatch = useAppDispatch();
-  const statuses = useDeviceStatus();
+  useDeviceStatus();
   const deviceId = params.deviceId;
 
   const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
