@@ -29,8 +29,6 @@ interface DeviceConfigurationPageProps {
   params: { deviceId: string };
 }
 
-const BRIGHTNESS_LEVELS = [20, 40, 60, 80, 100];
-
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   params,
 }) => {
@@ -149,6 +147,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     if (!confirmReset) return;
     handleRequest("Power", newPowerState);
     useDeviceStatus();
+    dispatch(getUserDeviceStateData(params.deviceId));
   };
 
   const handleBrightnessChange = (value: number | number[]) => {

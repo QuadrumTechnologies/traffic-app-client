@@ -23,6 +23,7 @@ import {
   SetItemToLocalStorage,
 } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
+import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 
 interface DeviceConfigurationPageProps {
   params: { deviceId: string };
@@ -141,6 +142,8 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     const newPowerState = !formik.values.signalPower;
     formik.setFieldValue("signalPower", newPowerState);
     handleRequest("Power", newPowerState);
+    useDeviceStatus();
+    dispatch(getUserDeviceStateData(params.deviceId));
   };
 
   const handleSignalConfigChange = (value: string) => {
