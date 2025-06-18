@@ -42,10 +42,7 @@ interface InitialStateTypes {
     Phase: string;
     DeviceID: string;
   };
-  deviceAvailability: {
-    DeviceID: string;
-    Status: boolean;
-  };
+
   deviceActiveStateData: {
     DeviceID: string;
     Auto: boolean;
@@ -91,10 +88,6 @@ const initialState: InitialStateTypes = {
     Countdown: "",
     Phase: "",
     DeviceID: "",
-  },
-  deviceAvailability: {
-    DeviceID: "",
-    Status: false,
   },
   deviceActiveStateData: {
     DeviceID: "",
@@ -247,27 +240,9 @@ const UserDeviceSlice = createSlice({
       } else {
         state.deviceStatuses.push({ id, status, lastSeen });
       }
-      state.deviceAvailability = { DeviceID: id, Status: status };
       console.log("Updated device status:", state.deviceStatuses);
     },
-    updateDeviceAvailability: (state, action) => {
-      console.log("Updating device availability:", action.payload);
-      state.deviceAvailability = action.payload;
-      const { DeviceID, Status } = action.payload;
-      const existingStatus = state.deviceStatuses.find(
-        (s) => s.id === DeviceID
-      );
-      if (existingStatus) {
-        existingStatus.status = Status;
-        existingStatus.lastSeen = Status ? null : new Date().toISOString();
-      } else {
-        state.deviceStatuses.push({
-          id: DeviceID,
-          status: Status,
-          lastSeen: Status ? null : new Date().toISOString(),
-        });
-      }
-    },
+
     handleWsFeedback: (state, action) => {
       state.wsFeedback = action.payload;
       emitToastMessage(
@@ -345,7 +320,6 @@ export const {
   clearPhaseConfig,
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
-  updateDeviceAvailability,
   updateDeviceStatus,
   addCurrentDeviceStateData,
   handleWsFeedback,

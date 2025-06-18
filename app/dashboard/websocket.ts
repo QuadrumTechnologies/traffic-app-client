@@ -38,7 +38,6 @@ export const sendIdentify = () => {
       isAdmin = window.location.pathname.startsWith("/admin");
     }
   } catch (err) {
-    console.error("Error accessing localStorage:", err);
     emitToastMessage("Failed to access user data.", "error");
   }
   const loggedInUser: User = isAdmin ? adminUser : user;
@@ -48,12 +47,10 @@ export const sendIdentify = () => {
     userEmail: loggedInUser.email || null,
     isAdmin,
   };
-  console.log("Sending identify event with user:", loggedInUser);
   ws_socket.send(JSON.stringify(identifyMessage));
 };
 
 export const initializeWebSocket = (): WebSocket => {
-  // If ws_socket exists and is CONNECTING or OPEN, reuse but ensure identify is sent
   if (ws_socket) {
     if (ws_socket.readyState === WebSocket.OPEN) {
       console.log("WebSocket already open; re-sending identify");
@@ -61,8 +58,6 @@ export const initializeWebSocket = (): WebSocket => {
       return ws_socket;
     }
     if (ws_socket.readyState === WebSocket.CONNECTING) {
-      console.log("WebSocket is connecting; will send identify on open");
-      // Attach/overwrite onopen so identify goes out once
       const prevOnOpen = ws_socket.onopen;
       ws_socket.onopen = (event) => {
         if (prevOnOpen && ws_socket) prevOnOpen.call(ws_socket, event);
@@ -77,7 +72,6 @@ export const initializeWebSocket = (): WebSocket => {
     emitToastMessage("WebSocket URL is not configured.", "error");
     throw new Error("WebSocket URL is undefined");
   }
-  console.log(`Initializing WebSocket with URL: ${wsUrl}`);
 
   try {
     ws_socket = new WebSocket(wsUrl);
@@ -85,9 +79,6 @@ export const initializeWebSocket = (): WebSocket => {
     // Timeout if onopen doesn't fire
     const openTimeout = setTimeout(() => {
       if (ws_socket && ws_socket.readyState !== WebSocket.OPEN) {
-        console.error(
-          `WebSocket did not open within timeout. State: ${ws_socket.readyState}`
-        );
         ws_socket.close();
         ws_socket = null;
       }
@@ -112,9 +103,7 @@ export const initializeWebSocket = (): WebSocket => {
       if (retryCount < maxRetries) {
         retryCount++;
         const delay = 5000 * retryCount;
-        console.log(
-          `Retrying WebSocket connection (${retryCount}/${maxRetries}) in ${delay}ms...`
-        );
+
         setTimeout(() => {
           emitToastMessage(
             `Retrying WebSocket connection (${retryCount}/${maxRetries})...`,
@@ -123,7 +112,6 @@ export const initializeWebSocket = (): WebSocket => {
           initializeWebSocket();
         }, delay);
       } else {
-        console.error("Max WebSocket retry attempts reached.");
         emitToastMessage(
           "Failed to establish WebSocket connection after multiple attempts.",
           "error"
@@ -132,7 +120,6 @@ export const initializeWebSocket = (): WebSocket => {
     };
 
     ws_socket.onerror = (error: Event) => {
-      console.error("WebSocket error:", error);
       emitToastMessage("WebSocket connection error occurred.", "error");
       ws_socket?.close();
       ws_socket = null;
@@ -140,7 +127,6 @@ export const initializeWebSocket = (): WebSocket => {
 
     return ws_socket;
   } catch (error) {
-    console.error("Error creating WebSocket:", error);
     ws_socket = null;
     emitToastMessage("Failed to create WebSocket connection.", "error");
     throw new Error(`Failed to create WebSocket: ${error}`);
@@ -154,17 +140,14 @@ export const getWebSocket = (): WebSocket => {
       ? ws_socket
       : initializeWebSocket();
   if (!ws) {
-    console.error("WebSocket initialization failed, ws is null");
     throw new Error("WebSocket is null");
   }
-  console.log(`Returning WebSocket, readyState: ${ws.readyState}`);
   return ws;
 };
 
 // Close and reset the singleton
 export const closeWebSocket = (): void => {
   if (ws_socket && ws_socket.readyState !== WebSocket.CLOSED) {
-    console.log("Closing WebSocket connection");
     ws_socket.close(1000, "Client requested close");
     ws_socket = null;
     retryCount = 0;

@@ -55,11 +55,20 @@ const Background = styled.div<{ $backgroundImage: string }>`
   @media screen and (max-width: 900px) {
     height: 50em;
   }
+  @media screen and (max-width: 600px) {
+    width: 500px;
+  }
   @media screen and (max-width: 500px) {
-    width: 450px;
+    width: 420px;
+  }
+  @media screen and (max-width: 450px) {
+    width: 380px;
   }
   @media screen and (max-width: 400px) {
     width: 330px;
+  }
+  @media screen and (max-width: 350px) {
+    width: 300px;
   }
   @media screen and (max-width: 300px) {
     width: 100%;
@@ -203,24 +212,30 @@ const DurationDisplay = styled.div<{
     left: 45.3%;
   }
   @media screen and (max-width: 1100px) {
-    top: 43.3%;
-    left: 45%;
+    top: 44.5%;
+    left: 46%;
+    width: 5.4rem;
+    height: 5.4rem;
   }
   @media screen and (max-width: 900px) {
-    top: 42.9%;
-    left: 47%;
+    top: 44%;
+    left: 46.5%;
+  }
+  @media screen and (max-width: 700px) {
+    top: 44%;
+    left: 46.5%;
   }
   @media screen and (max-width: 500px) {
-    top: 43%;
-    left: 45%;
+    top: 44%;
+    left: 46%;
   }
   @media screen and (max-width: 400px) {
-    top: 42%;
-    left: 44%;
+    top: 45%;
+    left: 45%;
   }
   @media screen and (max-width: 300px) {
-    top: 42%;
-    left: 43%;
+    top: 44%;
+    left: 45%;
   }
 `;
 

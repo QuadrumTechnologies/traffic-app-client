@@ -10,6 +10,7 @@ import {
   initializeWebSocket,
   sendIdentify,
 } from "../websocket";
+import { useAppSelector } from "@/hooks/reduxHook";
 
 export default function Layout({
   children,

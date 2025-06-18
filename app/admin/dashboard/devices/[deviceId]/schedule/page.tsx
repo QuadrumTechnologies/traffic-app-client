@@ -21,6 +21,7 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { getWebSocket } from "@/app/dashboard/websocket";
+import { toast } from "react-toastify"; // Add import for toast.dismiss
 
 interface Option {
   value: string;
@@ -223,9 +224,25 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         };
         dispatch(addOrUpdatePhaseConfig(configToSave));
         setPhaseToConfigure(null);
+        emitToastMessage("Phase configuration saved", "success");
       }
     },
+    validateOnBlur: true,
+    validateOnChange: false,
   });
+
+  // Show validation errors as toasts on blur
+  const handleDurationBlur = () => {
+    if (phaseFormik.touched.duration && phaseFormik.errors.duration) {
+      emitToastMessage(phaseFormik.errors.duration as string, "error");
+    }
+  };
+
+  // Cancel handler for phase configuration
+  const handleCancelPhaseConfig = () => {
+    phaseFormik.resetForm();
+    setPhaseToConfigure(null);
+  };
 
   const saveNewPattern = async () => {
     if (!newPatternName) {
@@ -367,6 +384,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           : null;
       });
       setSchedule(fullSchedule);
+      emitToastMessage("Schedule saved successfully", "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
@@ -381,33 +399,42 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       return;
     }
-    const plan = plans?.find(
-      (p) => p.name.toLowerCase() === dayType.value.toLowerCase()
-    );
-    if (!plan) {
-      emitToastMessage("Please save the schedule before uploading", "error");
-      return;
-    }
-    for (const timeSegmentKey of Object.keys(schedule)) {
-      if (
-        plan.schedule[timeSegmentKey]?.label !== schedule[timeSegmentKey]?.label
-      ) {
-        emitToastMessage(
-          `Schedule mismatch at ${timeSegmentKey}. Save the schedule before uploading.`,
-          "error"
-        );
+    let toastId: string | undefined;
+    try {
+      const plan = plans?.find(
+        (p) => p.name.toLowerCase() === dayType.value.toLowerCase()
+      );
+      if (!plan) {
+        emitToastMessage("Please save the schedule before uploading", "error");
         return;
       }
-    }
-    const confirmResult = confirm(
-      `Are you sure you want to upload "${dayType.label}" plan?`
-    );
-    if (!confirmResult) {
-      emitToastMessage("Upload cancelled", "info");
-      return;
-    }
-    try {
+      for (const timeSegmentKey of Object.keys(schedule)) {
+        if (
+          plan.schedule[timeSegmentKey]?.label !==
+          schedule[timeSegmentKey]?.label
+        ) {
+          emitToastMessage(
+            `Schedule mismatch at ${timeSegmentKey}. Save the schedule before uploading.`,
+            "error"
+          );
+          return;
+        }
+      }
+      const confirmResult = confirm(
+        `Are you sure you want to upload "${dayType.label}" plan?`
+      );
+      if (!confirmResult) {
+        emitToastMessage("Upload cancelled", "info");
+        return;
+      }
       setIsUploadingSchedule(true);
+      toastId = emitToastMessage(
+        `Uploading plan "${dayType.label}"...`,
+        "info",
+        {
+          duration: false,
+        }
+      );
       const sendMessage = (
         startSegmentKey: string,
         endSegmentKey: string,
@@ -480,9 +507,17 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         await sendMessage(lastStartKey, "00:00", lastValidSegment);
       }
       setIsUploadingSchedule(false);
+      emitToastMessage(
+        `Plan "${dayType.label}" uploaded successfully`,
+        "success",
+        { duration: 3000 }
+      );
+      toast.dismiss(toastId);
     } catch (error: any) {
       setIsUploadingSchedule(false);
-      emitToastMessage(error.message || "Failed to upload schedule", "error");
+      const message = error.message || "Failed to upload schedule";
+      emitToastMessage(message, "error");
+      toast.dismiss(toastId);
     }
   };
 
@@ -618,16 +653,29 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
               acc[p.period] = { value: p.name.toLowerCase(), label: p.name };
               return acc;
             }, {}),
+            customDate:
+              feedback.payload.Plan === "CUSTOM" && feedback.payload.Date
+                ? new Date(feedback.payload.Date)
+                : null,
           };
           try {
             await HttpRequest.put("/plans", newPlan);
             dispatch(getUserPlan(email));
             dispatch(getUserPattern(email));
             handlePlanChange({ value: planName, label: planName });
+            emitToastMessage("Schedule downloaded successfully", "success");
           } catch (error: any) {
             const message = error?.response?.data?.message || `Request failed`;
             emitToastMessage(message, "error");
           }
+        }
+      } else if (feedback.event === "upload_feedback") {
+        if (feedback.payload?.error) {
+          emitToastMessage(
+            feedback.payload.message || "Upload failed",
+            "error"
+          );
+          setIsUploadingSchedule(false);
         }
       } else if (feedback.event === "error") {
         setIsUploadingSchedule(false);
@@ -654,6 +702,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             onChange={handleDayTypeChange}
             className="schedule__select-field schedule__select-field-1"
             placeholder="Select day type"
+            aria-label="Select day type"
           />
           <Select
             options={plansOptions}
@@ -661,6 +710,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             onChange={handlePlanChange}
             className="schedule__select-field schedule__select-field-2"
             placeholder="Select existing plan"
+            aria-label="Select existing plan"
           />
           {dayType.value === "custom" && (
             <DatePicker
@@ -668,6 +718,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
               onChange={handleDateChange}
               className="schedule__datepicker"
               placeholderText="Select custom date"
+              aria-label="Select custom date"
             />
           )}
         </div>
@@ -698,6 +749,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                       placeholder="Select pattern"
                       isSearchable
                       isClearable
+                      aria-label={`Select pattern for ${time}`}
                     />
                   </td>
                 </tr>
@@ -710,6 +762,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             onClick={saveSchedule}
             className="schedule__button"
             disabled={isUploadingSchedule || isDownloadingSchedule}
+            aria-label="Save schedule"
           >
             Save Schedule
           </button>
@@ -717,6 +770,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             onClick={handleUpload}
             className="schedule__button"
             disabled={isUploadingSchedule || isDownloadingSchedule}
+            aria-label="Upload to device"
           >
             {isUploadingSchedule ? "Uploading..." : "Upload to Device"}
           </button>
@@ -724,6 +778,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             onClick={handleDownload}
             className="schedule__button"
             disabled={isUploadingSchedule || isDownloadingSchedule}
+            aria-label="Download from device"
           >
             {isDownloadingSchedule ? "Downloading..." : "Download from Device"}
           </button>
@@ -762,17 +817,30 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                         type="number"
                                         value={phaseFormik.values.duration}
                                         onChange={phaseFormik.handleChange}
-                                        onBlur={phaseFormik.handleBlur}
+                                        onBlur={(e) => {
+                                          phaseFormik.handleBlur(e);
+                                          handleDurationBlur();
+                                        }}
                                         autoFocus
+                                        aria-label="Phase duration"
                                       />
                                       <button
                                         type="submit"
                                         disabled={
                                           !phaseFormik.values.duration ||
-                                          !phaseFormik.dirty
+                                          !phaseFormik.dirty ||
+                                          !!phaseFormik.errors.duration
                                         }
+                                        aria-label="Save phase duration"
                                       >
                                         Save
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelPhaseConfig}
+                                        aria-label="Cancel phase duration edit"
+                                      >
+                                        Cancel
                                       </button>
                                     </>
                                   ) : (
@@ -797,6 +865,13 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                             phaseInstance.name
                                           )
                                         }
+                                        aria-label={
+                                          configuredPhases?.find(
+                                            (p) => p.id === phaseInstance.id
+                                          )?.duration
+                                            ? "Edit phase duration"
+                                            : "Set phase duration"
+                                        }
                                       >
                                         {configuredPhases?.find(
                                           (p) => p.id === phaseInstance.id
@@ -813,6 +888,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                       phaseInstance.id
                                     )
                                   }
+                                  aria-label="Remove phase"
                                 >
                                   Remove
                                 </button>
@@ -832,8 +908,11 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                   value={newPatternName}
                   onChange={(e) => setNewPatternName(e.target.value)}
                   placeholder="Enter new pattern name"
+                  aria-label="New pattern name"
                 />
-                <button onClick={saveNewPattern}>Save New Pattern</button>
+                <button onClick={saveNewPattern} aria-label="Save new pattern">
+                  Save New Pattern
+                </button>
               </div>
             </div>
             <div className="available-phases">
@@ -848,7 +927,10 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                   >
                     <h3>{phase.name}</h3>
                     <div>
-                      <button onClick={() => handleAvailablePhaseSelect(phase)}>
+                      <button
+                        onClick={() => handleAvailablePhaseSelect(phase)}
+                        aria-label={`Add phase ${phase.name}`}
+                      >
                         Add
                       </button>
                     </div>

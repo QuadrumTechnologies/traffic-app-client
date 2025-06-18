@@ -18,13 +18,11 @@ import {
   formatRtcDate,
   formatRtcTime,
   formatUnixTimestamp,
-  getDeviceStatus,
 } from "@/utils/misc";
 import {
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
   getUserDeviceInfoData,
-  updateDeviceAvailability,
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
@@ -46,8 +44,9 @@ export interface IntersectionConfigItem {
 }
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
-  const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =
+  const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
+
   const { isIntersectionConfigurable } = useAppSelector(
     (state) => state.signalConfig
   );
@@ -64,11 +63,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const statuses = useDeviceStatus();
   const deviceId = params.deviceId;
 
-  const icon =
-    getDeviceStatus(statuses, deviceId)?.status ||
-    (deviceAvailability.Status && deviceAvailability.DeviceID === deviceId)
-      ? "ON"
-      : "OFF";
+  const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
+  const icon = deviceStatus?.status ? "ON" : "OFF";
 
   useEffect(() => {
     setShowAutoMode(deviceActiveStateData?.Auto);

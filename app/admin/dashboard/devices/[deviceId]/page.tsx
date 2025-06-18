@@ -21,7 +21,6 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceInfoData,
   getUserDeviceStateData,
-  updateDeviceAvailability,
 } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
 
@@ -53,7 +52,7 @@ function formatUnixTimestamp(unixTimestamp: number): string {
 }
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
-  const { deviceAvailability, currentDeviceInfoData, deviceActiveStateData } =
+  const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
   const [showAutoMode, setShowAutoMode] = useState<boolean>(
     deviceActiveStateData?.Auto ?? false
@@ -64,11 +63,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
     (state) => state.signalConfig
   );
   const deviceId = params.deviceId;
-  const icon =
-    getDeviceStatus(statuses, deviceId) ||
-    (deviceAvailability.Status && deviceAvailability.DeviceID === deviceId)
-      ? "ON"
-      : "OFF";
+  const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
+  const icon = deviceStatus?.status ? "ON" : "OFF";
 
   useEffect(() => {
     setShowAutoMode(deviceActiveStateData?.Auto ?? false);
@@ -222,12 +218,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           console.log("Unhandled event type:", feedback.event);
       }
 
-      dispatch(
-        updateDeviceAvailability({
-          DeviceID: feedback.payload?.DeviceID,
-          Status: !feedback.payload?.error,
-        })
-      );
+      //  TODO: Add logic to update device status
     };
 
     socket.addEventListener("message", handleDataFeedback);

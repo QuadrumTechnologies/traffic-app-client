@@ -50,11 +50,13 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   const [signalConfig, setSignalConfig] = useState<string>("active_low_cp");
   const {
     devices,
-    deviceAvailability,
+    deviceStatuses,
     currentDeviceInfoData,
     deviceActiveStateData,
   } = useAppSelector((state) => state.userDevice);
-  const device = devices?.find((d) => d.deviceId === params.deviceId) || null;
+  const deviceId = params.deviceId;
+  const device = devices?.find((d) => d.deviceId === deviceId) || null;
+  const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
   const socket = getWebSocket();
 
   const fetchDeviceAdminSupportStatus = async () => {
@@ -389,7 +391,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
                   type="text"
                   name="deviceId"
                   label="Device ID"
-                  value={params.deviceId || deviceAvailability?.DeviceID || ""}
+                  value={params.deviceId || ""}
                   readOnly
                 />
                 <NormalInput

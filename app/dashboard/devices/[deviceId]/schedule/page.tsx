@@ -21,6 +21,7 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { getWebSocket } from "@/app/dashboard/websocket";
+import { toast } from "react-toastify"; // Add import for toast.dismiss
 
 interface Option {
   value: string;
@@ -226,7 +227,30 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
         emitToastMessage("Phase configuration saved", "success");
       }
     },
+    validateOnBlur: true,
+    validateOnChange: false,
   });
+
+  // Show validation errors as toasts on blur
+  const handleDurationBlur = () => {
+    if (phaseFormik.touched.duration && phaseFormik.errors.duration) {
+      emitToastMessage(
+        Array.isArray(phaseFormik.errors.duration)
+          ? phaseFormik.errors.duration.join(", ")
+          : typeof phaseFormik.errors.duration === "object" &&
+            phaseFormik.errors.duration !== null
+          ? JSON.stringify(phaseFormik.errors.duration)
+          : (phaseFormik.errors.duration as string),
+        "error"
+      );
+    }
+  };
+
+  // Add cancel handler for phase configuration
+  const handleCancelPhaseConfig = () => {
+    phaseFormik.resetForm();
+    setPhaseToConfigure(null);
+  };
 
   const saveNewPattern = async () => {
     if (!newPatternName) {
@@ -384,6 +408,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       return;
     }
+    let toastId: string | undefined;
     try {
       const plan = plans?.find(
         (plan) => plan.name.toLowerCase() === dayType.value.toLowerCase()
@@ -416,6 +441,13 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       }
       const socket = getWebSocket();
       setIsUploadingSchedule(true);
+      toastId = emitToastMessage(
+        `Uploading plan "${dayType.value}"...`,
+        "info",
+        {
+          duration: false,
+        }
+      );
 
       const sendMessage = (
         startSegmentKey: string,
@@ -477,8 +509,12 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       for (const timeSegmentKey of Object.keys(plan.schedule)) {
         const timeSegment = plan.schedule[timeSegmentKey];
         if (timeSegment && timeSegment.value && timeSegment.value !== "None") {
-          if (lastValidSegment && lastStartKey !== timeSegmentKey) {
-            await sendMessage(lastStartKey!, timeSegmentKey, lastValidSegment);
+          if (
+            lastValidSegment &&
+            lastStartKey &&
+            lastStartKey !== timeSegmentKey
+          ) {
+            await sendMessage(lastStartKey, timeSegmentKey, lastValidSegment);
           }
           lastValidSegment = timeSegment;
           lastStartKey = timeSegmentKey;
@@ -491,10 +527,19 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
       setIsUploadingSchedule(false);
       dispatch(getUserDeviceInfoData(params.deviceId));
+      emitToastMessage(
+        `Plan "${dayType.value}" uploaded successfully`,
+        "success",
+        {
+          duration: 3000,
+        }
+      );
+      toast.dismiss(toastId);
     } catch (error: any) {
       setIsUploadingSchedule(false);
-      const message = error?.response?.data?.message || `Request failed`;
+      const message = error?.message || `Request failed`;
       emitToastMessage(message, "error");
+      toast.dismiss(toastId);
     }
   };
 
@@ -785,16 +830,29 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                         type="number"
                                         value={phaseFormik.values.duration}
                                         onChange={phaseFormik.handleChange}
-                                        onBlur={phaseFormik.handleBlur}
+                                        onBlur={(e) => {
+                                          phaseFormik.handleBlur(e);
+                                          handleDurationBlur();
+                                        }}
+                                        aria-label="Phase duration"
                                       />
                                       <button
                                         type="submit"
                                         disabled={
                                           !phaseFormik.values.duration ||
-                                          !phaseFormik.dirty
+                                          !phaseFormik.dirty ||
+                                          !!phaseFormik.errors.duration
                                         }
+                                        aria-label="Save phase duration"
                                       >
                                         Save
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelPhaseConfig}
+                                        aria-label="Cancel phase duration edit"
+                                      >
+                                        Cancel
                                       </button>
                                     </>
                                   ) : (
@@ -819,6 +877,13 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                             phaseInstance?.name
                                           )
                                         }
+                                        aria-label={
+                                          configuredPhases?.find(
+                                            (p) => p?.id === phaseInstance?.id
+                                          )?.duration
+                                            ? "Edit phase duration"
+                                            : "Set phase duration"
+                                        }
                                       >
                                         {configuredPhases?.find(
                                           (p) => p?.id === phaseInstance?.id
@@ -835,6 +900,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                       phaseInstance?.id
                                     )
                                   }
+                                  aria-label="Remove phase"
                                 >
                                   Remove
                                 </button>
@@ -854,8 +920,11 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                   value={newPatternName}
                   onChange={(e) => setNewPatternName(e.target.value)}
                   placeholder="Enter new pattern name"
+                  aria-label="New pattern name"
                 />
-                <button onClick={saveNewPattern}>Save New Pattern</button>
+                <button onClick={saveNewPattern} aria-label="Save new pattern">
+                  Save New Pattern
+                </button>
               </div>
             </div>
             <div className="available-phases">
@@ -870,7 +939,10 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                   >
                     <h3>{phase?.name}</h3>
                     <div>
-                      <button onClick={() => handleAvailablePhaseSelect(phase)}>
+                      <button
+                        onClick={() => handleAvailablePhaseSelect(phase)}
+                        aria-label={`Add phase ${phase?.name}`}
+                      >
                         Add
                       </button>
                     </div>

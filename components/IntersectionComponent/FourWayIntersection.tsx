@@ -23,10 +23,10 @@ const positions = {
     900: { top: 22.5, left: 39.5 },
     800: { top: 22.5, left: 39.5 },
     700: { top: 22, left: 39.5 },
-    600: { top: 22, left: 39.8 },
-    500: { top: 22, left: 39 },
-    400: { top: 22, left: 35.2 },
-    300: { top: 60, left: 5 },
+    600: { top: 22, left: 39 },
+    500: { top: 22, left: 37.1 },
+    400: { top: 25, left: 34.4 },
+    300: { top: 27.5, left: 34.4 },
   },
   E: {
     1600: { top: 36, left: 71 },
@@ -39,10 +39,10 @@ const positions = {
     900: { top: 36, left: 66 },
     800: { top: 36, left: 66 },
     700: { top: 36, left: 66 },
-    600: { top: 36, left: 66 },
-    500: { top: 36, left: 67.6 },
-    400: { top: 36, left: 73 },
-    300: { top: 36, left: 66 },
+    600: { top: 36.3, left: 68 },
+    500: { top: 36.5, left: 71 },
+    400: { top: 37, left: 73 },
+    300: { top: 38.8, left: 73.2 },
   },
   S: {
     1600: { top: 74, left: 49.7 },
@@ -57,8 +57,8 @@ const positions = {
     700: { top: 74, left: 50 },
     600: { top: 74, left: 50 },
     500: { top: 74, left: 50 },
-    400: { top: 74, left: 50 },
-    300: { top: 74, left: 50 },
+    400: { top: 71.5, left: 49 },
+    300: { top: 70, left: 49 },
   },
   W: {
     1600: { top: 50.3, left: 24.5 },
@@ -71,10 +71,10 @@ const positions = {
     900: { top: 50.4, left: 30.5 },
     800: { top: 50.4, left: 30.5 },
     700: { top: 50.4, left: 30.5 },
-    600: { top: 50.4, left: 30.5 },
-    500: { top: 50.4, left: 29 },
-    400: { top: 50.4, left: 23 },
-    300: { top: 50.4, left: 30.5 },
+    600: { top: 50.6, left: 29 },
+    500: { top: 50.7, left: 25 },
+    400: { top: 49.6, left: 21.5 },
+    300: { top: 50, left: 21 },
   },
 };
 
@@ -95,8 +95,8 @@ const pedestrianPositions = {
     700: { first: { top: 16, left: -10 }, second: { top: 16, left: 110 } },
     600: { first: { top: 16, left: -11 }, second: { top: 16, left: 108 } },
     500: { first: { top: 16, left: -13 }, second: { top: 16, left: 100 } },
-    400: { first: { top: 18, left: -10 }, second: { top: 18, left: 100 } },
-    300: { first: { top: 16, left: -9 }, second: { top: 16, left: 80 } },
+    400: { first: { top: 15.5, left: -8 }, second: { top: 15.5, left: 90 } },
+    300: { first: { top: 14, left: -9 }, second: { top: 14, left: 80 } },
   },
   E: {
     1600: { first: { top: -20, left: -25 }, second: { top: 145, left: -25 } },
@@ -109,10 +109,10 @@ const pedestrianPositions = {
     900: { first: { top: -16, left: -19 }, second: { top: 109, left: -19 } },
     800: { first: { top: -16, left: -19 }, second: { top: 109, left: -19 } },
     700: { first: { top: -14, left: -20 }, second: { top: 110, left: -20 } },
-    600: { first: { top: -14, left: -20 }, second: { top: 110, left: -18 } },
+    600: { first: { top: -14, left: -20 }, second: { top: 105, left: -18 } },
     500: { first: { top: -14, left: -18 }, second: { top: 97, left: -18 } },
-    400: { first: { top: -13, left: -14 }, second: { top: 95, left: -14 } },
-    300: { first: { top: -12, left: -14 }, second: { top: 80, left: -14 } },
+    400: { first: { top: -11, left: -13 }, second: { top: 88, left: -13 } },
+    300: { first: { top: -12, left: -14 }, second: { top: 78, left: -14 } },
   },
   S: {
     1600: {
@@ -136,8 +136,8 @@ const pedestrianPositions = {
     700: { first: { top: -19, left: -68 }, second: { top: -19, left: 55 } },
     600: { first: { top: -19, left: -67 }, second: { top: -19, left: 54 } },
     500: { first: { top: -19, left: -63 }, second: { top: -19, left: 48 } },
-    400: { first: { top: -19, left: -62 }, second: { top: -19, left: 50 } },
-    300: { first: { top: -15, left: -52 }, second: { top: -15, left: 40 } },
+    400: { first: { top: -16, left: -50 }, second: { top: -16, left: 47 } },
+    300: { first: { top: -15, left: -48 }, second: { top: -15, left: 40 } },
   },
   W: {
     1600: { first: { top: 74, left: 29 }, second: { top: -92, left: 29 } },
@@ -152,7 +152,7 @@ const pedestrianPositions = {
     700: { first: { top: 53, left: 20 }, second: { top: -70, left: 20 } },
     600: { first: { top: 51, left: 20 }, second: { top: -68, left: 20 } },
     500: { first: { top: 49, left: 20 }, second: { top: -63, left: 20 } },
-    400: { first: { top: 48, left: 21 }, second: { top: -64, left: 21 } },
+    400: { first: { top: 45, left: 18 }, second: { top: -51, left: 18 } },
     300: { first: { top: 38, left: 19 }, second: { top: -50, left: 19 } },
   },
 };
@@ -198,7 +198,6 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
       setScreenWidth(window.innerWidth);
       const handleResize = () => {
         setScreenWidth(window.innerWidth);
-        console.log(`Window resized to: ${window.innerWidth}`); // Debugging
       };
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);

@@ -348,11 +348,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
                             : "Upload plan"
                         }
                       >
-                        {isUploading === plan.id ? (
-                          <LoadingSpinner />
-                        ) : (
-                          <MdUpload />
-                        )}
+                        {isUploading === plan.id ? "..." : <MdUpload />}
                       </button>
                       <button
                         onClick={() => handleDeletePlan(plan.id, plan.name)}
@@ -392,14 +388,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
             isUploadingAll ? "Uploading all plans" : "Upload all plans"
           }
         >
-          {isUploadingAll ? (
-            <>
-              <LoadingSpinner />
-              Uploading...
-            </>
-          ) : (
-            "Upload All Plans"
-          )}
+          {isUploadingAll ? "Uploading..." : "Upload All Plans"}
         </button>
         <div>
           <button
