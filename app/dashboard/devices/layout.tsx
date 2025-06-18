@@ -19,8 +19,8 @@ export default function Layout({
 }>) {
   const router = useRouter();
 
+  useDeviceStatus();
   useEffect(() => {
-    useDeviceStatus();
     // Initialize WebSocket once when Layout mounts
     const ws = initializeWebSocket();
 

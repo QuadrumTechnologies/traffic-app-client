@@ -142,7 +142,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     const newPowerState = !formik.values.signalPower;
     formik.setFieldValue("signalPower", newPowerState);
     handleRequest("Power", newPowerState);
-    useDeviceStatus();
+    // useDeviceStatus();
     dispatch(getUserDeviceStateData(params.deviceId));
   };
 

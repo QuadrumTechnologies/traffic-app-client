@@ -146,7 +146,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
     if (!confirmReset) return;
     handleRequest("Power", newPowerState);
-    useDeviceStatus();
+    // useDeviceStatus();
     dispatch(getUserDeviceStateData(params.deviceId));
   };
 
