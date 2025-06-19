@@ -15,7 +15,7 @@ import {
   formatRtcTime,
   formatUnixTimestamp,
 } from "@/utils/misc";
-import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
+import { getUserDevice, getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
 import {
   GetItemFromLocalStorage,
@@ -146,8 +146,8 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
 
     if (!confirmReset) return;
     handleRequest("Power", newPowerState);
-    // useDeviceStatus();
     dispatch(getUserDeviceStateData(params.deviceId));
+    dispatch(getUserDevice())
   };
 
   const handleBrightnessChange = (value: number | number[]) => {

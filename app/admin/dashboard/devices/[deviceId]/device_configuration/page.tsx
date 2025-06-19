@@ -24,6 +24,8 @@ import {
 } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
+import { getAdminDevice } from "@/store/devices/AdminDeviceSlice";
+import { deviceTypes } from "@/utils/deviceTypes";
 
 interface DeviceConfigurationPageProps {
   params: { deviceId: string };
@@ -59,6 +61,10 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
   const device = devices?.find((d) => d.deviceId === deviceId) || null;
   const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
   const socket = getWebSocket();
+  const adminUser = GetItemFromLocalStorage("adminUser");
+  const deviceType = deviceTypes.find(
+    (dev) => dev.department === adminUser?.department
+  );
 
   const fetchDeviceAdminSupportStatus = async () => {
     try {
@@ -98,7 +104,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       } action requested by admin`;
       try {
         await HttpRequest.post("/admin/confirm-password", {
-          email: GetItemFromLocalStorage("adminUser")?.email,
+          email: adminUser.email,
           reason,
           password,
         });
@@ -142,8 +148,8 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     const newPowerState = !formik.values.signalPower;
     formik.setFieldValue("signalPower", newPowerState);
     handleRequest("Power", newPowerState);
-    // useDeviceStatus();
     dispatch(getUserDeviceStateData(params.deviceId));
+    dispatch(getAdminDevice(deviceType));
   };
 
   const handleSignalConfigChange = (value: string) => {
