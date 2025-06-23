@@ -163,7 +163,7 @@ const UserDevices = () => {
                   {!status?.status || deviceStatus?.status === false
                     ? deviceStatus?.lastSeen
                       ? `Last seen: ${dayjs(
-                          device?.lastSeen || deviceStatus.lastSeen
+                          device?.lastSeen || deviceStatus?.lastSeen
                         ).format("YYYY-MM-DD HH:mm:ss")}`
                       : "Last seen: Never connected"
                     : null}
