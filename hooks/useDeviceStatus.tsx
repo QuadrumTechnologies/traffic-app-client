@@ -37,6 +37,7 @@ export const useDeviceStatus = () => {
       } else if (!existingStatus && status) {
         emitToastMessage(`Device ${id} is online.`, "info");
       }
+      // Check why the time
       dispatch(updateDeviceStatus({ id, status, lastSeen }));
     };
 
