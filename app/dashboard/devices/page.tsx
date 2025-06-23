@@ -112,8 +112,11 @@ const UserDevices = () => {
       )}
       <div className="devices-list">
         {devices?.map((device: any, index) => {
-          const status = getDeviceStatus(deviceStatuses, device.deviceId);
           const deviceStatus = deviceStatuses.find((s) => s.id === device?.id);
+          const status = getDeviceStatus(deviceStatuses, device.deviceId);
+          const isOffline =
+            deviceStatus?.status === false ||
+            (!deviceStatus && status?.status === false);
           return (
             <div
               key={index}
@@ -160,10 +163,10 @@ const UserDevices = () => {
                     color: "#888",
                   }}
                 >
-                  {!status?.status || deviceStatus?.status === false
-                    ? deviceStatus?.lastSeen
+                  {isOffline
+                    ? deviceStatus?.lastSeen || status?.lastSeen
                       ? `Last seen: ${dayjs(
-                          device?.lastSeen || deviceStatus?.lastSeen
+                          deviceStatus?.lastSeen || status?.lastSeen
                         ).format("YYYY-MM-DD HH:mm:ss")}`
                       : "Last seen: Never connected"
                     : null}
