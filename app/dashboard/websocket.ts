@@ -18,7 +18,7 @@ interface IdentifyMessage {
 // Singleton WebSocket instance and retry state
 let ws_socket: WebSocket | null = null;
 let retryCount = 0;
-const maxRetries = 5;
+const maxRetries = 3;
 
 const wsUrl: string =
   process.env.NEXT_PUBLIC_BACKEND_WS || "ws://localhost:3000/ws";
