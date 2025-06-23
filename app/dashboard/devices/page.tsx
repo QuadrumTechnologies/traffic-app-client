@@ -39,8 +39,6 @@ const UserDevices = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
-  console.log("All devices status", deviceStatuses);
-
   const deviceActionModal = useRef<HTMLDivElement>(null);
   const closeDeviceActionModal = () => {
     setShowOptions(false);
@@ -117,6 +115,7 @@ const UserDevices = () => {
           const isOffline =
             deviceStatus?.status === false ||
             (!deviceStatus && status?.status === false);
+          console.log("IsOffline", isOffline, deviceStatus, status);
           return (
             <div
               key={index}
