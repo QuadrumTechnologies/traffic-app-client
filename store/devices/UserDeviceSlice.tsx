@@ -235,8 +235,8 @@ const UserDeviceSlice = createSlice({
       const { id, status, lastSeen } = action.payload;
       const existingStatus = state.deviceStatuses.find((s) => s.id === id);
       console.log(
-        "befor updating existing status",
-        existingStatus,
+        "Before updating existing status",
+        JSON.parse(JSON.stringify(existingStatus)),
         id,
         status,
         lastSeen
@@ -244,7 +244,10 @@ const UserDeviceSlice = createSlice({
       if (existingStatus) {
         existingStatus.status = status;
         existingStatus.lastSeen = lastSeen;
-        console.log("From State", state.deviceStatuses);
+        console.log(
+          "From State",
+          JSON.parse(JSON.stringify(state.deviceStatuses))
+        );
       } else {
         state.deviceStatuses.push({ id, status, lastSeen });
       }

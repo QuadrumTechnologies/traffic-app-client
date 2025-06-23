@@ -54,8 +54,6 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
     deviceActiveStateData?.Auto || false
   );
 
-  console.log("All devices status", deviceStatuses);
-
   const dispatch = useAppDispatch();
   useDeviceStatus();
   const deviceId = params.deviceId;
