@@ -501,7 +501,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                       }
                     />
                   </SettingLabel>
-                  <SettingLabel>
+                  {/* <SettingLabel>
                     <input
                       type="checkbox"
                       checked={phaseSettings.holdRedSignalOnAmber}
@@ -526,7 +526,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                       }
                     />
                     Hold Green During Amber (Green → Red)
-                  </SettingLabel>
+                  </SettingLabel> */}
                 </>
               )}
             </SettingsSection>
