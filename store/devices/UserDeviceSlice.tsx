@@ -193,22 +193,23 @@ const UserDeviceSlice = createSlice({
   initialState,
   reducers: {
     addOrUpdatePhaseConfig: (state, action) => {
-      const { id, name, signalString, duration } = action.payload;
-      const existingPhase = state.configuredPhases.find(
-        (phase) => phase.id === id
+      const newPhase = action.payload;
+      const existingIndex = state.configuredPhases.findIndex(
+        (phase) => phase.id === newPhase.id
       );
-      if (existingPhase) {
-        existingPhase.name = name;
-        existingPhase.duration = duration;
+
+      if (existingIndex !== -1) {
+        // Merge new data into existing phase
+        state.configuredPhases[existingIndex] = {
+          ...state.configuredPhases[existingIndex],
+          ...newPhase,
+        };
       } else {
-        state.configuredPhases.push({
-          id,
-          name,
-          duration,
-          signalString,
-        });
+        // Add new phase
+        state.configuredPhases.push({ ...newPhase });
       }
     },
+
     removePhaseConfig: (state, action) => {
       const phaseIdToRemove = action.payload;
       state.configuredPhases = state.configuredPhases.filter(

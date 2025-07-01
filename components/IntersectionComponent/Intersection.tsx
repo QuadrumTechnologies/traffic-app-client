@@ -8,8 +8,9 @@ import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { MdCancel } from "react-icons/md";
 import { getUserPhase } from "@/store/devices/UserDeviceSlice";
-import { useAppDispatch } from "@/hooks/reduxHook";
+import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import {
+  setInputModal,
   setLandingPageInitialSignals,
   setLandingPageSignals,
   SignalState,
@@ -72,69 +73,6 @@ const Background = styled.div<{ $backgroundImage: string }>`
   }
   @media screen and (max-width: 300px) {
     width: 100%;
-  }
-`;
-
-const ModalBackdrop = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(1px);
-  z-index: 1000;
-  pointer-events: auto;
-`;
-
-const PhaseContainer = styled.form`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 350px;
-  background-color: #ffffff;
-  padding: 1rem;
-  border-radius: 0.4rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.6rem;
-  z-index: 1001;
-  pointer-events: auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-`;
-
-const PhaseNameInput = styled.input`
-  padding: 0.5rem;
-  border: 0.1rem solid #ccc;
-  border-radius: 0.4rem;
-  font-size: 1.4rem;
-  width: 100%;
-
-  &:focus {
-    outline: none;
-    border-color: #514604;
-  }
-
-  &:hover {
-    border-color: #2a2a29;
-  }
-`;
-
-const AddPhaseButton = styled.button<{ disabled: boolean }>`
-  padding: 0.8rem 1rem;
-  background-color: ${({ disabled }) => (disabled ? "#cccccc" : "#514604")};
-  color: white;
-  border: none;
-  border-radius: 0.4rem;
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-  font-size: 1.4rem;
-  width: 100%;
-  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
-
-  &:hover:not(:disabled) {
-    background-color: #2a2a29;
   }
 `;
 
@@ -247,10 +185,9 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
   countDownColor,
   createdPatternPhasePreviewing,
 }) => {
+  const { openInputModal } = useAppSelector((state) => state.signalConfig);
+
   const [signals, setSignals] = useState<Signal[]>(initialSignals);
-  const [showInputModal, setShowInputModal] = useState<boolean>(false);
-  const [isCreatingPhase, setIsCreatingPhase] = useState<boolean>(false);
-  const [phaseName, setPhaseName] = useState<string>("");
   const dispatch = useAppDispatch();
   const params = useParams<{ deviceId: string }>();
 
@@ -277,77 +214,6 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
     dispatch(setLandingPageSignals({ direction, signalType, color }));
   };
 
-  const handleAddPhase = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phaseName) {
-      alert("Please enter a name for the phase.");
-      return;
-    }
-    setIsCreatingPhase(true);
-    const user = GetItemFromLocalStorage("user");
-
-    const getAdjacentPedestrianSignal = (
-      signals: Signal[],
-      direction: "N" | "E" | "S" | "W"
-    ): "R" | "G" | "X" => {
-      let adjacentDirection: "N" | "E" | "S" | "W";
-      switch (direction) {
-        case "S":
-          adjacentDirection = "E";
-          break;
-        case "E":
-          adjacentDirection = "N";
-          break;
-        case "N":
-          adjacentDirection = "W";
-          break;
-        case "W":
-          adjacentDirection = "S";
-          break;
-        default:
-          adjacentDirection = "N";
-      }
-      const adjacentSignal = signals.find(
-        (signal) => signal.direction === adjacentDirection
-      );
-      return adjacentSignal ? adjacentSignal.pedestrian : "X";
-    };
-
-    try {
-      const encodeSignals = () => {
-        return (
-          "*" +
-          signals
-            .map((signal) => {
-              const adjacentPedestrian = getAdjacentPedestrianSignal(
-                signals,
-                signal.direction
-              );
-              return `${signal.direction}${signal.left}${signal.straight}${signal.right}${signal.bike}${signal.pedestrian}${adjacentPedestrian}`;
-            })
-            .join("") +
-          "#"
-        );
-      };
-      const encodedSignals = encodeSignals();
-      const { data } = await HttpRequest.post("/phases", {
-        email: user.email,
-        phaseName,
-        phaseData: encodedSignals,
-        deviceId: params.deviceId,
-      });
-      dispatch(getUserPhase(user.email));
-      emitToastMessage(data.message, "success");
-      setIsCreatingPhase(false);
-      setPhaseName("");
-      setShowInputModal(false);
-    } catch (error: any) {
-      console.error("Error adding phase:", error);
-      emitToastMessage(error?.response.data.message, "error");
-      setIsCreatingPhase(false);
-    }
-  };
-
   return (
     <Background $backgroundImage={backgroundImage}>
       {signals.map((signal) => (
@@ -367,9 +233,9 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
           whileHover={{ scale: 1.2 }}
           whileTap={{ scale: 1 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          onClick={() => setShowInputModal((prev) => !prev)}
+          onClick={() => dispatch(setInputModal(true))}
         >
-          {!showInputModal ? (
+          {!openInputModal ? (
             <IoMdAddCircle size={56} />
           ) : (
             <MdCancel size={56} />
@@ -382,25 +248,6 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
             {createdPatternPhasePreviewing.duration}s
           </DurationDisplay>
         )}
-      {showInputModal && (
-        <ModalBackdrop onClick={() => setShowInputModal(false)}>
-          <PhaseContainer
-            onSubmit={handleAddPhase}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PhaseNameInput
-              type="text"
-              placeholder="Enter phase name"
-              value={phaseName}
-              onChange={(e) => setPhaseName(e.target.value)}
-              autoFocus={true}
-            />
-            <AddPhaseButton type="submit" disabled={isCreatingPhase}>
-              {isCreatingPhase ? "Creating..." : "Create"}
-            </AddPhaseButton>
-          </PhaseContainer>
-        </ModalBackdrop>
-      )}
     </Background>
   );
 };

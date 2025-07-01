@@ -36,18 +36,8 @@ import { useParams } from "next/navigation";
 
 interface BoxTwoProps {}
 
-export interface PhaseConfigType {
-  id: string;
-  name: string;
-  data: string;
-  duration: string;
-}
 interface Pattern {
   configuredPhases: any[];
-  blinkEnabled: boolean;
-  amberEnabled: boolean;
-  blinkTimeGreenToRed: number;
-  amberDurationGreenToRed: number;
 }
 
 const BoxTwo: React.FC<BoxTwoProps> = () => {
@@ -57,7 +47,6 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   const { phases, patterns, configuredPhases } = useAppSelector(
     (state) => state.userDevice
   );
-
   const [showAllAvailablePhases, setShowAllAvailablePhases] =
     useState<boolean>(false);
   const [showOtherPatternConfig, setShowOtherPatternConfig] =
@@ -68,12 +57,11 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   const [selectedPattern, setSelectedPattern] = useState<any>(null);
   const [updatedPatternPhases, setUpdatedPatternPhases] = useState<any[]>([]);
   const [selectedPhases, setSelectedPhases] = useState<any[]>([]);
-  const [phaseToConfigure, setPhaseToConfigure] =
-    useState<PhaseConfigType | null>(null);
+  const [phaseToConfigure, setPhaseToConfigure] = useState<any | null>(null);
   const [
     alreadyCreatedPatternPhaseToConfigure,
     setAlreadyCreatedPatternPhaseToConfigure,
-  ] = useState<PhaseConfigType | null>(null);
+  ] = useState<any | null>(null);
   const [activeOrLastAddedPhase, setActiveOrLastAddedPhase] =
     useState<string>("");
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -81,6 +69,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   const [searchedResult, setSearchedResult] = useState<any[]>([]);
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
   const [inputtedPatternName, setInputtedPatternName] = useState<string>("");
+  const [newPatternName, setNewPatternName] = useState<string>("");
 
   const searchPatternByName = (patternName: string) => {
     const matchedPhases = patterns.filter((pattern) =>
@@ -167,6 +156,53 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     setUpdatedPatternPhases(reorderedPhases);
   };
 
+  const createPatternHandler = async () => {
+    // const patternName = prompt("Enter a name for the new pattern");
+    if (!newPatternName.trim()) {
+      emitToastMessage("A pattern name is required", "error");
+      return;
+    }
+
+    // Ensure all selected phases have valid configurations
+    if (!allPhasesConfigured) {
+      emitToastMessage(
+        "All selected phases must have a configured duration",
+        "error"
+      );
+      return;
+    }
+
+    const patternData = {
+      name: newPatternName.toUpperCase(),
+      email: email,
+      deviceId: params.deviceId,
+      configuredPhases: configuredPhases.map((phase, index) => ({
+        name: phase.name,
+        phaseId: phase._id,
+        id: phase.id,
+        signalString:
+          phase.signalString ||
+          phases.find((p) => p.name === phase.name)?.data ||
+          "",
+        duration: phase.duration,
+        deviceId: params.deviceId,
+      })),
+    };
+
+    try {
+      const { data } = await HttpRequest.post("/patterns", patternData);
+      dispatch(getUserPattern(email));
+      dispatch(clearPhaseConfig());
+      setSelectedPhases([]);
+      setShowAllAvailablePhases(false);
+      emitToastMessage(data.message, "success");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || "Failed to create pattern";
+      emitToastMessage(message, "error");
+    }
+  };
+
   const duplicatePatternHandler = async (patternName: string) => {
     const newPatternName = prompt("Enter a name for the pattern");
     if (!newPatternName) {
@@ -175,19 +211,38 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     }
 
     const pattern = patterns.find((pattern) => pattern.name === patternName);
-    try {
-      const { data } = await HttpRequest.post("/patterns", {
-        ...pattern,
-        email,
-        name: newPatternName,
+    if (!pattern) {
+      emitToastMessage("Pattern not found", "error");
+      return;
+    }
+
+    const newConfiguredPhases = pattern.configuredPhases.map(
+      (phase: any, index: number) => ({
+        name: phase.name,
+        phaseId: phase.id,
+        id: `${phase.name}-${Date.now()}-${index}`,
+        signalString: phase.signalString,
+        duration: phase.duration,
         deviceId: params.deviceId,
-      });
+      })
+    );
+
+    const patternData = {
+      name: newPatternName.toUpperCase(),
+      email,
+      deviceId: params.deviceId,
+      configuredPhases: newConfiguredPhases,
+    };
+
+    try {
+      const { data } = await HttpRequest.post("/patterns", patternData);
       dispatch(getUserPattern(email));
       dispatch(clearPhaseConfig());
       emitToastMessage(data.message, "success");
       handleCancel();
     } catch (error: any) {
-      const message = error?.response?.data?.message || `Request failed`;
+      const message =
+        error?.response?.data?.message || "Failed to duplicate pattern";
       emitToastMessage(message, "error");
     }
   };
@@ -287,7 +342,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases.find((p) => p.id === phaseToConfigure.id)
+        ? configuredPhases.find((p) => p.id === phaseToConfigure._id)
             ?.duration || ""
         : "",
     },
@@ -299,7 +354,8 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     onSubmit: async (values) => {
       if (phaseToConfigure) {
         const configToSave = {
-          id: phaseToConfigure.id,
+          ...phaseToConfigure,
+          _id: phaseToConfigure._id,
           name: phaseToConfigure.name,
           signalString: phaseToConfigure.data,
           duration: values.duration,
@@ -358,83 +414,6 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     dispatch(clearPhaseConfig());
   };
 
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      patternName: "",
-      blinkEnabled: false,
-      blinkTimeRedToGreen: 1,
-      blinkTimeGreenToRed: 2,
-      amberEnabled: true,
-      amberDurationRedToGreen: 3,
-      amberDurationGreenToRed: 3,
-    },
-    validationSchema: Yup.object({
-      patternName: Yup.string().required("Pattern name is required"),
-      blinkTimeRedToGreen: Yup.number().when(
-        "blinkEnabled",
-        (blinkEnabled, schema) =>
-          blinkEnabled
-            ? schema
-                .min(0, "Blink time must be at least 0")
-                .max(5, "Blink time must be at most 5")
-                .required("Blink time is required")
-            : schema.notRequired()
-      ),
-      blinkTimeGreenToRed: Yup.number().when(
-        "blinkEnabled",
-        (blinkEnabled, schema) =>
-          blinkEnabled
-            ? schema
-                .min(0, "Blink time must be at least 0")
-                .max(5, "Blink time must be at most 5")
-                .required("Blink time is required")
-            : schema.notRequired()
-      ),
-      amberDurationRedToGreen: Yup.number().when(
-        "amberEnabled",
-        (amberEnabled, schema) =>
-          amberEnabled
-            ? schema
-                .min(0, "Amber duration must be at least 0")
-                .max(5, "Amber duration must be at most 5")
-                .required("Amber duration is required")
-            : schema.notRequired()
-      ),
-      amberDurationGreenToRed: Yup.number().when(
-        "amberEnabled",
-        (amberEnabled, schema) =>
-          amberEnabled
-            ? schema
-                .min(0, "Amber duration must be at least 0")
-                .max(5, "Amber duration must be at most 5")
-                .required("Amber duration is required")
-            : schema.notRequired()
-      ),
-    }),
-    onSubmit: async (values) => {
-      try {
-        const response = await HttpRequest.post("/patterns", {
-          name: values.patternName,
-          email: email,
-          blinkEnabled: values.blinkEnabled,
-          blinkTimeRedToGreen: values.blinkTimeRedToGreen,
-          blinkTimeGreenToRed: values.blinkTimeGreenToRed,
-          amberEnabled: values.amberEnabled,
-          amberDurationRedToGreen: values.amberDurationRedToGreen,
-          amberDurationGreenToRed: values.amberDurationGreenToRed,
-          configuredPhases: configuredPhases,
-          deviceId: params.deviceId,
-        });
-        dispatch(getUserPattern(email));
-        handleCancel();
-      } catch (error: any) {
-        const message = error?.response?.data?.message || `Request failed`;
-        emitToastMessage(message, "error");
-      }
-    },
-  });
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
   const [activePatternIndex, setActivePatternIndex] = useState<number | null>(
@@ -466,47 +445,146 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
         let timeLeft =
           initialTimeLeft !== null ? initialTimeLeft : currentPhase?.duration;
 
-        const showPhase = (
-          phase: any,
-          time: number,
-          isBlinking: boolean = false
-        ) => {
+        const showPhase = (phase: any, time: number) => {
           dispatch(
             previewCreatedPatternPhase({
               duration: time,
-              signalString: isBlinking
-                ? phase.signalString.replace(/G/g, "B")
-                : phase.signalString,
+              signalString: phase.signalString,
             })
           );
         };
 
-        const blinkPhase = (phase: any, blinkTime: number) => {
-          return new Promise<void>((resolve) => {
-            let blinkCount = blinkTime * 2;
-            const blinkInterval = setInterval(() => {
-              showPhase(phase, timeLeft, blinkCount % 2 === 0);
-              blinkCount--;
-              if (blinkCount <= 0) {
-                clearInterval(blinkInterval);
-                resolve();
+        const calculateTransitionSignalString = (
+          currentPhase: any,
+          nextPhase: any,
+          elapsed: number
+        ) => {
+          const currentSignals = currentPhase.signalString.slice(1, -1); // Remove * and #
+          const nextSignals = nextPhase.signalString.slice(1, -1);
+          let transitionSignals = "";
+
+          for (let i = 0; i < currentSignals.length; i++) {
+            const currentState = currentSignals[i];
+            const nextState = nextSignals[i];
+
+            if (currentState === "G" && nextState === "R") {
+              // Green to Red transition
+              const blinkDelay = currentPhase.enableBlink
+                ? currentPhase.greenToRedDelay
+                : 0;
+              const amberDelay = currentPhase.enableAmber
+                ? currentPhase.greenToRedAmberDelay
+                : 0;
+
+              if (elapsed < blinkDelay) {
+                // Blink phase: alternate G and X every 0.5s
+                const blinkCycle = Math.floor(elapsed / 0.5) % 2;
+                transitionSignals += blinkCycle === 0 ? "G" : "X";
+              } else if (elapsed < blinkDelay + amberDelay) {
+                // Amber phase
+                if (currentPhase.enableAmberBlink) {
+                  const amberCycle =
+                    Math.floor((elapsed - blinkDelay) / 0.5) % 2;
+                  transitionSignals += amberCycle === 0 ? "A" : "X";
+                } else {
+                  transitionSignals += "A";
+                }
+              } else {
+                transitionSignals += "R";
               }
-            }, 500);
-          });
+            } else if (currentState === "R" && nextState === "G") {
+              // Red to Green transition
+              const blinkDelay = currentPhase.enableBlink
+                ? currentPhase.redToGreenDelay
+                : 0;
+              const amberDelay = currentPhase.enableAmber
+                ? currentPhase.redToGreenAmberDelay
+                : 0;
+
+              if (elapsed < blinkDelay) {
+                // Blink phase: alternate R and X every 0.5s
+                const blinkCycle = Math.floor(elapsed / 0.5) % 2;
+                transitionSignals += blinkCycle === 0 ? "R" : "X";
+              } else if (elapsed < blinkDelay + amberDelay) {
+                // Amber phase
+                if (currentPhase.enableAmberBlink) {
+                  const amberCycle =
+                    Math.floor((elapsed - blinkDelay) / 0.5) % 2;
+                  transitionSignals += amberCycle === 0 ? "A" : "X";
+                } else {
+                  transitionSignals += "A";
+                }
+              } else {
+                transitionSignals += "G";
+              }
+            } else {
+              // No change
+              transitionSignals += currentState;
+            }
+          }
+
+          return "*" + transitionSignals + "#";
         };
 
-        const showAmber = (phase: any, amberDuration: number) => {
-          return new Promise<void>((resolve) => {
-            dispatch(
-              previewCreatedPatternPhase({
-                duration: amberDuration,
-                signalString: phase.signalString.replace(/G/g, "A"),
-              })
-            );
-            setTimeout(() => {
-              resolve();
-            }, amberDuration * 1000);
-          });
+        const handleTransition = async (currentPhase: any, nextPhase: any) => {
+          const greenToRedBlinkDelay = currentPhase.enableBlink
+            ? currentPhase.greenToRedDelay
+            : 0;
+          const greenToRedAmberDelay = currentPhase.enableAmber
+            ? currentPhase.greenToRedAmberDelay
+            : 0;
+          const redToGreenBlinkDelay = currentPhase.enableBlink
+            ? currentPhase.redToGreenDelay
+            : 0;
+          const redToGreenAmberDelay = currentPhase.enableAmber
+            ? currentPhase.redToGreenAmberDelay
+            : 0;
+
+          const transitionDuration = Math.max(
+            greenToRedBlinkDelay + greenToRedAmberDelay,
+            redToGreenBlinkDelay + redToGreenAmberDelay
+          );
+
+          if (transitionDuration > 0) {
+            const startTime = Date.now();
+            return new Promise<void>((resolve) => {
+              const transitionInterval = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000; // Time in seconds
+
+                if (elapsed >= transitionDuration) {
+                  clearInterval(transitionInterval);
+                  dispatch(
+                    previewCreatedPatternPhase({
+                      duration: nextPhase.duration,
+                      signalString: nextPhase.signalString,
+                    })
+                  );
+                  resolve();
+                } else {
+                  const signalString = calculateTransitionSignalString(
+                    currentPhase,
+                    nextPhase,
+                    elapsed
+                  );
+                  dispatch(
+                    previewCreatedPatternPhase({
+                      duration: 0.5,
+                      signalString,
+                    })
+                  );
+                  // Update countdown color based on dominant transition state
+                  if (
+                    elapsed <
+                    Math.max(greenToRedBlinkDelay, redToGreenBlinkDelay)
+                  ) {
+                    dispatch(updateCountDownColor("red")); // Blinking
+                  } else {
+                    dispatch(updateCountDownColor("yellow")); // Amber
+                  }
+                }
+              }, 500); // Update every 0.5s
+            });
+          }
         };
 
         const runPhase = async () => {
@@ -522,35 +600,27 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
               setIntervalId(null);
               setRemainingTime(null);
 
-              if (pattern.blinkEnabled && pattern.blinkTimeGreenToRed > 0) {
-                dispatch(updateCountDownColor("red"));
-                await blinkPhase(currentPhase, pattern.blinkTimeGreenToRed);
-              }
-
-              if (pattern.amberEnabled && pattern.amberDurationGreenToRed > 0) {
-                dispatch(updateCountDownColor("yellow"));
-                await showAmber(currentPhase, pattern.amberDurationGreenToRed);
-              }
-
               const nextIndex =
                 index + 1 >= pattern.configuredPhases.length ? 0 : index + 1;
+              const nextPhase = pattern.configuredPhases[nextIndex];
+
+              await handleTransition(currentPhase, nextPhase);
+
               setCurrentPhaseIndex(nextIndex);
               startPhaseInterval(nextIndex);
             } else {
               showPhase(currentPhase, timeLeft);
             }
           }, 1000);
-
           setIntervalId(id);
         };
 
-        runPhase();
+        runPhase(); // Start the phase
       };
 
-      startPhaseInterval(currentPhaseIndex, startFromTime);
+      startPhaseInterval(0, startFromTime); // Kick off the process
     }
   };
-
   const stopPlayPhases = () => {
     if (isPlaying && intervalId) {
       clearInterval(intervalId);
@@ -648,16 +718,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
             Add a new Pattern
           </button>
         )}
-        {showOtherPatternConfig && (
-          <button
-            onClick={() => {
-              setShowOtherPatternConfig(false);
-              setShowAllAvailablePhases(true);
-            }}
-          >
-            Back
-          </button>
-        )}
+
         {(showAllAvailablePhases || showOtherPatternConfig) && (
           <button onClick={handleCancel}>Cancel</button>
         )}
@@ -798,184 +859,23 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
               </DragDropContext>
             </div>
           )}
-          {selectedPhases.length > 0 && (
-            <Button
-              type="button"
-              onClick={() => {
-                setShowAllAvailablePhases(false);
-                setShowOtherPatternConfig(true);
-              }}
-              disabled={!allPhasesConfigured}
+          <div className="patterns__selected--ctn">
+            <input
+              type="text"
+              value={newPatternName}
+              onChange={(e) => setNewPatternName(e.target.value)}
+              placeholder="Enter new pattern name"
+              aria-label="New pattern name"
+            />
+            <button
+              onClick={createPatternHandler}
+              disabled={!allPhasesConfigured || !newPatternName.trim()}
+              aria-label="Save new pattern"
             >
-              Continue pattern creation
-            </Button>
-          )}
+              Save New Pattern
+            </button>
+          </div>
         </>
-      )}
-
-      {showOtherPatternConfig && (
-        <div>
-          <form
-            onSubmit={formik.handleSubmit}
-            className="patterns__selected--form"
-          >
-            <h3>Blink and Amber Configuration</h3>
-            <div className="patterns__selected--title">
-              <label>
-                <input
-                  type="checkbox"
-                  name="blinkEnabled"
-                  checked={formik.values.blinkEnabled}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                Enable Blink
-              </label>
-              {formik.values.blinkEnabled && (
-                <>
-                  <div className="patterns__selected--item">
-                    <label htmlFor="blinkTimeRedToGreen">
-                      Blink Time (Red to Green)
-                    </label>
-                    <input
-                      type="number"
-                      name="blinkTimeRedToGreen"
-                      id="blinkTimeRedToGreen"
-                      value={formik.values.blinkTimeRedToGreen}
-                      onChange={(e) => {
-                        const value = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value))
-                        );
-                        formik.setFieldValue("blinkTimeRedToGreen", value);
-                      }}
-                      onBlur={formik.handleBlur}
-                      autoFocus
-                      min={0}
-                      max={5}
-                    />
-                    {formik.touched.blinkTimeRedToGreen &&
-                      formik.errors.blinkTimeRedToGreen && (
-                        <div>{formik.errors.blinkTimeRedToGreen}</div>
-                      )}
-                  </div>
-                  <div className="patterns__selected--item">
-                    <label htmlFor="blinkTimeGreenToRed">
-                      Blink Time (Green to Red)
-                    </label>
-                    <input
-                      type="number"
-                      name="blinkTimeGreenToRed"
-                      id="blinkTimeGreenToRed"
-                      value={formik.values.blinkTimeGreenToRed}
-                      onChange={(e) => {
-                        const value = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value))
-                        );
-                        formik.setFieldValue("blinkTimeGreenToRed", value);
-                      }}
-                      onBlur={formik.handleBlur}
-                      min={0}
-                      max={5}
-                    />
-                    {formik.touched.blinkTimeGreenToRed &&
-                      formik.errors.blinkTimeGreenToRed && (
-                        <div>{formik.errors.blinkTimeGreenToRed}</div>
-                      )}
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="patterns__selected--title">
-              <label>
-                <input
-                  type="checkbox"
-                  name="amberEnabled"
-                  checked={formik.values.amberEnabled}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                />
-                Enable Amber
-              </label>
-              {formik.values.amberEnabled && (
-                <>
-                  <div className="patterns__selected--item">
-                    <label htmlFor="amberDurationRedToGreen">
-                      Amber Duration (Red to Green)
-                    </label>
-                    <input
-                      type="number"
-                      name="amberDurationRedToGreen"
-                      id="amberDurationRedToGreen"
-                      value={formik.values.amberDurationRedToGreen}
-                      onChange={(e) => {
-                        const value = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value))
-                        );
-                        formik.setFieldValue("amberDurationRedToGreen", value);
-                      }}
-                      onBlur={formik.handleBlur}
-                      min={0}
-                      max={5}
-                    />
-                    {formik.touched.amberDurationRedToGreen &&
-                      formik.errors.amberDurationRedToGreen && (
-                        <div>{formik.errors.amberDurationRedToGreen}</div>
-                      )}
-                  </div>
-                  <div className="patterns__selected--item">
-                    <label htmlFor="amberDurationGreenToRed">
-                      Amber Duration (Green to Red)
-                    </label>
-                    <input
-                      type="number"
-                      name="amberDurationGreenToRed"
-                      id="amberDurationGreenToRed"
-                      value={formik.values.amberDurationGreenToRed}
-                      onChange={(e) => {
-                        const value = Math.max(
-                          0,
-                          Math.min(5, Number(e.target.value))
-                        );
-                        formik.setFieldValue("amberDurationGreenToRed", value);
-                      }}
-                      onBlur={formik.handleBlur}
-                      min={0}
-                      max={5}
-                    />
-                    {formik.touched.amberDurationGreenToRed &&
-                      formik.errors.amberDurationGreenToRed && (
-                        <div>{formik.errors.amberDurationGreenToRed}</div>
-                      )}
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="patterns__selected--ctn">
-              <input
-                type="text"
-                id="patternName"
-                name="patternName"
-                value={formik.values.patternName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-              />
-              {formik.touched.patternName && formik.errors.patternName && (
-                <div>{formik.errors.patternName}</div>
-              )}
-              <button
-                type="submit"
-                disabled={
-                  !formik.isValid || !formik.dirty || formik.isSubmitting
-                }
-              >
-                Create pattern
-              </button>
-            </div>
-          </form>
-        </div>
       )}
 
       {patterns?.length > 0 ? (

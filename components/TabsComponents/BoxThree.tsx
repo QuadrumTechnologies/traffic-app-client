@@ -126,7 +126,7 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
     }
 
-    let toastId: string | undefined; // Declare toastId outside try-catch
+    let toastId: string | undefined;
     try {
       const plan = plans.find((p) => p.id === planId);
       if (!plan || !plan.schedule) {
@@ -218,14 +218,23 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
 
       setIsUploading(null);
       emitToastMessage(`Plan "${planName}" uploaded successfully`, "success", {
-        duration: 3000,
+        duration: 5000,
       });
       if (toastId) toast.dismiss(toastId);
     } catch (error: any) {
       setIsUploading(null);
+      setIsUploadingAll(false);
       const message = error?.message || "Request failed";
       emitToastMessage(message, "error");
       if (toastId) toast.dismiss(toastId);
+    } finally {
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
+      setTimeout(() => {
+        setIsUploading(null);
+        setIsUploadingAll(false);
+      }, 5000);
     }
   };
 
@@ -266,12 +275,13 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
       }
 
       emitToastMessage("All plans uploaded successfully", "success", {
-        duration: 3000,
+        duration: 5000,
       });
       toast.dismiss(toastId);
     } catch (error: any) {
       const message = error?.message || "Request failed";
       emitToastMessage(message, "error");
+      setIsUploadingAll(false);
     } finally {
       setIsUploadingAll(false);
     }

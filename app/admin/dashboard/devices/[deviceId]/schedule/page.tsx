@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import Select, { ActionMeta, SingleValue } from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { PhaseConfigType } from "@/components/TabsComponents/BoxTwo";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import HttpRequest from "@/store/services/HttpRequest";
 import { emitToastMessage } from "@/utils/toastFunc";
@@ -39,18 +38,21 @@ interface ScheduleTemplateProps {
 interface Pattern {
   name: string;
   config: {
-    amberDurationGreenToRed: number;
-    amberDurationRedToGreen: number;
-    amberEnabled: boolean;
-    blinkEnabled: boolean;
-    blinkTimeGreenToRed: number;
-    blinkTimeRedToGreen: number;
     configuredPhases: Array<{
       name: string;
       phaseId: string;
       signalString: string;
       duration: number;
       id: number;
+      enableBlink: boolean;
+      redToGreenDelay: number;
+      greenToRedDelay: number;
+      enableAmber: boolean;
+      enableAmberBlink: boolean;
+      redToGreenAmberDelay: number;
+      greenToRedAmberDelay: number;
+      holdRedSignalOnAmber: boolean;
+      holdGreenSignalOnAmber: boolean;
     }>;
   };
 }
@@ -125,8 +127,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   const [selectedPattern, setSelectedPattern] = useState<any>(null);
   const [updatedPatternPhases, setUpdatedPatternPhases] = useState<any[]>([]);
   const [newPatternName, setNewPatternName] = useState<string>("");
-  const [phaseToConfigure, setPhaseToConfigure] =
-    useState<PhaseConfigType | null>(null);
+  const [phaseToConfigure, setPhaseToConfigure] = useState<any | null>(null);
 
   const handleDragEndEdit = (result: any) => {
     if (!result.destination) return;
@@ -158,29 +159,43 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   };
 
   const handleAvailablePhaseSelect = (phase: any) => {
-    const updatedPhases = [
-      ...updatedPatternPhases,
-      {
-        id: phase._id,
-        name: phase.name,
-        signalString: phase.data,
-        duration: "",
-      },
-    ];
+    console.log("Selected phase:", phase);
+
+    const transformedPhase = {
+      deviceId: phase.deviceId,
+      duration: 1,
+      enableAmber: phase.enableAmber,
+      enableAmberBlink: phase.enableAmberBlink,
+      enableBlink: phase.enableBlink,
+      greenToRedAmberDelay: phase.greenToRedAmberDelay,
+      greenToRedDelay: phase.greenToRedDelay,
+      holdGreenSignalOnAmber: phase.holdGreenSignalOnAmber,
+      holdRedSignalOnAmber: phase.holdRedSignalOnAmber,
+      id: phase._id,
+      index: updatedPatternPhases.length,
+      name: phase.name,
+      phaseId: `${phase.name}-${Date.now()}`,
+      redToGreenAmberDelay: phase.redToGreenAmberDelay,
+      redToGreenDelay: phase.redToGreenDelay,
+      signalString: phase.data,
+    };
+
+    const updatedPhases = [...updatedPatternPhases, transformedPhase];
+
     setUpdatedPatternPhases(updatedPhases);
   };
 
   const handleRemovePhaseFromSelectedPhases = (phaseId: string) => {
     setUpdatedPatternPhases((prev) =>
-      prev.filter((phase) => phase.id !== phaseId)
+      prev.filter((phase) => phase?.phaseId !== phaseId)
     );
     dispatch(removePhaseConfig(phaseId));
   };
 
-  const handleConfigurePhase = (phaseId: string, phaseName: string) => {
+  const handleConfigurePhase = (phaseInstance: any) => {
     if (
       phaseToConfigure &&
-      phaseToConfigure.id !== phaseId &&
+      phaseToConfigure?.phaseId !== phaseInstance?.phaseId &&
       phaseFormik.dirty
     ) {
       const confirmSwitch = window.confirm(
@@ -188,39 +203,66 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       if (!confirmSwitch) return;
     }
-    const foundPhase = phases?.find((p) => p.name === phaseName);
-    if (foundPhase) {
-      setPhaseToConfigure({ ...foundPhase, id: phaseId });
-      phaseFormik.resetForm({
-        values: {
-          duration:
-            configuredPhases?.find((p) => p.id === foundPhase.id)?.duration ||
-            "",
-        },
-      });
-    }
+    setPhaseToConfigure(phaseInstance);
+    phaseFormik.resetForm({
+      values: {
+        duration:
+          configuredPhases?.find((p) => p?.phaseId === phaseInstance?.phaseId)
+            ?.duration || "",
+        enableBlink: phaseInstance?.enableBlink ?? false,
+        redToGreenDelay: phaseInstance?.redToGreenDelay ?? 0,
+        greenToRedDelay: phaseInstance?.greenToRedDelay ?? 2,
+        enableAmber: phaseInstance?.enableAmber ?? true,
+        enableAmberBlink: phaseInstance?.enableAmberBlink ?? false,
+        redToGreenAmberDelay: phaseInstance?.redToGreenAmberDelay ?? 0,
+        greenToRedAmberDelay: phaseInstance?.greenToRedAmberDelay ?? 3,
+      },
+    });
   };
 
   const phaseFormik = useFormik({
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases?.find((p) => p.id === phaseToConfigure.id)
+        ? configuredPhases?.find((p) => p?.id === phaseToConfigure?.id)
             ?.duration || ""
         : "",
+      enableBlink: phaseToConfigure?.enableBlink ?? false,
+      redToGreenDelay: phaseToConfigure?.redToGreenDelay ?? 0,
+      greenToRedDelay: phaseToConfigure?.greenToRedDelay ?? 2,
+      enableAmber: phaseToConfigure?.enableAmber ?? true,
+      enableAmberBlink: phaseToConfigure?.enableAmberBlink ?? false,
+      redToGreenAmberDelay: phaseToConfigure?.redToGreenAmberDelay ?? 0,
+      greenToRedAmberDelay: phaseToConfigure?.greenToRedAmberDelay ?? 3,
     },
     validationSchema: Yup.object({
       duration: Yup.number()
         .required("Duration is required")
         .min(1, "Minimum duration is 1"),
+      redToGreenDelay: Yup.number().min(0).max(5, "Max 5 seconds"),
+      greenToRedDelay: Yup.number().min(0).max(5, "Max 5 seconds"),
+      redToGreenAmberDelay: Yup.number().min(0).max(5, "Max 5 seconds"),
+      greenToRedAmberDelay: Yup.number()
+        .min(2, "Min 2 seconds")
+        .max(5, "Max 5 seconds"),
     }),
     onSubmit: async (values) => {
       if (phaseToConfigure) {
         const configToSave = {
-          id: phaseToConfigure.id,
-          name: phaseToConfigure.name,
-          signalString: phaseToConfigure.data,
+          id: phaseToConfigure?.id,
+          name: phaseToConfigure?.name,
+          phaseId: phaseToConfigure?.phaseId || phaseToConfigure?.id,
+          signalString: phaseToConfigure?.signalString,
           duration: values.duration,
+          enableBlink: values.enableBlink,
+          redToGreenDelay: values.redToGreenDelay,
+          greenToRedDelay: values.greenToRedDelay,
+          enableAmber: values.enableAmber,
+          enableAmberBlink: values.enableAmberBlink,
+          redToGreenAmberDelay: values.redToGreenAmberDelay,
+          greenToRedAmberDelay: values.greenToRedAmberDelay,
+          holdRedSignalOnAmber: false,
+          holdGreenSignalOnAmber: false,
         };
         dispatch(addOrUpdatePhaseConfig(configToSave));
         setPhaseToConfigure(null);
@@ -231,10 +273,17 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     validateOnChange: false,
   });
 
-  // Show validation errors as toasts on blur
   const handleDurationBlur = () => {
     if (phaseFormik.touched.duration && phaseFormik.errors.duration) {
-      emitToastMessage(phaseFormik.errors.duration as string, "error");
+      emitToastMessage(
+        Array.isArray(phaseFormik.errors.duration)
+          ? phaseFormik.errors.duration.join(", ")
+          : typeof phaseFormik.errors.duration === "object" &&
+            phaseFormik.errors.duration !== null
+          ? JSON.stringify(phaseFormik.errors.duration)
+          : (phaseFormik.errors.duration as string),
+        "error"
+      );
     }
   };
 
@@ -249,13 +298,34 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       emitToastMessage("Please provide a new pattern name.", "error");
       return;
     }
+
+    const newConfiguredPhases = updatedPatternPhases.map(
+      (phase: any, index: number) => ({
+        name: phase.name,
+        phaseId: phase.id,
+        id: `${phase.name}-${Date.now()}-${index}`,
+        signalString: phase.signalString,
+        duration: phase.duration,
+        deviceId: params.deviceId,
+        enableBlink: phase.enableBlink ?? false,
+        redToGreenDelay: phase.redToGreenDelay ?? 0,
+        greenToRedDelay: phase.greenToRedDelay ?? 2,
+        enableAmber: phase.enableAmber ?? true,
+        enableAmberBlink: phase.enableAmberBlink ?? false,
+        redToGreenAmberDelay: phase.redToGreenAmberDelay ?? 0,
+        greenToRedAmberDelay: phase.greenToRedAmberDelay ?? 3,
+        holdRedSignalOnAmber: false,
+        holdGreenSignalOnAmber: false,
+      })
+    );
     try {
       await HttpRequest.post("/patterns", {
         email,
-        ...selectedPattern,
-        configuredPhases: configuredPhases,
-        name: newPatternName,
+        name: newPatternName.toUpperCase(),
         deviceId: params.deviceId,
+        config: {
+          configuredPhases: newConfiguredPhases,
+        },
       });
       dispatch(getUserPattern(email));
       dispatch(clearPhaseConfig());
@@ -263,12 +333,12 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       setNewPatternName("");
       setUpdatedPatternPhases([]);
       setRightBoxContent(null);
+      emitToastMessage("Pattern saved successfully", "success");
     } catch (error: any) {
       const message = error?.response?.data?.message || `Request failed`;
       emitToastMessage(message, "error");
     }
   };
-
   const handleDateChange = (date: Date | null) => {
     setCustomDate(date);
   };
@@ -543,64 +613,125 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
 
   function generatePatternName(config: Pattern["config"]): string {
     const parts: string[] = [];
-    if (config.blinkEnabled) {
-      parts.push(
-        `Blink${config.blinkTimeGreenToRed}${config.blinkTimeRedToGreen}`
-      );
-    }
-    if (config.amberEnabled) {
-      parts.push(
-        `Amber${config.amberDurationGreenToRed}${config.amberDurationRedToGreen}`
-      );
-    }
-    if (config.configuredPhases[0]?.duration >= 20) {
-      parts.push("Peak");
-    } else if (config.configuredPhases[0]?.duration >= 10) {
-      parts.push("Noon");
-    } else {
-      parts.push("OffPeak");
+    const firstPhase = config.configuredPhases[0];
+    if (firstPhase) {
+      if (firstPhase.enableBlink) {
+        parts.push(
+          `Blink${firstPhase.greenToRedDelay}${firstPhase.redToGreenDelay}`
+        );
+      }
+      if (firstPhase.enableAmber) {
+        parts.push(
+          `Amber${firstPhase.greenToRedAmberDelay}${firstPhase.redToGreenAmberDelay}`
+        );
+      }
+      if (firstPhase.duration >= 20) {
+        parts.push("Peak");
+      } else if (firstPhase.duration >= 10) {
+        parts.push("Noon");
+      } else {
+        parts.push("OffPeak");
+      }
     }
     return parts.join("_") || "Default";
   }
 
   function parsePattern(patternArray: string[]): Pattern {
-    const config = {
-      amberDurationGreenToRed: 3,
-      amberDurationRedToGreen: 3,
-      amberEnabled: false,
-      blinkEnabled: false,
-      blinkTimeGreenToRed: 2,
-      blinkTimeRedToGreen: 1,
-      configuredPhases: [] as Pattern["config"]["configuredPhases"],
-    };
+    const configuredPhases: Pattern["config"]["configuredPhases"] = [];
     let currentPhaseIndex = 0;
-    patternArray.forEach((line) => {
-      const pattern = line.trim();
+
+    // Default phase configuration based on provided rules
+    const defaultPhaseConfig = {
+      enableBlink: false,
+      redToGreenDelay: 0, // redToGreenBlinkDelay
+      greenToRedDelay: 2, // greenToRedBlinkDelay
+      enableAmber: true,
+      enableAmberBlink: false,
+      redToGreenAmberDelay: 0,
+      greenToRedAmberDelay: 3,
+      holdRedSignalOnAmber: false,
+      holdGreenSignalOnAmber: false,
+    };
+
+    for (let i = 0; i < patternArray.length; i++) {
+      const pattern = patternArray[i].trim();
       const match = pattern.match(/\*(\d+|X)\*(.*?)#/);
-      if (!match) return;
+      if (!match) continue;
+
       const [_, duration, signalString] = match;
-      if (duration === "X") {
-        config.blinkEnabled = true;
-      }
-      if (duration !== "X" && signalString.includes("A")) {
-        config.amberEnabled = true;
-      }
+
       if (
         duration !== "X" &&
         !signalString.includes("X") &&
         !signalString.includes("A")
       ) {
-        config.configuredPhases.push({
+        // Main phase (no transition signals like X or A)
+        const phase = {
           name: `Phase${currentPhaseIndex + 1}`,
           phaseId: String(currentPhaseIndex),
           signalString: `*${signalString}#`,
           duration: parseInt(duration) || 0,
           id: currentPhaseIndex,
-        });
+          ...defaultPhaseConfig,
+        };
+
+        // Check subsequent lines for transition settings (blink or amber)
+        let nextIndex = i + 1;
+        while (nextIndex < patternArray.length) {
+          const nextPattern = patternArray[nextIndex].trim();
+          const nextMatch = nextPattern.match(/\*(\d+|X)\*(.*?)#/);
+          if (!nextMatch) break;
+
+          const [_, nextDuration, nextSignalString] = nextMatch;
+
+          if (nextDuration === "X" && nextSignalString.includes("X")) {
+            // Blink phase detected
+            phase.enableBlink = true;
+            // Estimate blink duration by counting consecutive 'X' lines
+            let blinkCount = 0;
+            for (let j = nextIndex; j < patternArray.length; j++) {
+              const check = patternArray[j].match(/\*X\*(.*?)#/);
+              if (!check || !check[1].includes("X")) break;
+              blinkCount += 0.5; // Each X line represents a 0.5s blink cycle
+              nextIndex = j + 1;
+            }
+            // Assign blink duration (split between green-to-red and red-to-green for simplicity)
+            phase.greenToRedDelay = Math.min(blinkCount / 2, 5); // Cap at 5s
+            phase.redToGreenDelay = Math.min(blinkCount / 2, 5); // Cap at 5s
+            continue;
+          } else if (nextSignalString.includes("A")) {
+            // Amber phase detected
+            phase.enableAmber = true;
+            phase.enableAmberBlink = nextSignalString.includes("X");
+            // Estimate amber duration
+            let amberCount = 0;
+            for (let j = nextIndex; j < patternArray.length; j++) {
+              const check = patternArray[j].match(/\*(\d+|X)\*(.*?)#/);
+              if (!check || !check[2].includes("A")) break;
+              amberCount += check[1] === "X" ? 0.5 : parseInt(check[1]) / 2; // Approximate duration
+              nextIndex = j + 1;
+            }
+            phase.greenToRedAmberDelay = Math.min(
+              Math.max(amberCount / 2, 2),
+              5
+            ); // Range 2–5s
+            phase.redToGreenAmberDelay = Math.min(amberCount / 2, 5); // Range 0–5s
+            continue;
+          } else {
+            break; // No more transition phases
+          }
+        }
+
+        configuredPhases.push(phase);
         currentPhaseIndex++;
+        i = nextIndex - 1; // Skip processed transition lines
       }
-    });
-    return { name: generatePatternName(config), config };
+    }
+
+    return {
+      name: generatePatternName({ configuredPhases }),
+      config: { configuredPhases },
+    };
   }
 
   useEffect(() => {
@@ -795,8 +926,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                     <ul {...provided.droppableProps} ref={provided.innerRef}>
                       {updatedPatternPhases.map((phaseInstance, index) => (
                         <Draggable
-                          key={phaseInstance.id}
-                          draggableId={`${phaseInstance.id}`}
+                          key={phaseInstance.phaseId}
+                          draggableId={`${phaseInstance.phaseId}`}
                           index={index}
                         >
                           {(provided) => (
@@ -809,7 +940,8 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                 <h3>{phaseInstance.name}</h3>
                                 <form onSubmit={phaseFormik.handleSubmit}>
                                   {phaseToConfigure &&
-                                  phaseToConfigure.id === phaseInstance.id ? (
+                                  phaseToConfigure.phaseId ===
+                                    phaseInstance.phaseId ? (
                                     <>
                                       <input
                                         id="duration"
@@ -846,13 +978,16 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                   ) : (
                                     <>
                                       {configuredPhases?.find(
-                                        (p) => p.id === phaseInstance.id
+                                        (p) =>
+                                          p.phaseId === phaseInstance.phaseId
                                       )?.duration ? (
                                         <span>
                                           Dur:{" "}
                                           {
                                             configuredPhases.find(
-                                              (p) => p.id === phaseInstance.id
+                                              (p) =>
+                                                p.phaseId ===
+                                                phaseInstance.phaseId
                                             )?.duration
                                           }
                                         </span>
@@ -860,21 +995,21 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                       <button
                                         type="button"
                                         onClick={() =>
-                                          handleConfigurePhase(
-                                            phaseInstance.id,
-                                            phaseInstance.name
-                                          )
+                                          handleConfigurePhase(phaseInstance)
                                         }
                                         aria-label={
                                           configuredPhases?.find(
-                                            (p) => p.id === phaseInstance.id
+                                            (p) =>
+                                              p.phaseId ===
+                                              phaseInstance.phaseId
                                           )?.duration
                                             ? "Edit phase duration"
                                             : "Set phase duration"
                                         }
                                       >
                                         {configuredPhases?.find(
-                                          (p) => p.id === phaseInstance.id
+                                          (p) =>
+                                            p.phaseId === phaseInstance.phaseId
                                         )?.duration
                                           ? "Edit Duration"
                                           : "Set Duration"}
@@ -885,7 +1020,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                 <button
                                   onClick={() =>
                                     handleRemovePhaseFromSelectedPhases(
-                                      phaseInstance.id
+                                      phaseInstance.phaseId
                                     )
                                   }
                                   aria-label="Remove phase"

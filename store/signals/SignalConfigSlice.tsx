@@ -23,6 +23,7 @@ interface SignalConfigState {
   manualMode: boolean;
   landingPageSignals: Signal[];
   countDownColor: "red" | "yellow" | "green";
+  openInputModal: boolean;
 }
 
 const initializeSignals = (
@@ -64,12 +65,16 @@ const initialConfig: SignalConfigState = {
   manualMode: false,
   landingPageSignals: [],
   countDownColor: "green",
+  openInputModal: false,
 };
 
 const signalConfigSlice = createSlice({
   name: "signalConfig",
   initialState: initialConfig,
   reducers: {
+    setInputModal(state, action: PayloadAction<boolean>) {
+      state.openInputModal = action.payload;
+    },
     setSignalString(state, action: PayloadAction<string>) {
       state.signalString = action.payload;
     },
@@ -149,5 +154,6 @@ export const {
   setLandingPageInitialSignals,
   updateCountDownColor,
   handleManualControlFeedback,
+  setInputModal,
 } = signalConfigSlice.actions;
 export default signalConfigSlice.reducer;
