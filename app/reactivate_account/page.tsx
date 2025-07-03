@@ -101,7 +101,19 @@ const ReactivateAccount: React.FC<ReactivateAccountProps> = () => {
             {formik.isSubmitting ? <LoadingSpinner /> : "Reactivate"}
           </Button>
           <button
-            className="forgot-card__button update-container__button"
+            style={{
+              marginTop: "10px",
+              backgroundColor: "transparent",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "16px",
+              textAlign: "center",
+              textDecoration: "underline",
+              padding: "0",
+              outline: "none",
+              transition: "color 0.3s ease",
+            }}
             type="button"
             onClick={() => {
               router.push("/");
