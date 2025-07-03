@@ -20,7 +20,7 @@ const Button: React.FC<Props> = ({
   return (
     <button
       onClick={onClick}
-      className={`btn ${className ? className : ""}`}
+      className={`btn ${className ? className : "button"}`}
       id={id}
       type={type}
       style={style}
