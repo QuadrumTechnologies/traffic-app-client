@@ -116,7 +116,7 @@ const ReactivateAccount: React.FC<ReactivateAccountProps> = () => {
             }}
             type="button"
             onClick={() => {
-              router.push("/");
+              router.push("/login");
             }}
           >
             Back to login

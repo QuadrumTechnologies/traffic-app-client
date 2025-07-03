@@ -94,7 +94,7 @@ const ForgotPassword = () => {
               transition: "color 0.3s ease",
             }}
             onClick={() => {
-              router.push("/");
+              router.push("/login");
             }}
           >
             Back to login
