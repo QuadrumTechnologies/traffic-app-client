@@ -4,6 +4,7 @@ interface Props {
   type: "button" | "submit" | "reset" | undefined;
   className?: string;
   disabled?: boolean;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }
 
@@ -12,13 +13,18 @@ const Button: React.FC<Props> = ({
   className,
   type,
   disabled,
+  id,
+  style,
   children,
 }) => {
   return (
     <button
       onClick={onClick}
-      className="button"
+      className={`btn ${className ? className : ""}`}
+      id={id}
       type={type}
+      style={style}
+      aria-label={id}
       disabled={disabled}
     >
       {children}

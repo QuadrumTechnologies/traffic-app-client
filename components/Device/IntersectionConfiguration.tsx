@@ -54,6 +54,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const [initialSignalStrings, setInitialSignalStrings] = useState("");
 
   const handleRequest = async (action: string) => {
+    console.log("Action requested:", action);
     const device = devices?.find((device) => device.deviceId === deviceId);
     if (!device) {
       emitToastMessage("Device not found.", "error");
@@ -176,6 +177,10 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     const initialStrings = encodeSignals();
     setInitialSignalStrings(initialStrings);
   }, [landingPageSignals]);
+
+  useEffect(() => {
+    if (!deviceActiveStateData?.Auto) setShowManualMoreConfig(true);
+  }, [deviceActiveStateData]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -303,7 +308,15 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   if (showCommandsOnly) {
     return (
-      <div>
+      <div
+        style={{
+          width: "90%",
+          border: "1px solid #ccc",
+          margin: "10px auto",
+          padding: "20px",
+          borderRadius: "8px",
+        }}
+      >
         <div>
           <h2>Commands Control</h2>
           <div className="intersectionConfiguration__commands">
@@ -321,43 +334,43 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
             <button onClick={() => handleRequest("Next")}>Next</button>
             <button onClick={() => handleRequest("Reboot")}>Reboot</button>
           </div>
+
           {showManualMoreConfig && (
-            <div className="phases__buttonBox">
-              <button
-                className="phases__clear"
-                onClick={() => {
-                  dispatch(setSignalStringToAllRed());
-                  dispatch(setSignalState());
-                }}
+            <>
+              <div className="phases__buttonBox">
+                <button
+                  className="phases__clear"
+                  onClick={() => {
+                    dispatch(setSignalStringToAllRed());
+                    dispatch(setSignalState());
+                  }}
+                >
+                  All Red
+                </button>
+                <button
+                  // className="phases__clear"
+                  onClick={() => {
+                    dispatch(setSignalStringToAllAmber());
+                    dispatch(setSignalState());
+                  }}
+                >
+                  All Yellow
+                </button>
+                <button
+                  // className="phases__clear"
+                  onClick={() => {
+                    dispatch(setSignalStringToAllBlank());
+                    dispatch(setSignalState());
+                  }}
+                >
+                  All Blank
+                </button>
+              </div>
+              <form
+                onSubmit={formik.handleSubmit}
+                className="patterns__selected--form"
               >
-                All Red
-              </button>
-              <button
-                className="phases__clear"
-                onClick={() => {
-                  dispatch(setSignalStringToAllAmber());
-                  dispatch(setSignalState());
-                }}
-              >
-                All Yellow
-              </button>
-              <button
-                className="phases__clear"
-                onClick={() => {
-                  dispatch(setSignalStringToAllBlank());
-                  dispatch(setSignalState());
-                }}
-              >
-                All Blank
-              </button>
-            </div>
-          )}
-          {showManualMoreConfig && (
-            <form
-              onSubmit={formik.handleSubmit}
-              className="patterns__selected--form"
-            >
-              {initialSignalStrings.includes("G") && (
+                {/* {initialSignalStrings.includes("G") && ( */}
                 <div>
                   <h3>Blink and Amber Configuration</h3>
                   <div className="patterns__selected--title">
@@ -437,9 +450,20 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
                     )}
                   </div>
                 </div>
-              )}
-              <Button type="submit">Send Signal</Button>
-            </form>
+                {/* )} */}
+                <Button
+                  type="submit"
+                  style={{
+                    color: "white",
+                    padding: "10px 20px",
+                    backgroundColor: "#6c6128",
+                    borderRadius: "5px",
+                  }}
+                >
+                  Send Signal
+                </Button>
+              </form>
+            </>
           )}
         </div>
       </div>

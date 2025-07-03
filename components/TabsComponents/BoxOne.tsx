@@ -430,6 +430,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                   type="number"
                   min="0"
                   max="5"
+                  defaultValue={2}
                   value={phaseSettings.greenToRedDelay}
                   onChange={(e) =>
                     setPhaseSettings({
@@ -492,6 +493,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                       type="number"
                       min="0"
                       max="5"
+                      defaultValue={3}
                       value={phaseSettings.greenToRedAmberDelay}
                       onChange={(e) =>
                         setPhaseSettings({
@@ -595,7 +597,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
           </p>
         </div>
       )}
-      <div className="phases__buttonBox">
+      {/* <div className="phases__buttonBox">
         <button
           className="phases__clear"
           onClick={() => {
@@ -623,7 +625,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
         >
           All Blank
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };
