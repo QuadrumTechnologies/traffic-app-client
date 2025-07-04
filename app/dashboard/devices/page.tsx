@@ -164,9 +164,13 @@ const UserDevices = () => {
                   }}
                 >
                   {isOffline
-                    ? deviceStatus?.lastSeen || status?.lastSeen
+                    ? deviceStatus?.lastSeen ||
+                      status?.lastSeen ||
+                      device?.lastSeen
                       ? `Last seen: ${dayjs(
-                          deviceStatus?.lastSeen || status?.lastSeen
+                          deviceStatus?.lastSeen ||
+                            status?.lastSeen ||
+                            device?.lastSeen
                         ).format("YYYY-MM-DD HH:mm:ss")}`
                       : "Last seen: Never connected"
                     : null}
