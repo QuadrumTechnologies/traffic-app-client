@@ -30,6 +30,7 @@ const UserDevices = () => {
   const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
     (state) => state.userDevice
   );
+  console.log("Devices", devices);
 
   const dispatch = useAppDispatch();
   useDeviceStatus();
