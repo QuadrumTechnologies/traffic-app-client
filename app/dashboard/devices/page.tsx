@@ -115,7 +115,8 @@ const UserDevices = () => {
           const status = getDeviceStatus(deviceStatuses, device.deviceId);
           const isOffline =
             deviceStatus?.status === false ||
-            (!deviceStatus && status?.status === false);
+            (!deviceStatus && status?.status === false) ||
+            !!device?.lastSeen;
           console.log("IsOffline", isOffline, deviceStatus, status);
           return (
             <div
