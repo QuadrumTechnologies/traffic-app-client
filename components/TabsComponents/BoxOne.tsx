@@ -20,6 +20,7 @@ import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import HttpRequest from "@/store/services/HttpRequest";
 import { getUserPhase } from "@/store/devices/UserDeviceSlice";
 import { useParams } from "next/navigation";
+import { AiOutlineClose } from "react-icons/ai";
 
 // Styled components for phase creation modal
 const ModalBackdrop = styled.div`
@@ -93,6 +94,16 @@ const SettingsSection = styled.div`
   margin-top: 1rem;
 `;
 
+const CloseIcon = styled(AiOutlineClose)`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  cursor: pointer;
+  color: #555;
+  &:hover {
+    color: #f00;
+  }
+`;
 const SettingLabel = styled.label`
   display: flex;
   align-items: center;
@@ -266,7 +277,6 @@ const BoxOne: React.FC<BoxOneProps> = () => {
         holdRedSignalOnAmber: phaseSettings.holdRedSignalOnAmber,
         holdGreenSignalOnAmber: phaseSettings.holdGreenSignalOnAmber,
       };
-      console.log("Encoded Phase Data:", phase);
       const { data } = await HttpRequest.post("/phases", {
         email: user.email,
         phase,
@@ -278,11 +288,11 @@ const BoxOne: React.FC<BoxOneProps> = () => {
       setPhaseSettings({
         enableBlink: false,
         redToGreenDelay: 0,
-        greenToRedDelay: 0,
+        greenToRedDelay: 2,
         enableAmber: true,
         enableAmberBlink: false,
         redToGreenAmberDelay: 0,
-        greenToRedAmberDelay: 0,
+        greenToRedAmberDelay: 3,
         holdRedSignalOnAmber: false,
         holdGreenSignalOnAmber: false,
       });
@@ -386,6 +396,17 @@ const BoxOne: React.FC<BoxOneProps> = () => {
             onSubmit={handleAddPhase}
             onClick={(e) => e.stopPropagation()}
           >
+            <CloseIcon
+              size={24}
+              style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                cursor: "pointer",
+                color: "#555",
+              }}
+              onClick={() => dispatch(setInputModal(false))}
+            />
             <PhaseNameInput
               type="text"
               placeholder="Enter phase name"

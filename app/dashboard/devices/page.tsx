@@ -11,7 +11,6 @@ import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { getDeviceStatus } from "@/utils/misc";
-import { getWebSocket } from "../websocket";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import HttpRequest from "@/store/services/HttpRequest";
 import { emitToastMessage } from "@/utils/toastFunc";
@@ -113,11 +112,10 @@ const UserDevices = () => {
         {devices?.map((device: any, index) => {
           const deviceStatus = deviceStatuses.find((s) => s.id === device?.id);
           const status = getDeviceStatus(deviceStatuses, device.deviceId);
-          const isOffline =
-            deviceStatus?.status === false ||
-            (!deviceStatus && status?.status === false) ||
-            !!device?.lastSeen;
-          console.log("IsOffline", isOffline, deviceStatus, status);
+          // const isOffline =
+          //   deviceStatus?.status === false ||
+          //   (!deviceStatus && status?.status === false);
+
           return (
             <div
               key={index}
@@ -155,27 +153,28 @@ const UserDevices = () => {
                     </div>
                   )}
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    fontSize: "1.4rem",
-                    letterSpacing: "0.05rem",
-                    color: "#888",
-                  }}
-                >
-                  {isOffline
-                    ? deviceStatus?.lastSeen ||
-                      status?.lastSeen ||
-                      device?.lastSeen
+                {/* Only show Last seen if the device is offline */}
+                {!status?.status && (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      fontSize: "1.4rem",
+                      letterSpacing: "0.05rem",
+                      color: "#888",
+                    }}
+                  >
+                    {deviceStatus?.lastSeen ||
+                    status?.lastSeen ||
+                    device?.lastSeen
                       ? `Last seen: ${dayjs(
                           deviceStatus?.lastSeen ||
                             status?.lastSeen ||
                             device?.lastSeen
                         ).format("YYYY-MM-DD HH:mm:ss")}`
-                      : "Last seen: Never connected"
-                    : null}
-                </div>
+                      : "Last seen: Never connected"}
+                  </div>
+                )}
               </div>
               <div className="deviceConfigPage__menu">
                 <CiMenuKebab

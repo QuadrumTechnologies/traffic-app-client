@@ -157,13 +157,11 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   };
 
   const createPatternHandler = async () => {
-    // const patternName = prompt("Enter a name for the new pattern");
     if (!newPatternName.trim()) {
       emitToastMessage("A pattern name is required", "error");
       return;
     }
 
-    // Ensure all selected phases have valid configurations
     if (!allPhasesConfigured) {
       emitToastMessage(
         "All selected phases must have a configured duration",
@@ -219,7 +217,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     const newConfiguredPhases = pattern.configuredPhases.map(
       (phase: any, index: number) => ({
         name: phase.name,
-        phaseId: phase.id,
+        phaseId: phase.phaseId,
         id: `${phase.name}-${Date.now()}-${index}`,
         signalString: phase.signalString,
         duration: phase.duration,
@@ -276,7 +274,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   };
 
   const handleCreatedPatternPhasePreview = (phase: any) => {
-    if (activePreviewPhase === phase.id) {
+    if (activePreviewPhase === phase.phaseId) {
       dispatch(closePreviewCreatedPatternPhase());
       setActivePreviewPhase(null);
     } else {
@@ -289,7 +287,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
           signalString: phase.signalString,
         })
       );
-      setActivePreviewPhase(phase.id);
+      setActivePreviewPhase(phase.phaseId);
     }
   };
 
@@ -321,8 +319,8 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   const handleConfigurePhaseForCreatedPattern = (pattern: any, phase: any) => {
     if (
       alreadyCreatedPatternPhaseToConfigure &&
-      alreadyCreatedPatternPhaseToConfigure.id !== phase.id &&
-      phaseFormik.dirty
+      alreadyCreatedPatternPhaseToConfigure.phaseId !== phase.phaseId &&
+      createdPhaseFormik.dirty
     ) {
       const confirmSwitch = window.confirm(
         "You have unsaved changes. Do you want to switch to configuring a different phase without saving?"
@@ -331,7 +329,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     }
 
     const foundPhase = pattern.configuredPhases.find(
-      (p: any) => p.id === phase.id
+      (p: any) => p.phaseId === phase.phaseId
     );
     if (foundPhase) {
       setAlreadyCreatedPatternPhaseToConfigure({ ...foundPhase });
@@ -378,7 +376,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     }),
     onSubmit: async (values) => {
       const configuredPhases = updatedPatternPhases.map((phase) => {
-        if (phase.id === alreadyCreatedPatternPhaseToConfigure?.id) {
+        if (phase.phaseId === alreadyCreatedPatternPhaseToConfigure?.phaseId) {
           return { ...phase, duration: values.duration };
         }
         return phase;
@@ -457,8 +455,14 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
         const calculateTransitionSignalString = (
           currentPhase: any,
           nextPhase: any,
-          elapsed: number
+          elapsed: number,
+          maxTransitionDuration: number
         ) => {
+          // If elapsed time exceeds the maximum transition duration, return next phase's signalString
+          if (elapsed >= maxTransitionDuration) {
+            return nextPhase.signalString;
+          }
+
           const currentSignals = currentPhase.signalString.slice(1, -1); // Remove * and #
           const nextSignals = nextPhase.signalString.slice(1, -1);
           let transitionSignals = "";
@@ -470,10 +474,10 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
             if (currentState === "G" && nextState === "R") {
               // Green to Red transition
               const blinkDelay = currentPhase.enableBlink
-                ? currentPhase.greenToRedDelay
+                ? currentPhase.greenToRedDelay || 0
                 : 0;
               const amberDelay = currentPhase.enableAmber
-                ? currentPhase.greenToRedAmberDelay
+                ? currentPhase.greenToRedAmberDelay || 0
                 : 0;
 
               if (elapsed < blinkDelay) {
@@ -482,23 +486,27 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                 transitionSignals += blinkCycle === 0 ? "G" : "X";
               } else if (elapsed < blinkDelay + amberDelay) {
                 // Amber phase
+                let baseSignal = currentPhase.holdGreenSignalOnAmber
+                  ? "G"
+                  : "X";
                 if (currentPhase.enableAmberBlink) {
                   const amberCycle =
                     Math.floor((elapsed - blinkDelay) / 0.5) % 2;
-                  transitionSignals += amberCycle === 0 ? "A" : "X";
+                  transitionSignals += amberCycle === 0 ? "A" : baseSignal;
                 } else {
-                  transitionSignals += "A";
+                  transitionSignals += baseSignal === "X" ? "A" : baseSignal;
                 }
               } else {
-                transitionSignals += "R";
+                // Still in transition for other signals, keep current state
+                transitionSignals += currentState;
               }
             } else if (currentState === "R" && nextState === "G") {
               // Red to Green transition
               const blinkDelay = currentPhase.enableBlink
-                ? currentPhase.redToGreenDelay
+                ? currentPhase.redToGreenDelay || 0
                 : 0;
               const amberDelay = currentPhase.enableAmber
-                ? currentPhase.redToGreenAmberDelay
+                ? currentPhase.redToGreenAmberDelay || 0
                 : 0;
 
               if (elapsed < blinkDelay) {
@@ -507,15 +515,17 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                 transitionSignals += blinkCycle === 0 ? "R" : "X";
               } else if (elapsed < blinkDelay + amberDelay) {
                 // Amber phase
+                let baseSignal = currentPhase.holdRedSignalOnAmber ? "R" : "X";
                 if (currentPhase.enableAmberBlink) {
                   const amberCycle =
                     Math.floor((elapsed - blinkDelay) / 0.5) % 2;
-                  transitionSignals += amberCycle === 0 ? "A" : "X";
+                  transitionSignals += amberCycle === 0 ? "A" : baseSignal;
                 } else {
-                  transitionSignals += "A";
+                  transitionSignals += baseSignal === "X" ? "A" : baseSignal;
                 }
               } else {
-                transitionSignals += "G";
+                // Still in transition for other signals, keep current state
+                transitionSignals += currentState;
               }
             } else {
               // No change
@@ -527,18 +537,36 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
         };
 
         const handleTransition = async (currentPhase: any, nextPhase: any) => {
-          const greenToRedBlinkDelay = currentPhase.enableBlink
-            ? currentPhase.greenToRedDelay
-            : 0;
-          const greenToRedAmberDelay = currentPhase.enableAmber
-            ? currentPhase.greenToRedAmberDelay
-            : 0;
-          const redToGreenBlinkDelay = currentPhase.enableBlink
-            ? currentPhase.redToGreenDelay
-            : 0;
-          const redToGreenAmberDelay = currentPhase.enableAmber
-            ? currentPhase.redToGreenAmberDelay
-            : 0;
+          // Check if any signals are transitioning
+          const currentSignals = currentPhase.signalString.slice(1, -1);
+          const nextSignals = nextPhase.signalString.slice(1, -1);
+          let hasRedToGreen = false;
+          let hasGreenToRed = false;
+          for (let i = 0; i < currentSignals.length; i++) {
+            if (currentSignals[i] === "R" && nextSignals[i] === "G") {
+              hasRedToGreen = true;
+            } else if (currentSignals[i] === "G" && nextSignals[i] === "R") {
+              hasGreenToRed = true;
+            }
+          }
+
+          // Calculate transition duration based on actual transitions
+          const greenToRedBlinkDelay =
+            currentPhase.enableBlink && hasGreenToRed
+              ? currentPhase.greenToRedDelay || 0
+              : 0;
+          const greenToRedAmberDelay =
+            currentPhase.enableAmber && hasGreenToRed
+              ? currentPhase.greenToRedAmberDelay || 0
+              : 0;
+          const redToGreenBlinkDelay =
+            currentPhase.enableBlink && hasRedToGreen
+              ? currentPhase.redToGreenDelay || 0
+              : 0;
+          const redToGreenAmberDelay =
+            currentPhase.enableAmber && hasRedToGreen
+              ? currentPhase.redToGreenAmberDelay || 0
+              : 0;
 
           const transitionDuration = Math.max(
             greenToRedBlinkDelay + greenToRedAmberDelay,
@@ -559,12 +587,14 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                       signalString: nextPhase.signalString,
                     })
                   );
+                  dispatch(updateCountDownColor("green"));
                   resolve();
                 } else {
                   const signalString = calculateTransitionSignalString(
                     currentPhase,
                     nextPhase,
-                    elapsed
+                    elapsed,
+                    transitionDuration // Pass maxTransitionDuration
                   );
                   dispatch(
                     previewCreatedPatternPhase({
@@ -584,6 +614,16 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                 }
               }, 500); // Update every 0.5s
             });
+          } else {
+            // No transition needed, immediately show next phase
+            dispatch(
+              previewCreatedPatternPhase({
+                duration: nextPhase.duration,
+                signalString: nextPhase.signalString,
+              })
+            );
+            dispatch(updateCountDownColor("green"));
+            return Promise.resolve();
           }
         };
 
@@ -615,12 +655,13 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
           setIntervalId(id);
         };
 
-        runPhase(); // Start the phase
+        runPhase();
       };
 
-      startPhaseInterval(0, startFromTime); // Kick off the process
+      startPhaseInterval(0, startFromTime);
     }
   };
+
   const stopPlayPhases = () => {
     if (isPlaying && intervalId) {
       clearInterval(intervalId);
@@ -1024,14 +1065,14 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                           {updatedPatternPhases?.map(
                             (phase: any, index: any) => (
                               <Draggable
-                                key={`${phase.id}`}
-                                draggableId={`${phase.id}`}
+                                key={`${phase.phaseId}`}
+                                draggableId={`${phase.phaseId}`}
                                 index={index}
                               >
                                 {(provided) => (
                                   <li
                                     className={`patterns__phases--item ${
-                                      activePreviewPhase === phase.id
+                                      activePreviewPhase === phase.phaseId
                                         ? "active"
                                         : ""
                                     }`}
@@ -1047,8 +1088,8 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                                         }
                                       >
                                         {alreadyCreatedPatternPhaseToConfigure &&
-                                        alreadyCreatedPatternPhaseToConfigure.id ===
-                                          phase.id ? (
+                                        alreadyCreatedPatternPhaseToConfigure.phaseId ===
+                                          phase.phaseId ? (
                                           <>
                                             <input
                                               id="duration"
@@ -1109,7 +1150,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
                                           )
                                         }
                                       >
-                                        {activePreviewPhase === phase.id
+                                        {activePreviewPhase === phase.phaseId
                                           ? "Close"
                                           : "Preview"}
                                       </button>
