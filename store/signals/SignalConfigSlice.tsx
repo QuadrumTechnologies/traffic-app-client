@@ -81,6 +81,7 @@ const signalConfigSlice = createSlice({
     setSignalState(state) {
       state.signals = initializeSignals(state.signalString);
     },
+
     setSignalStringToAllRed(state) {
       state.signalString = "*NRRRRRRERRRRRRSRRRRRRWRRRRRR#";
     },

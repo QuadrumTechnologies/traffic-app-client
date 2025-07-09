@@ -207,8 +207,9 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     phaseFormik.resetForm({
       values: {
         duration:
-          configuredPhases?.find((p) => p?.phaseId === phaseInstance?.phaseId)
-            ?.duration || "",
+          updatedPatternPhases?.find(
+            (p) => p?.phaseId === phaseInstance?.phaseId
+          )?.duration || "",
         enableBlink: phaseInstance?.enableBlink ?? false,
         redToGreenDelay: phaseInstance?.redToGreenDelay ?? 0,
         greenToRedDelay: phaseInstance?.greenToRedDelay ?? 2,
@@ -224,8 +225,9 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases?.find((p) => p?.id === phaseToConfigure?.id)
-            ?.duration || ""
+        ? updatedPatternPhases?.find(
+            (p) => p?.phaseId === phaseToConfigure?.phaseId
+          )?.duration || ""
         : "",
       enableBlink: phaseToConfigure?.enableBlink ?? false,
       redToGreenDelay: phaseToConfigure?.redToGreenDelay ?? 0,
@@ -692,12 +694,12 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             for (let j = nextIndex; j < patternArray.length; j++) {
               const check = patternArray[j].match(/\*X\*(.*?)#/);
               if (!check || !check[1].includes("X")) break;
-              blinkCount += 0.5; // Each X line represents a 0.5s blink cycle
+              blinkCount += 0.5;
               nextIndex = j + 1;
             }
             // Assign blink duration (split between green-to-red and red-to-green for simplicity)
-            phase.greenToRedDelay = Math.min(blinkCount / 2, 5); // Cap at 5s
-            phase.redToGreenDelay = Math.min(blinkCount / 2, 5); // Cap at 5s
+            phase.greenToRedDelay = Math.min(blinkCount / 2, 5);
+            phase.redToGreenDelay = Math.min(blinkCount / 2, 5);
             continue;
           } else if (nextSignalString.includes("A")) {
             // Amber phase detected
@@ -708,17 +710,18 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
             for (let j = nextIndex; j < patternArray.length; j++) {
               const check = patternArray[j].match(/\*(\d+|X)\*(.*?)#/);
               if (!check || !check[2].includes("A")) break;
-              amberCount += check[1] === "X" ? 0.5 : parseInt(check[1]) / 2; // Approximate duration
+              amberCount += check[1] === "X" ? 0.5 : parseInt(check[1]) / 2;
               nextIndex = j + 1;
             }
             phase.greenToRedAmberDelay = Math.min(
               Math.max(amberCount / 2, 2),
               5
-            ); // Range 2–5s
-            phase.redToGreenAmberDelay = Math.min(amberCount / 2, 5); // Range 0–5s
+            );
+            // Range 2–5s
+            phase.redToGreenAmberDelay = Math.min(amberCount / 2, 5);
             continue;
           } else {
-            break; // No more transition phases
+            break;
           }
         }
 
@@ -977,14 +980,14 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                     </>
                                   ) : (
                                     <>
-                                      {configuredPhases?.find(
+                                      {updatedPatternPhases?.find(
                                         (p) =>
                                           p.phaseId === phaseInstance.phaseId
                                       )?.duration ? (
                                         <span>
                                           Dur:{" "}
                                           {
-                                            configuredPhases.find(
+                                            updatedPatternPhases.find(
                                               (p) =>
                                                 p.phaseId ===
                                                 phaseInstance.phaseId
@@ -998,7 +1001,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                           handleConfigurePhase(phaseInstance)
                                         }
                                         aria-label={
-                                          configuredPhases?.find(
+                                          updatedPatternPhases?.find(
                                             (p) =>
                                               p.phaseId ===
                                               phaseInstance.phaseId
@@ -1007,7 +1010,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                             : "Set phase duration"
                                         }
                                       >
-                                        {configuredPhases?.find(
+                                        {updatedPatternPhases?.find(
                                           (p) =>
                                             p.phaseId === phaseInstance.phaseId
                                         )?.duration

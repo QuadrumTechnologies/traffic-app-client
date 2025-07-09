@@ -145,7 +145,7 @@
     &:disabled {
       cursor: not-allowed;
       background-color: rgba($color-black-dark, 0.8), 0.4;
-      color: $color-white;
+      // color: $color-white;
     }
   }
 }

@@ -203,12 +203,15 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       if (!confirmSwitch) return;
     }
+    console.log("Configuring phase:", phaseInstance);
+
     setPhaseToConfigure(phaseInstance);
     phaseFormik.resetForm({
       values: {
         duration:
-          configuredPhases?.find((p) => p?.phaseId === phaseInstance?.phaseId)
-            ?.duration || "",
+          updatedPatternPhases?.find(
+            (p) => p?.phaseId === phaseInstance?.phaseId
+          )?.duration || "",
         enableBlink: phaseInstance?.enableBlink ?? false,
         redToGreenDelay: phaseInstance?.redToGreenDelay ?? 0,
         greenToRedDelay: phaseInstance?.greenToRedDelay ?? 2,
@@ -224,8 +227,9 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     enableReinitialize: true,
     initialValues: {
       duration: phaseToConfigure
-        ? configuredPhases?.find((p) => p?.id === phaseToConfigure?.id)
-            ?.duration || ""
+        ? updatedPatternPhases?.find(
+            (p) => p?.phaseId === phaseToConfigure?.phaseId
+          )?.duration || ""
         : "",
       enableBlink: phaseToConfigure?.enableBlink ?? false,
       redToGreenDelay: phaseToConfigure?.redToGreenDelay ?? 0,
@@ -840,8 +844,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
     };
   }, [dispatch, params.deviceId, email, patternsOptions]);
 
-  console.log("updatedPatternPhases:", configuredPhases, updatedPatternPhases);
-
   return (
     <div className="schedule__container">
       <div className="schedule__left">
@@ -988,14 +990,14 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                     </>
                                   ) : (
                                     <>
-                                      {configuredPhases?.find(
+                                      {updatedPatternPhases?.find(
                                         (p) =>
                                           p?.phaseId === phaseInstance?.phaseId
                                       )?.duration ? (
                                         <span>
                                           Dur:{" "}
                                           {
-                                            configuredPhases?.find(
+                                            updatedPatternPhases?.find(
                                               (p) =>
                                                 p?.phaseId ===
                                                 phaseInstance?.phaseId
@@ -1009,7 +1011,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                           handleConfigurePhase(phaseInstance)
                                         }
                                         aria-label={
-                                          configuredPhases?.find(
+                                          updatedPatternPhases?.find(
                                             (p) =>
                                               p?.phaseId ===
                                               phaseInstance?.phaseId
@@ -1018,7 +1020,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
                                             : "Set phase duration"
                                         }
                                       >
-                                        {configuredPhases?.find(
+                                        {updatedPatternPhases?.find(
                                           (p) =>
                                             p?.phaseId ===
                                             phaseInstance?.phaseId

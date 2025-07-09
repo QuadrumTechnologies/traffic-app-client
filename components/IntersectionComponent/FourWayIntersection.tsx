@@ -9,7 +9,7 @@ import {
   setSignalStringToAllBlank,
   setSignalState,
 } from "@/store/signals/SignalConfigSlice";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 const positions = {
   N: {
@@ -191,6 +191,7 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
   } = useAppSelector((state) => state.signalConfig);
   const dispatch = useAppDispatch();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [screenWidth, setScreenWidth] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -229,6 +230,7 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
   );
 
   const isIntersectionConfig = pathname.includes("/intersection_configuration");
+  const isTabOne = searchParams.get("tab") === "1";
 
   return (
     <>
@@ -240,7 +242,7 @@ const FourWayIntersection = ({ editable }: { editable: boolean }) => {
         manualMode={manualMode}
         createdPatternPhasePreviewing={createdPatternPhasePreviewing}
       />
-      {isIntersectionConfig && (
+      {isIntersectionConfig && isTabOne && (
         <div className="phases__buttonBox">
           <button
             className="phases__clear"

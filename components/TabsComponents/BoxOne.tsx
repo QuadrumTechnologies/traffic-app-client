@@ -16,13 +16,16 @@ import {
   setSignalStringToAllRed,
 } from "@/store/signals/SignalConfigSlice";
 import { emitToastMessage } from "@/utils/toastFunc";
-import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
+import {
+  GetItemFromLocalStorage,
+  SetItemToLocalStorage,
+} from "@/utils/localStorageFunc";
 import HttpRequest from "@/store/services/HttpRequest";
 import { getUserPhase } from "@/store/devices/UserDeviceSlice";
 import { useParams } from "next/navigation";
 import { AiOutlineClose } from "react-icons/ai";
 
-// Styled components for phase creation modal
+// Styled components for phase creation and edit modal
 const ModalBackdrop = styled.div`
   position: fixed;
   top: 0;
@@ -73,6 +76,13 @@ const PhaseNameInput = styled.input`
   }
 `;
 
+const PhaseNameDisplay = styled.div`
+  padding: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: bold;
+  width: 100%;
+`;
+
 const AddPhaseButton = styled.button<{ disabled: boolean }>`
   padding: 0.8rem 1rem;
   background-color: ${({ disabled }) => (disabled ? "#cccccc" : "#514604")};
@@ -104,6 +114,7 @@ const CloseIcon = styled(AiOutlineClose)`
     color: #f00;
   }
 `;
+
 const SettingLabel = styled.label`
   display: flex;
   align-items: center;
@@ -138,7 +149,9 @@ const BoxOne: React.FC<BoxOneProps> = () => {
   const [showSearchedResult, setShowSearchedResult] = useState<boolean>(false);
   const [inputtedPhaseName, setInputtedPhaseName] = useState<string>("");
   const [isCreatingPhase, setIsCreatingPhase] = useState<boolean>(false);
+  const [isEditingPhase, setIsEditingPhase] = useState<boolean>(false);
   const [phaseName, setPhaseName] = useState<string>("");
+  const [editPhaseId, setEditPhaseId] = useState<string | null>(null);
   const [phaseSettings, setPhaseSettings] = useState({
     enableBlink: false,
     redToGreenDelay: 0,
@@ -159,10 +172,153 @@ const BoxOne: React.FC<BoxOneProps> = () => {
   };
   const phasesToShow = showSearchedResult ? searchedResult : phases;
 
+  const encodeSignals = (signals: typeof landingPageSignals) => {
+    const getAdjacentPedestrianSignal = (
+      signals: typeof landingPageSignals,
+      direction: "N" | "E" | "S" | "W"
+    ): "R" | "G" | "X" => {
+      let adjacentDirection: "N" | "E" | "S" | "W";
+      switch (direction) {
+        case "S":
+          adjacentDirection = "E";
+          break;
+        case "E":
+          adjacentDirection = "N";
+          break;
+        case "N":
+          adjacentDirection = "W";
+          break;
+        case "W":
+          adjacentDirection = "S";
+          break;
+        default:
+          adjacentDirection = "N";
+      }
+      const adjacentSignal = signals.find(
+        (signal) => signal.direction === adjacentDirection
+      );
+      return adjacentSignal ? adjacentSignal.pedestrian : "X";
+    };
+
+    return (
+      "*" +
+      signals
+        .map((signal) => {
+          const adjacentPedestrian = getAdjacentPedestrianSignal(
+            signals,
+            signal.direction
+          );
+          return `${signal.direction}${signal.left}${signal.straight}${signal.right}${signal.bike}${signal.pedestrian}${adjacentPedestrian}`;
+        })
+        .join("") +
+      "#"
+    );
+  };
+
   const handlePhasePreview = (phaseName: string, signalString: string) => {
     setActiveOrLastAddedPhase(phaseName);
     dispatch(setSignalString(signalString));
     dispatch(setSignalState());
+  };
+
+  const handleEditPhase = (phase: any) => {
+    const currentEncodedSignals = encodeSignals(landingPageSignals);
+    SetItemToLocalStorage("newtempSignals", currentEncodedSignals);
+
+    // Check if the current signals differ from the phase's original signals
+    if (currentEncodedSignals !== phase.data) {
+      const confirmEdit = window.confirm(
+        "You have modified the signal configuration. Do you want to use the updated configuration for editing this phase?"
+      );
+      if (!confirmEdit) {
+        emitToastMessage(
+          "Edit cancelled. Signal configuration unchanged.",
+          "info"
+        );
+        return;
+      }
+    }
+
+    // Store current signals to ensure they persist
+    setEditPhaseId(phase._id);
+    setPhaseName(phase.name);
+    setPhaseSettings({
+      enableBlink: phase.enableBlink,
+      redToGreenDelay: phase.redToGreenDelay,
+      greenToRedDelay: phase.greenToRedDelay,
+      enableAmber: phase.enableAmber,
+      enableAmberBlink: phase.enableAmberBlink,
+      redToGreenAmberDelay: phase.redToGreenAmberDelay,
+      greenToRedAmberDelay: phase.greenToRedAmberDelay,
+      holdRedSignalOnAmber: phase.holdRedSignalOnAmber,
+      holdGreenSignalOnAmber: phase.holdGreenSignalOnAmber,
+    });
+    dispatch(setSignalString(phase.data));
+    dispatch(setSignalState());
+    setIsEditingPhase(true);
+    dispatch(setInputModal(true));
+  };
+
+  const handleUpdatePhase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editPhaseId) {
+      emitToastMessage("No phase selected for editing", "error");
+      return;
+    }
+    setIsCreatingPhase(true);
+    const user = GetItemFromLocalStorage("user");
+
+    try {
+      const signalsFromLocalStorage = GetItemFromLocalStorage("newtempSignals");
+
+      const phase = {
+        name: phaseName.toUpperCase(),
+        data: signalsFromLocalStorage,
+        deviceId: params.deviceId,
+        enableBlink: phaseSettings.enableBlink,
+        redToGreenDelay: phaseSettings.redToGreenDelay,
+        greenToRedDelay: phaseSettings.greenToRedDelay,
+        enableAmber: phaseSettings.enableAmber,
+        enableAmberBlink: phaseSettings.enableAmberBlink,
+        redToGreenAmberDelay: phaseSettings.redToGreenAmberDelay,
+        greenToRedAmberDelay: phaseSettings.greenToRedAmberDelay,
+        holdRedSignalOnAmber: phaseSettings.holdRedSignalOnAmber,
+        holdGreenSignalOnAmber: phaseSettings.holdGreenSignalOnAmber,
+      };
+      const { data } = await HttpRequest.patch(
+        `/phases/${editPhaseId}/${user.email}`,
+        {
+          phase,
+        }
+      );
+      dispatch(getUserPhase(user.email));
+      emitToastMessage(data.message, "success");
+      setIsCreatingPhase(false);
+      setPhaseName("");
+      setEditPhaseId(null);
+      setPhaseSettings({
+        enableBlink: false,
+        redToGreenDelay: 0,
+        greenToRedDelay: 2,
+        enableAmber: true,
+        enableAmberBlink: false,
+        redToGreenAmberDelay: 0,
+        greenToRedAmberDelay: 3,
+        holdRedSignalOnAmber: false,
+        holdGreenSignalOnAmber: false,
+      });
+      dispatch(setInputModal(false));
+      setIsEditingPhase(false);
+      setActiveOrLastAddedPhase(phaseName);
+      SetItemToLocalStorage("tempSignals", []); // Clear local storage after update
+    } catch (error: any) {
+      console.error("Error updating phase:", error);
+      emitToastMessage(
+        error?.response.data.message || "Failed to update phase",
+        "error"
+      );
+      setIsCreatingPhase(false);
+    }
   };
 
   const handleDeletePhase = async (phaseName: string) => {
@@ -219,50 +375,8 @@ const BoxOne: React.FC<BoxOneProps> = () => {
     setIsCreatingPhase(true);
     const user = GetItemFromLocalStorage("user");
 
-    const getAdjacentPedestrianSignal = (
-      signals: typeof landingPageSignals,
-      direction: "N" | "E" | "S" | "W"
-    ): "R" | "G" | "X" => {
-      let adjacentDirection: "N" | "E" | "S" | "W";
-      switch (direction) {
-        case "S":
-          adjacentDirection = "E";
-          break;
-        case "E":
-          adjacentDirection = "N";
-          break;
-        case "N":
-          adjacentDirection = "W";
-          break;
-        case "W":
-          adjacentDirection = "S";
-          break;
-        default:
-          adjacentDirection = "N";
-      }
-      const adjacentSignal = signals.find(
-        (signal) => signal.direction === adjacentDirection
-      );
-      return adjacentSignal ? adjacentSignal.pedestrian : "X";
-    };
-
     try {
-      const encodeSignals = () => {
-        return (
-          "*" +
-          landingPageSignals
-            .map((signal) => {
-              const adjacentPedestrian = getAdjacentPedestrianSignal(
-                landingPageSignals,
-                signal.direction
-              );
-              return `${signal.direction}${signal.left}${signal.straight}${signal.right}${signal.bike}${signal.pedestrian}${adjacentPedestrian}`;
-            })
-            .join("") +
-          "#"
-        );
-      };
-      const encodedSignals = encodeSignals();
+      const encodedSignals = encodeSignals(landingPageSignals);
       const phase = {
         name: phaseName.toUpperCase(),
         data: encodedSignals,
@@ -376,6 +490,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                   >
                     Preview
                   </button>
+                  <button onClick={() => handleEditPhase(phase)}>Edit</button>
                   <button onClick={() => handleDeletePhase(phase.name)}>
                     Delete
                   </button>
@@ -393,11 +508,11 @@ const BoxOne: React.FC<BoxOneProps> = () => {
       {openInputModal && (
         <ModalBackdrop onClick={() => dispatch(setInputModal(false))}>
           <PhaseContainer
-            onSubmit={handleAddPhase}
+            onSubmit={isEditingPhase ? handleUpdatePhase : handleAddPhase}
             onClick={(e) => e.stopPropagation()}
           >
             <CloseIcon
-              size={24}
+              size={20}
               style={{
                 position: "absolute",
                 top: "16px",
@@ -405,15 +520,37 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                 cursor: "pointer",
                 color: "#555",
               }}
-              onClick={() => dispatch(setInputModal(false))}
+              onClick={() => {
+                dispatch(setInputModal(false));
+                setIsEditingPhase(false);
+                setEditPhaseId(null);
+                setPhaseName("");
+                setPhaseSettings({
+                  enableBlink: false,
+                  redToGreenDelay: 0,
+                  greenToRedDelay: 2,
+                  enableAmber: true,
+                  enableAmberBlink: false,
+                  redToGreenAmberDelay: 0,
+                  greenToRedAmberDelay: 3,
+                  holdRedSignalOnAmber: false,
+                  holdGreenSignalOnAmber: false,
+                });
+
+                SetItemToLocalStorage("newtempSignals", []);
+              }}
             />
-            <PhaseNameInput
-              type="text"
-              placeholder="Enter phase name"
-              value={phaseName}
-              onChange={(e) => setPhaseName(e.target.value)}
-              autoFocus={true}
-            />
+            {isEditingPhase ? (
+              <PhaseNameDisplay>{phaseName}</PhaseNameDisplay>
+            ) : (
+              <PhaseNameInput
+                type="text"
+                placeholder="Enter phase name"
+                value={phaseName}
+                onChange={(e) => setPhaseName(e.target.value)}
+                autoFocus={true}
+              />
+            )}
             <SettingsSection>
               <h3>Blink Settings</h3>
               <SettingLabel>
@@ -451,7 +588,6 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                   type="number"
                   min="0"
                   max="5"
-                  defaultValue={2}
                   value={phaseSettings.greenToRedDelay}
                   onChange={(e) =>
                     setPhaseSettings({
@@ -514,7 +650,6 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                       type="number"
                       min="0"
                       max="5"
-                      defaultValue={3}
                       value={phaseSettings.greenToRedAmberDelay}
                       onChange={(e) =>
                         setPhaseSettings({
@@ -524,37 +659,15 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                       }
                     />
                   </SettingLabel>
-                  {/* <SettingLabel>
-                    <input
-                      type="checkbox"
-                      checked={phaseSettings.holdRedSignalOnAmber}
-                      onChange={(e) =>
-                        setPhaseSettings({
-                          ...phaseSettings,
-                          holdRedSignalOnAmber: e.target.checked,
-                        })
-                      }
-                    />
-                    Hold Red During Amber (Red → Green)
-                  </SettingLabel>
-                  <SettingLabel>
-                    <input
-                      type="checkbox"
-                      checked={phaseSettings.holdGreenSignalOnAmber}
-                      onChange={(e) =>
-                        setPhaseSettings({
-                          ...phaseSettings,
-                          holdGreenSignalOnAmber: e.target.checked,
-                        })
-                      }
-                    />
-                    Hold Green During Amber (Green → Red)
-                  </SettingLabel> */}
                 </>
               )}
             </SettingsSection>
             <AddPhaseButton type="submit" disabled={isCreatingPhase}>
-              {isCreatingPhase ? "Creating..." : "Create"}
+              {isCreatingPhase
+                ? "Processing..."
+                : isEditingPhase
+                ? "Update"
+                : "Create"}
             </AddPhaseButton>
           </PhaseContainer>
         </ModalBackdrop>
@@ -618,35 +731,6 @@ const BoxOne: React.FC<BoxOneProps> = () => {
           </p>
         </div>
       )}
-      {/* <div className="phases__buttonBox">
-        <button
-          className="phases__clear"
-          onClick={() => {
-            dispatch(setSignalStringToAllRed());
-            dispatch(setSignalState());
-          }}
-        >
-          All Red
-        </button>
-        <button
-          className="phases__clear"
-          onClick={() => {
-            dispatch(setSignalStringToAllAmber());
-            dispatch(setSignalState());
-          }}
-        >
-          All Yellow
-        </button>
-        <button
-          className="phases__clear"
-          onClick={() => {
-            dispatch(setSignalStringToAllBlank());
-            dispatch(setSignalState());
-          }}
-        >
-          All Blank
-        </button>
-      </div> */}
     </div>
   );
 };

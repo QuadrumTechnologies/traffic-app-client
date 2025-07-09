@@ -430,6 +430,12 @@
           rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
         transition: all 0.3s;
 
+        &:disabled {
+          cursor: not-allowed;
+          background-color: rgba($color-black-dark, 0.4);
+          color: $color-white;
+        }
+
         &:hover {
           background-color: rgba($color-yellow, 0.8);
           color: $color-white;
