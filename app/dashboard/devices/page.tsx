@@ -3,7 +3,7 @@
 import AddDeviceModal from "@/components/Modals/AddDeviceModal";
 import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaPlus } from "react-icons/fa";
 import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
@@ -29,8 +29,6 @@ const UserDevices = () => {
   const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
     (state) => state.userDevice
   );
-  console.log("Devices", devices);
-
   const dispatch = useAppDispatch();
   useDeviceStatus();
   const pathname = usePathname();
@@ -38,12 +36,21 @@ const UserDevices = () => {
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(true);
 
   const deviceActionModal = useRef<HTMLDivElement>(null);
   const closeDeviceActionModal = () => {
     setShowOptions(false);
   };
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
+
+  // Simulate 5-second delay for spinner
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSpinner(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
@@ -79,7 +86,10 @@ const UserDevices = () => {
     }
   };
 
-  if (isFetchingDevices) return <LoadingSpinner color="blue" height="big" />;
+  // Show spinner if either fetching devices or within 4-second delay
+  if (isFetchingDevices || showSpinner) {
+    return <LoadingSpinner color="blue" height="big" />;
+  }
 
   return (
     <aside className="devices">
@@ -112,9 +122,6 @@ const UserDevices = () => {
         {devices?.map((device: any, index) => {
           const deviceStatus = deviceStatuses.find((s) => s.id === device?.id);
           const status = getDeviceStatus(deviceStatuses, device.deviceId);
-          // const isOffline =
-          //   deviceStatus?.status === false ||
-          //   (!deviceStatus && status?.status === false);
 
           return (
             <div

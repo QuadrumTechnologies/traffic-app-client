@@ -3,7 +3,7 @@
 import AdminAddDeviceModal from "@/components/Modals/AdminAddDeviceModal";
 import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
@@ -33,6 +33,7 @@ const AdminDevices = () => {
   const [hoveredDeviceId, setHoveredDeviceId] = useState<string | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(true);
 
   const deviceActionModal = useRef<HTMLDivElement>(null);
   const closeDeviceActionModal = () => {
@@ -40,6 +41,14 @@ const AdminDevices = () => {
   };
 
   useOutsideClick(deviceActionModal, closeDeviceActionModal);
+
+  // Simulate 5-second delay for spinner
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSpinner(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
     router.push(`${pathname}/${deviceId}`);
@@ -130,7 +139,10 @@ const AdminDevices = () => {
     }
   };
 
-  if (isFetchingDevices) return <LoadingSpinner color="blue" height="big" />;
+  // Show spinner if either fetching devices or within 4-second delay
+  if (isFetchingDevices || showSpinner) {
+    return <LoadingSpinner color="blue" height="big" />;
+  }
 
   return (
     <aside>
