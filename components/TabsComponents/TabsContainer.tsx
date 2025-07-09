@@ -11,14 +11,21 @@ const TabsContainer = () => {
   const pathname = usePathname();
   const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // Initialize currentStep from URL query parameter on mount
+  // Initialize currentStep
   useEffect(() => {
     const tab = searchParams.get("tab");
-    const validTab = tab && ["1", "2", "3"].includes(tab) ? parseInt(tab) : 1;
-    setCurrentStep(validTab);
-  }, [searchParams]);
+    if (tab && ["1", "2", "3"].includes(tab)) {
+      // Valid tab in URL, set currentStep to it
+      setCurrentStep(parseInt(tab));
+    } else {
+      // No valid tab in URL, set currentStep to 1 and update URL
+      setCurrentStep(1);
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set("tab", "1");
+      router.replace(`${pathname}?${newSearchParams.toString()}`);
+    }
+  }, [searchParams, router, pathname]);
 
-  // Update URL when currentStep changes
   const updateStep = (step: number) => {
     setCurrentStep(step);
     const newSearchParams = new URLSearchParams(searchParams.toString());
