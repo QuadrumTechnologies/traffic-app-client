@@ -180,7 +180,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   useEffect(() => {
     if (!deviceActiveStateData?.Auto) setShowManualMoreConfig(true);
-  }, [deviceActiveStateData]);
+  }, [deviceActiveStateData, currentDeviceInfoData]);
 
   const formik = useFormik({
     enableReinitialize: true,

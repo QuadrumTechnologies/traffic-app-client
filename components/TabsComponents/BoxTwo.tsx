@@ -32,7 +32,7 @@ import {
 } from "react-icons/fa";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 interface BoxTwoProps {}
 
@@ -41,6 +41,8 @@ interface Pattern {
 }
 
 const BoxTwo: React.FC<BoxTwoProps> = () => {
+  const searchParams = useSearchParams();
+  const isTabTwo = searchParams.get("tab") === "2";
   const email = GetItemFromLocalStorage("user")?.email;
   const params = useParams<{ deviceId: string }>();
   const dispatch = useAppDispatch();
@@ -463,7 +465,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
             return nextPhase.signalString;
           }
 
-          const currentSignals = currentPhase.signalString.slice(1, -1); // Remove * and #
+          const currentSignals = currentPhase.signalString.slice(1, -1);
           const nextSignals = nextPhase.signalString.slice(1, -1);
           let transitionSignals = "";
 
@@ -577,7 +579,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
             const startTime = Date.now();
             return new Promise<void>((resolve) => {
               const transitionInterval = setInterval(() => {
-                const elapsed = (Date.now() - startTime) / 1000; // Time in seconds
+                const elapsed = (Date.now() - startTime) / 1000;
 
                 if (elapsed >= transitionDuration) {
                   clearInterval(transitionInterval);
@@ -671,6 +673,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   };
 
   const handlePlayPause = (pattern: Pattern, index: number) => {
+    if (!isTabTwo) return;
     if (activePatternIndex !== index) {
       setActivePatternIndex(index);
       setCurrentPhaseIndex(0);
@@ -680,10 +683,11 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     } else {
       if (isPlaying) {
         stopPlayPhases();
+        setIsPlaying(false);
       } else {
         startPlayPhases(pattern, remainingTime || undefined);
+        setIsPlaying(true);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -739,14 +743,15 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
       dispatch(getUserPattern(email));
     }
     dispatch(setIsIntersectionConfigurable(false));
+  }, [dispatch, email]);
 
+  useEffect(() => {
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
       stopPlayPhases();
     };
-  }, [dispatch, email, intervalId]);
+  }, []);
+
+  console.log("Active Pattern Index:", activePatternIndex, isPlaying);
 
   return (
     <div className="boxTwo">
@@ -943,231 +948,237 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
           </div>
 
           <ul className="patterns">
-            {patternsToShow?.map((pattern, index) => (
-              <li className="patterns__list" key={index}>
-                <div className="patterns__list--item">
-                  <h3>
-                    {pattern?.name.length > 17
-                      ? `${pattern?.name.slice(0, 17)}...`
-                      : pattern?.name}
-                  </h3>
-                  <div>
-                    {showPatternPhases === index ? (
+            {patternsToShow?.map((pattern, index) => {
+              console.log("Index", index);
+
+              return (
+                <li className="patterns__list" key={index}>
+                  <div className="patterns__list--item">
+                    <h3>
+                      {pattern?.name.length > 17
+                        ? `${pattern?.name.slice(0, 17)}...`
+                        : pattern?.name}
+                    </h3>
+                    <div>
+                      {showPatternPhases === index ? (
+                        <button
+                          className={
+                            activeAction === "more" ||
+                            showPatternPhases === index
+                              ? "active"
+                              : ""
+                          }
+                          onClick={() => {
+                            handleActionClick("more");
+                            handleSelectPattern(pattern, index);
+                          }}
+                        >
+                          <MdExpandLess />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            handleActionClick("more");
+                            handleSelectPattern(pattern, index);
+                            setUpdatedPatternPhases(pattern.configuredPhases);
+                          }}
+                        >
+                          <MdExpandMore />
+                        </button>
+                      )}
                       <button
+                        disabled={!isCurrentPatternPlaying(index)}
                         className={
-                          activeAction === "more" || showPatternPhases === index
+                          activeAction === "prev" && showPatternPhases === index
                             ? "active"
                             : ""
                         }
                         onClick={() => {
-                          handleActionClick("more");
-                          handleSelectPattern(pattern, index);
+                          handleActionClick("prev");
+                          goToPrevPhase();
                         }}
                       >
-                        <MdExpandLess />
+                        <FaArrowLeft />
                       </button>
-                    ) : (
                       <button
+                        className={
+                          activeAction === "play" && showPatternPhases === index
+                            ? "active"
+                            : ""
+                        }
                         onClick={() => {
-                          handleActionClick("more");
-                          handleSelectPattern(pattern, index);
-                          setUpdatedPatternPhases(pattern.configuredPhases);
+                          handleActionClick("play");
+                          handlePlayPause(pattern, index);
                         }}
                       >
-                        <MdExpandMore />
+                        {isPlaying && activePatternIndex === index ? (
+                          <FaPause />
+                        ) : (
+                          <FaPlay />
+                        )}
                       </button>
-                    )}
-                    <button
-                      disabled={!isCurrentPatternPlaying(index)}
-                      className={
-                        activeAction === "prev" && showPatternPhases === index
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        handleActionClick("prev");
-                        goToPrevPhase();
-                      }}
-                    >
-                      <FaArrowLeft />
-                    </button>
-                    <button
-                      className={
-                        activeAction === "play" && showPatternPhases === index
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        handleActionClick("play");
-                        handlePlayPause(pattern, index);
-                      }}
-                    >
-                      {isPlaying && activePatternIndex === index ? (
-                        <FaPause />
-                      ) : (
-                        <FaPlay />
-                      )}
-                    </button>
-                    <button
-                      disabled={!isCurrentPatternPlaying(index)}
-                      className={
-                        activeAction === "next" && showPatternPhases === index
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        handleActionClick("next");
-                        goToNextPhase();
-                      }}
-                    >
-                      <FaArrowRight />
-                    </button>
-                    <button
-                      className={
-                        activeAction === "duplicate" &&
-                        showPatternPhases === index
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        handleActionClick("duplicate");
-                        duplicatePatternHandler(pattern.name);
-                      }}
-                    >
-                      <IoDuplicate />
-                    </button>
-                    <button
-                      className={
-                        activeAction === "delete" && showPatternPhases === index
-                          ? "active"
-                          : ""
-                      }
-                      onClick={() => {
-                        handleActionClick("delete");
-                        handleDeletePattern(pattern.name);
-                        handleActionClick("more");
-                      }}
-                    >
-                      <FaTrashAlt />
-                    </button>
+                      <button
+                        disabled={!isCurrentPatternPlaying(index)}
+                        className={
+                          activeAction === "next" && showPatternPhases === index
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() => {
+                          handleActionClick("next");
+                          goToNextPhase();
+                        }}
+                      >
+                        <FaArrowRight />
+                      </button>
+                      <button
+                        className={
+                          activeAction === "duplicate" &&
+                          showPatternPhases === index
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() => {
+                          handleActionClick("duplicate");
+                          duplicatePatternHandler(pattern.name);
+                        }}
+                      >
+                        <IoDuplicate />
+                      </button>
+                      <button
+                        className={
+                          activeAction === "delete" &&
+                          showPatternPhases === index
+                            ? "active"
+                            : ""
+                        }
+                        onClick={() => {
+                          handleActionClick("delete");
+                          handleDeletePattern(pattern.name);
+                          handleActionClick("more");
+                        }}
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {showPatternPhases === index && (
-                  <DragDropContext onDragEnd={handleDragEndEdit}>
-                    <Droppable droppableId="pattern-phases">
-                      {(provided) => (
-                        <ul
-                          className="patterns__phases"
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                        >
-                          {updatedPatternPhases?.map(
-                            (phase: any, index: any) => (
-                              <Draggable
-                                key={`${phase.phaseId}`}
-                                draggableId={`${phase.phaseId}`}
-                                index={index}
-                              >
-                                {(provided) => (
-                                  <li
-                                    className={`patterns__phases--item ${
-                                      activePreviewPhase === phase.phaseId
-                                        ? "active"
-                                        : ""
-                                    }`}
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                  >
-                                    <h3>{phase.name}</h3>
-                                    <div className="patterns__phases--form">
-                                      <form
-                                        onSubmit={
-                                          createdPhaseFormik.handleSubmit
-                                        }
-                                      >
-                                        {alreadyCreatedPatternPhaseToConfigure &&
-                                        alreadyCreatedPatternPhaseToConfigure.phaseId ===
-                                          phase.phaseId ? (
-                                          <>
-                                            <input
-                                              id="duration"
-                                              name="duration"
-                                              type="number"
-                                              autoFocus
-                                              value={
-                                                createdPhaseFormik.values
-                                                  .duration
-                                              }
-                                              onChange={
-                                                createdPhaseFormik.handleChange
-                                              }
-                                              onBlur={
-                                                createdPhaseFormik.handleBlur
-                                              }
-                                            />
-                                            <button
-                                              type="submit"
-                                              disabled={
-                                                !createdPhaseFormik.values
-                                                  .duration ||
-                                                !createdPhaseFormik.dirty
-                                              }
-                                            >
-                                              Save
-                                            </button>
+                  {showPatternPhases === index && (
+                    <DragDropContext onDragEnd={handleDragEndEdit}>
+                      <Droppable droppableId="pattern-phases">
+                        {(provided) => (
+                          <ul
+                            className="patterns__phases"
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                          >
+                            {updatedPatternPhases?.map(
+                              (phase: any, index: any) => (
+                                <Draggable
+                                  key={`${phase.phaseId}`}
+                                  draggableId={`${phase.phaseId}`}
+                                  index={index}
+                                >
+                                  {(provided) => (
+                                    <li
+                                      className={`patterns__phases--item ${
+                                        activePreviewPhase === phase.phaseId
+                                          ? "active"
+                                          : ""
+                                      }`}
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                    >
+                                      <h3>{phase.name}</h3>
+                                      <div className="patterns__phases--form">
+                                        <form
+                                          onSubmit={
+                                            createdPhaseFormik.handleSubmit
+                                          }
+                                        >
+                                          {alreadyCreatedPatternPhaseToConfigure &&
+                                          alreadyCreatedPatternPhaseToConfigure.phaseId ===
+                                            phase.phaseId ? (
+                                            <>
+                                              <input
+                                                id="duration"
+                                                name="duration"
+                                                type="number"
+                                                autoFocus
+                                                value={
+                                                  createdPhaseFormik.values
+                                                    .duration
+                                                }
+                                                onChange={
+                                                  createdPhaseFormik.handleChange
+                                                }
+                                                onBlur={
+                                                  createdPhaseFormik.handleBlur
+                                                }
+                                              />
+                                              <button
+                                                type="submit"
+                                                disabled={
+                                                  !createdPhaseFormik.values
+                                                    .duration ||
+                                                  !createdPhaseFormik.dirty
+                                                }
+                                              >
+                                                Save
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setAlreadyCreatedPatternPhaseToConfigure(
+                                                    null
+                                                  );
+                                                  createdPhaseFormik.resetForm();
+                                                }}
+                                              >
+                                                Cancel
+                                              </button>
+                                            </>
+                                          ) : (
                                             <button
                                               type="button"
-                                              onClick={() => {
-                                                setAlreadyCreatedPatternPhaseToConfigure(
-                                                  null
-                                                );
-                                                createdPhaseFormik.resetForm();
-                                              }}
+                                              onClick={() =>
+                                                handleConfigurePhaseForCreatedPattern(
+                                                  pattern,
+                                                  phase
+                                                )
+                                              }
                                             >
-                                              Cancel
+                                              Edit Duration
                                             </button>
-                                          </>
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              handleConfigurePhaseForCreatedPattern(
-                                                pattern,
-                                                phase
-                                              )
-                                            }
-                                          >
-                                            Edit Duration
-                                          </button>
-                                        )}
-                                      </form>
-                                      <button
-                                        onClick={() =>
-                                          handleCreatedPatternPhasePreview(
-                                            phase
-                                          )
-                                        }
-                                      >
-                                        {activePreviewPhase === phase.phaseId
-                                          ? "Close"
-                                          : "Preview"}
-                                      </button>
-                                    </div>
-                                  </li>
-                                )}
-                              </Draggable>
-                            )
-                          )}
-                          {provided.placeholder}
-                        </ul>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
-                )}
-              </li>
-            ))}
+                                          )}
+                                        </form>
+                                        <button
+                                          onClick={() =>
+                                            handleCreatedPatternPhasePreview(
+                                              phase
+                                            )
+                                          }
+                                        >
+                                          {activePreviewPhase === phase.phaseId
+                                            ? "Close"
+                                            : "Preview"}
+                                        </button>
+                                      </div>
+                                    </li>
+                                  )}
+                                </Draggable>
+                              )
+                            )}
+                            {provided.placeholder}
+                          </ul>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </>
       ) : (

@@ -16,7 +16,11 @@ import HttpRequest from "@/store/services/HttpRequest";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { CiMenuKebab } from "react-icons/ci";
 import { useOutsideClick } from "@/hooks/useOutsideClick";
-import { getUserDevice } from "@/store/devices/UserDeviceSlice";
+import {
+  getUserDevice,
+  getUserDeviceInfoData,
+  getUserDeviceStateData,
+} from "@/store/devices/UserDeviceSlice";
 import dayjs from "dayjs";
 
 export interface DeviceStatus {
@@ -53,6 +57,8 @@ const UserDevices = () => {
   }, []);
 
   const handleRedirectionToDevicePage = (deviceId: string) => {
+    dispatch(getUserDeviceStateData(deviceId));
+    dispatch(getUserDeviceInfoData(deviceId));
     router.push(`${pathname}/${deviceId}`);
   };
 

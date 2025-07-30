@@ -570,7 +570,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                 Red to Green Delay (s):
                 <SettingInput
                   type="number"
-                  min="0"
+                  min="2"
                   max="5"
                   value={phaseSettings.redToGreenDelay}
                   onChange={(e) =>
@@ -648,7 +648,7 @@ const BoxOne: React.FC<BoxOneProps> = () => {
                     Green to Red Amber Delay (s):
                     <SettingInput
                       type="number"
-                      min="0"
+                      min="3"
                       max="5"
                       value={phaseSettings.greenToRedAmberDelay}
                       onChange={(e) =>
