@@ -47,7 +47,6 @@ export interface IntersectionConfigItem {
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
-  console.log("From Device Page", deviceActiveStateData, currentDeviceInfoData);
 
   const { isIntersectionConfigurable } = useAppSelector(
     (state) => state.signalConfig
@@ -55,6 +54,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const [showAutoMode, setShowAutoMode] = useState<boolean>(
     deviceActiveStateData?.Auto || false
   );
+  console.log("From Device Page", deviceActiveStateData.Auto, showAutoMode);
 
   const dispatch = useAppDispatch();
   useDeviceStatus();

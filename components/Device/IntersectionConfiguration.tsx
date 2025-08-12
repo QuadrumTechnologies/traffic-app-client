@@ -42,11 +42,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 }) => {
   const { devices, deviceActiveStateData, currentDeviceInfoData } =
     useAppSelector((state) => state.userDevice);
-  console.log(
-    "From Intersection Page",
-    deviceActiveStateData,
-    currentDeviceInfoData
-  );
+  console.log("From Intersection Page", deviceActiveStateData.Auto);
 
   const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
   const dispatch = useAppDispatch();
@@ -184,8 +180,14 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   }, [landingPageSignals]);
 
   useEffect(() => {
+    console.log(
+      "Intersection",
+      !deviceActiveStateData?.Auto,
+      showManualMoreConfig
+    );
+
     if (!deviceActiveStateData?.Auto) setShowManualMoreConfig(true);
-  }, [deviceActiveStateData, currentDeviceInfoData]);
+  }, [deviceActiveStateData]);
 
   const formik = useFormik({
     enableReinitialize: true,
