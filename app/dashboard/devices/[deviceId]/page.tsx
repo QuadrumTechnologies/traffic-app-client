@@ -65,7 +65,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
 
   useEffect(() => {
     setShowAutoMode(deviceActiveStateData?.Auto);
-  }, [deviceActiveStateData?.Auto]);
+  }, [deviceActiveStateData]);
 
   useEffect(() => {
     dispatch(setIsIntersectionConfigurable(false));
