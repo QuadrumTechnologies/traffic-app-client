@@ -53,7 +53,7 @@ export const sendIdentify = () => {
 export const initializeWebSocket = (): WebSocket => {
   if (ws_socket) {
     if (ws_socket.readyState === WebSocket.OPEN) {
-      console.log("WebSocket already open; re-sending identify");
+      // console.log("WebSocket already open; re-sending identify");
       sendIdentify();
       return ws_socket;
     }
@@ -86,19 +86,12 @@ export const initializeWebSocket = (): WebSocket => {
 
     ws_socket.onopen = () => {
       clearTimeout(openTimeout);
-      console.log(
-        `WebSocket connection established, readyState: ${ws_socket?.readyState}`
-      );
+
       retryCount = 0;
       sendIdentify();
     };
 
     ws_socket.onclose = (event: CloseEvent) => {
-      console.log("WebSocket connection closed:", {
-        code: event.code,
-        reason: event.reason,
-        wasClean: event.wasClean,
-      });
       ws_socket = null;
       if (retryCount < maxRetries) {
         retryCount++;

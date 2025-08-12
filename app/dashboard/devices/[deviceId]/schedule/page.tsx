@@ -159,8 +159,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   };
 
   const handleAvailablePhaseSelect = (phase: any) => {
-    console.log("Selected phase:", phase);
-
     const transformedPhase = {
       deviceId: phase.deviceId,
       duration: 1,
@@ -203,7 +201,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
       );
       if (!confirmSwitch) return;
     }
-    console.log("Configuring phase:", phaseInstance);
 
     setPhaseToConfigure(phaseInstance);
     phaseFormik.resetForm({
@@ -835,7 +832,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
           }
           break;
         default:
-          console.log("Unhandled event:", feedback.event);
+          // emitToastMessage(`Unhandled event type:1${feedback.event}`, "error");
       }
     };
     socket?.addEventListener("message", handleDataFeedback);

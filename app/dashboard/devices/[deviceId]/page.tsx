@@ -27,6 +27,7 @@ import {
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
+import { totalmem } from "os";
 
 interface DeviceDetailsProps {
   params: { deviceId: string };
@@ -46,6 +47,7 @@ export interface IntersectionConfigItem {
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
+  console.log("From Device Page", deviceActiveStateData, currentDeviceInfoData);
 
   const { isIntersectionConfigurable } = useAppSelector(
     (state) => state.signalConfig
@@ -203,7 +205,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           break;
 
         default:
-          console.log("Unhandled event type:", feedback.event);
+          emitToastMessage(`Unhandled event type:1${feedback.event}`, "error");
       }
     };
 

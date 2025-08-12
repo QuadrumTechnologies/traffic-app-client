@@ -215,10 +215,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
           break;
 
         default:
-          console.log("Unhandled event type:", feedback.event);
+          // emitToastMessage(`Unhandled event type:1${feedback.event}`, "error");
       }
-
-      //  TODO: Add logic to update device status
     };
 
     socket.addEventListener("message", handleDataFeedback);

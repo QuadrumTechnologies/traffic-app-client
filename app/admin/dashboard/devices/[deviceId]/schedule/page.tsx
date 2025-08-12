@@ -159,7 +159,6 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
   };
 
   const handleAvailablePhaseSelect = (phase: any) => {
-    console.log("Selected phase:", phase);
 
     const transformedPhase = {
       deviceId: phase.deviceId,

@@ -11,7 +11,6 @@ const ConfigurePatternModal: React.FC<ConfigurePatternModalProps> = ({
   closeModal,
   pattern,
 }) => {
-  console.log("Pattern", pattern);
   const dispatch = useAppDispatch();
   const user = GetItemFromLocalStorage("user");
 

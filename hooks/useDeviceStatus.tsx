@@ -75,12 +75,12 @@ export const useDeviceStatus = () => {
             message.source.status,
             message.source.lastSeen
           );
-          console.log(
-            "Device status update:",
-            deviceId,
-            message.source.status,
-            message.source.lastSeen
-          );
+          // console.log(
+          //   "Device status update:",
+          //   deviceId,
+          //   message.source.status,
+          //   message.source.lastSeen
+          // );
         } else if (message.event === "error") {
           dispatch(
             handleWsFeedback({ event: "error", message: message.message })

@@ -173,16 +173,16 @@ const BoxThree: React.FC<BoxThreeProps> = () => {
             })
           );
 
-          console.log("Sending upload request:", {
-            DeviceID: params.deviceId,
-            plan: plan.name,
-            timeSegmentString,
-            patternName: timeSegment.label || "",
-          });
+          // console.log("Sending upload request:", {
+          //   DeviceID: params.deviceId,
+          //   plan: plan.name,
+          //   timeSegmentString,
+          //   patternName: timeSegment.label || "",
+          // });
 
           const handleFeedback = (event: MessageEvent) => {
             const feedback = JSON.parse(event.data);
-            console.log("Received feedback:", feedback);
+            // console.log("Received feedback:", feedback);
 
             if (feedback.event === "ping_received") return;
             if (feedback.event !== "upload_feedback") return;

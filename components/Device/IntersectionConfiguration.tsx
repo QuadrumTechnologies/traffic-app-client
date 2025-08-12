@@ -42,6 +42,12 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 }) => {
   const { devices, deviceActiveStateData, currentDeviceInfoData } =
     useAppSelector((state) => state.userDevice);
+  console.log(
+    "From Intersection Page",
+    deviceActiveStateData,
+    currentDeviceInfoData
+  );
+
   const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -54,7 +60,6 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const [initialSignalStrings, setInitialSignalStrings] = useState("");
 
   const handleRequest = async (action: string) => {
-    console.log("Action requested:", action);
     const device = devices?.find((device) => device.deviceId === deviceId);
     if (!device) {
       emitToastMessage("Device not found.", "error");
@@ -279,7 +284,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
           }
           break;
         default:
-          console.log("Unhandled event:", feedback.event);
+        // emitToastMessage(`Unhandled event type:1${feedback.event}`, "error");
       }
     };
     socket?.addEventListener("message", handleFeedback);

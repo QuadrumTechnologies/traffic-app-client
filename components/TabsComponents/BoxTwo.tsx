@@ -751,7 +751,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
     };
   }, []);
 
-  console.log("Active Pattern Index:", activePatternIndex, isPlaying);
+  // console.log("Active Pattern Index:", activePatternIndex, isPlaying);
 
   return (
     <div className="boxTwo">
@@ -949,7 +949,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
 
           <ul className="patterns">
             {patternsToShow?.map((pattern, index) => {
-              console.log("Index", index);
+              // console.log("Index", index);
 
               return (
                 <li className="patterns__list" key={index}>
