@@ -54,7 +54,6 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
   const [showAutoMode, setShowAutoMode] = useState<boolean>(
     deviceActiveStateData?.Auto || false
   );
-  console.log("From Device Page", deviceActiveStateData.Auto, showAutoMode);
 
   const dispatch = useAppDispatch();
   useDeviceStatus();

@@ -50,8 +50,9 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const params = useParams();
   const email = GetItemFromLocalStorage("user")?.email;
 
-  const [showManualMoreConfig, setShowManualMoreConfig] =
-    useState<boolean>(true);
+  const [showManualMoreConfig, setShowManualMoreConfig] = useState<boolean>(
+    !deviceActiveStateData?.Auto
+  );
   const [initialSignalStrings, setInitialSignalStrings] = useState("");
 
   const handleRequest = async (action: string) => {
@@ -180,7 +181,14 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
 
   useEffect(() => {
     if (deviceActiveStateData?.Auto) setShowManualMoreConfig(false);
-  }, [deviceActiveStateData]);
+  }, [deviceActiveStateData, currentDeviceInfoData]);
+
+  console.log(
+    "Device ",
+    deviceActiveStateData.Auto,
+    showManualMoreConfig,
+    showCommandsOnly
+  );
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -335,7 +343,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
             <button onClick={() => handleRequest("Reboot")}>Reboot</button>
           </div>
 
-          {showManualMoreConfig && (
+          {!deviceActiveStateData?.Auto && showManualMoreConfig && (
             <>
               <div className="phases__buttonBox">
                 <button
