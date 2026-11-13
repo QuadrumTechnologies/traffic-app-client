@@ -56,7 +56,7 @@ const Navigation = () => {
           style={{ objectFit: "contain" }}
         />
         <span>
-          Traffic Monitoring System
+          Traffic Control and Monitoring System
           {!isSmallScreen && <small>Quadrum Technologies</small>}
         </span>
       </div>

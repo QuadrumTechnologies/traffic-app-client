@@ -1077,3 +1077,201 @@ body {
   background: rgba($qt-accent, 0.06);
   color: darken($qt-accent, 12%);
 }
+
+// ---- Request access (public) ----
+.qtRequest {
+  width: min(56rem, 100%);
+
+  textarea {
+    width: 100%;
+    font: 400 1.6rem/1.4 $qt-font;
+    padding: 1rem 1.2rem;
+    border: 1px solid $qt-line;
+    border-radius: 0.6rem;
+    resize: vertical;
+    color: $qt-ink;
+
+    &:focus {
+      outline: 3px solid rgba($qt-accent, 0.25);
+      border-color: $qt-accent;
+    }
+  }
+
+  &__purposes {
+    border: none;
+    padding: 0;
+    margin: 1.2rem 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+
+    legend {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: $qt-ink;
+      margin-bottom: 0.8rem;
+    }
+
+    @media screen and (max-width: 560px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Overrides the form's generic label and input rules.
+  label.qtRequest__purpose {
+    margin: 0;
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    padding: 1rem 1.1rem;
+    border: 1px solid $qt-line;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    font-weight: 400;
+
+    input {
+      width: auto;
+      margin-top: 0.3rem;
+      flex: none;
+      accent-color: $qt-accent;
+    }
+
+    b {
+      display: block;
+      font-size: 1.45rem;
+      color: $qt-ink;
+    }
+
+    small {
+      display: block;
+      font-size: 1.25rem;
+      line-height: 1.35;
+      color: $qt-muted;
+      margin-top: 0.2rem;
+    }
+
+    &.is-on {
+      border-color: $qt-accent;
+      background: rgba($qt-accent, 0.05);
+    }
+  }
+
+  &__lead {
+    margin-top: 1rem;
+    font-size: 1.45rem;
+    color: #08535c;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1.2rem;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media screen and (max-width: 560px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  &__done {
+    gap: 1.2rem;
+
+    p {
+      font-size: 1.6rem;
+      line-height: 1.5;
+      color: $qt-ink;
+    }
+  }
+
+  &__back {
+    text-align: center;
+    text-decoration: none;
+  }
+}
+
+.loginScreen__note a,
+.loginScreen__hint a {
+  color: $qt-accent;
+  font-weight: 600;
+}
+
+// ---- Requests panel (Users page) ----
+.qtRequests {
+  margin-bottom: 2.4rem;
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
+    gap: 1.2rem;
+  }
+
+  &__item {
+    background: $qt-surface;
+    border: 1px solid $qt-line;
+    border-left: 4px solid $qt-amber;
+    border-radius: 0.8rem;
+    padding: 1.4rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-size: 1.4rem;
+    color: $qt-ink;
+  }
+
+  &__purpose {
+    align-self: flex-start;
+    font: 700 1.15rem/1 $qt-mono;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #5c4300;
+    background: rgba($qt-amber, 0.15);
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.4rem;
+  }
+
+  &__who {
+    font-weight: 700;
+    font-size: 1.55rem;
+  }
+
+  &__meta {
+    color: $qt-muted;
+    word-break: break-word;
+  }
+
+  &__msg {
+    white-space: pre-wrap;
+    line-height: 1.45;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.6rem;
+
+    select {
+      font: 400 1.4rem/1.2 $qt-font;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid $qt-line;
+      border-radius: 0.6rem;
+      background: #fff;
+    }
+  }
+}

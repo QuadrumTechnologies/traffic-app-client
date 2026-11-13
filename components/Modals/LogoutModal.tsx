@@ -14,7 +14,7 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ onClose }) => {
 
   return (
     <div className="logout">
-      <p className="logout-text">Sign out of the Traffic Monitoring System?</p>
+      <p className="logout-text">Sign out of the Traffic Control and Monitoring System?</p>
 
       <div className="logout-buttons">
         <button
