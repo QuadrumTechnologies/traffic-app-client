@@ -37,21 +37,30 @@ const Navigation = () => {
 
   return (
     <nav className="navigation">
-      <figure
-        style={{
-          overflow: "hidden",
-          cursor: "pointer",
-        }}
-        onClick={() => router.push("/dashboard")}
+      <div
+        className="qtBrand"
+        style={{ cursor: "pointer" }}
+        onClick={() =>
+          router.push(
+            typeof window !== "undefined" &&
+              window.location.pathname.startsWith("/admin")
+              ? "/admin/dashboard/devices"
+              : "/dashboard/devices"
+          )
+        }
       >
         <Image
           src="/images/logo.png"
-          alt="Logo"
-          width={isSmallScreen ? 40 : 60}
-          height={isSmallScreen ? 40 : 60}
-          style={{ objectFit: "cover" }}
+          alt=""
+          width={isSmallScreen ? 34 : 40}
+          height={isSmallScreen ? 34 : 40}
+          style={{ objectFit: "cover", borderRadius: 8, background: "#fff" }}
         />
-      </figure>
+        <span>
+          Traffic Monitoring System
+          {!isSmallScreen && <small>Quadrum Technologies</small>}
+        </span>
+      </div>
 
       {isLoggedIn && (
         <div>

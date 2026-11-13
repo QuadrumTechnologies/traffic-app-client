@@ -2,15 +2,32 @@ $color-white: #fff;
 $color-white-light: #f7f7f7;
 $color-white-dark: #f2f2f2;
 
-$color-yellow: #514604;
-$color-yellow-light: #6c6128;
-$color-yellow-dark: #3b3302;
+$color-yellow: #08707d; // brand teal (name kept to limit churn)
+$color-yellow-light: #0b8794;
+$color-yellow-dark: #064e57;
 
-$color-black: #010100;
-$color-black-light: #2a2a29;
+$color-black: #121821;
+$color-black-light: #2b313a;
 $color-black-dark: #060606;
 
 $text-success-color: #10601f;
 $text-error-color: #e45351;
 
 $box-shadow: 0 0.3rem 2rem rgba(0, 0, 0, 0.13);
+
+// Quadrum v2
+$qt-bg: #f3f4f1;
+$qt-surface: #ffffff;
+$qt-ink: #121821;
+$qt-muted: #59606b;
+$qt-line: #d9dcd5;
+$qt-night: #101317;
+$qt-night-2: #171b21;
+$qt-night-line: #2b313a;
+$qt-accent: #08707d;
+$qt-accent-bright: #4cc6d4;
+$qt-red: #d23b2e;
+$qt-amber: #e9a100;
+$qt-green: #1f9a57;
+$qt-font: "Overpass", "Helvetica Neue", Arial, sans-serif;
+$qt-mono: "Overpass Mono", ui-monospace, Menlo, Consolas, monospace;

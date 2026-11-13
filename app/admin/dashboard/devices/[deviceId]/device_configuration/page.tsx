@@ -1,4 +1,5 @@
 "use client";
+import { useRealParams } from "@/hooks/useRealParams";
 
 import NormalInput from "@/components/UI/Input/NormalInput";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
@@ -41,8 +42,9 @@ const rfModuleOptions: Option[] = [
 ];
 
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
-  params,
+  params: routeParams,
 }) => {
+  const params = useRealParams(routeParams);
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showIntersectionPassword, setShowIntersectionPassword] =

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import { useEffect } from "react";
 import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
@@ -12,7 +13,8 @@ interface IntersectionConfigurationPageProps {
 
 const IntersectionConfigurationPage: React.FC<
   IntersectionConfigurationPageProps
-> = ({ params }) => {
+> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
   const dispatch = useAppDispatch();
   const { signalString, isIntersectionConfigurable } = useAppSelector(
     (state) => state.signalConfig

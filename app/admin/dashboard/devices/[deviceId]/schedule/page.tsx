@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import React, { useState, useEffect, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import Select, { ActionMeta, SingleValue } from "react-select";
@@ -90,7 +91,8 @@ const dayTypeOptions: Option[] = [
   { value: "custom", label: "Custom" },
 ];
 
-const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params }) => {
+const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
   const { patterns, phases, plans, configuredPhases, currentDeviceInfoData } =
     useAppSelector((state) => state.userDevice);
   const dispatch = useAppDispatch();

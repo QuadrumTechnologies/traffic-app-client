@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import "@fontsource/overpass/400.css";
+import "@fontsource/overpass/600.css";
+import "@fontsource/overpass/800.css";
+import "@fontsource/overpass-mono/400.css";
+import "@fontsource/overpass-mono/600.css";
 import "./globals.css";
 import "@/stylesheets/main.scss";
 import ReduxProvider from "./ReduxProvider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const inter = Inter({ subsets: ["latin"] });
+import AddressBarFix from "@/components/Guards/AddressBarFix";
 
 export const metadata: Metadata = {
-  title: "Traffic Monitoring System",
+  title: "Traffic Monitoring System · Quadrum Technologies",
   description:
-    "This is a web appication for remote configuration and monitoring of traffic system",
+    "Remote configuration and monitoring of Quadrum traffic signal controllers.",
 };
+
+// Saved before Next.js starts, so pages built with "_" for an id can still
+// read the real address (see hooks/useRealParams.ts).
+const saveEntryPath = "window.__QT_ENTRY_PATH__=window.location.pathname;";
 
 export default function RootLayout({
   children,
@@ -21,10 +28,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <link rel="icon" href="./images/logo.png" sizes="any" />
-      <ToastContainer />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: saveEntryPath }} />
+        <link rel="icon" href="/images/logo.png" sizes="any" />
+        <meta name="theme-color" content="#08707d" />
+      </head>
       <ReduxProvider>
-        <body className={inter.className}>{children}</body>
+        <body>
+          <ToastContainer />
+          <AddressBarFix />
+          {children}
+        </body>
       </ReduxProvider>
     </html>
   );

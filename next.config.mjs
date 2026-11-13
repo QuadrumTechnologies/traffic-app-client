@@ -1,31 +1,11 @@
 /** @type {import('next').NextConfig} */
+// The dashboard is exported as static files and served by Cloudflare Pages.
+// Redirects and the rewrites for pages with an id in the address live in
+// public/_redirects; sign-in checks run in the browser (components/Guards).
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: "/dashboard",
-        destination: "/dashboard/devices",
-        permanent: true,
-      },
-      {
-        source: "/admin/dashboard",
-        destination: "/admin/dashboard/devices",
-        permanent: true,
-      },
-      {
-        source: "/admin",
-        destination: "/admin/login",
-        permanent: true,
-      },
-    ];
-  },
+  output: "export",
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-    ],
+    unoptimized: true,
   },
   reactStrictMode: false,
 };

@@ -3,9 +3,10 @@
 import SideBar from "@/components/Dashboard/Sidebar";
 import Navigation from "@/components/Navigation/Navigation";
 import MobileSideBar from "@/components/Dashboard/MobileSidebar";
+import RequireSignIn from "@/components/Guards/RequireSignIn";
 
 const sideBarLinks = [
-  { name: "My Devices", link: "/admin/dashboard/devices", iconUrl: "devices" },
+  { name: "Devices", link: "/admin/dashboard/devices", iconUrl: "devices" },
   { name: "Settings", link: "/admin/dashboard/settings", iconUrl: "settings" },
 ];
 
@@ -15,6 +16,7 @@ export default function HostLayout({
   children: React.ReactNode;
 }) {
   return (
+    <RequireSignIn role="admin">
     <section>
       <Navigation />
       <div className="dashboard">
@@ -27,5 +29,6 @@ export default function HostLayout({
         <div className="dashboard-right">{children}</div>
       </div>
     </section>
+    </RequireSignIn>
   );
 }

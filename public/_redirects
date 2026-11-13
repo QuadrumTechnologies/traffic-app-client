@@ -1,0 +1,19 @@
+# Cloudflare Pages. Plain redirects first, then rewrites (status 200).
+/dashboard  /dashboard/devices  301
+/admin  /admin/login  301
+/admin/dashboard  /admin/dashboard/devices  301
+
+# Pages with an id in the address are built once, with "_" for the id.
+# Serve that file for every real id; the page reads the id from the address.
+/dashboard/devices/:id/intersection_configuration  /dashboard/devices/_/intersection_configuration  200
+/dashboard/devices/:id/device_configuration  /dashboard/devices/_/device_configuration  200
+/dashboard/devices/:id/schedule  /dashboard/devices/_/schedule  200
+/dashboard/devices/:id  /dashboard/devices/_  200
+/admin/dashboard/devices/:id/intersection_configuration  /admin/dashboard/devices/_/intersection_configuration  200
+/admin/dashboard/devices/:id/device_configuration  /admin/dashboard/devices/_/device_configuration  200
+/admin/dashboard/devices/:id/schedule  /admin/dashboard/devices/_/schedule  200
+/admin/dashboard/devices/:id  /admin/dashboard/devices/_  200
+/reset_password/:token  /reset_password/_  200
+/verify_email/:token  /verify_email/_  200
+/admin/reset_password/:token  /admin/reset_password/_  200
+/admin/verify_email/:token  /admin/verify_email/_  200

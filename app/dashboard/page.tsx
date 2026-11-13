@@ -1,4 +1,13 @@
-const Dashboard = () => {
-  return <div></div>;
-};
-export default Dashboard;
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+// The dashboard opens on the device list.
+export default function DashboardIndex() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/dashboard/devices");
+  }, [router]);
+  return null;
+}

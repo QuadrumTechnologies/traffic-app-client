@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
@@ -16,7 +17,8 @@ interface ResetPasswordProps {
   searchParams: any;
 }
 
-const ResetPassword: React.FC<ResetPasswordProps> = ({ params }) => {
+const ResetPassword: React.FC<ResetPasswordProps> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState<boolean>(false);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import bg from "@/public/images/tra.avif";
@@ -13,7 +14,8 @@ interface VerifyEmailProps {
   searchParams: any;
 }
 
-const VerifyEmail: React.FC<VerifyEmailProps> = ({ params }) => {
+const VerifyEmail: React.FC<VerifyEmailProps> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
   const router = useRouter();
 
   const [seconds, setSeconds] = useState<number>(5);

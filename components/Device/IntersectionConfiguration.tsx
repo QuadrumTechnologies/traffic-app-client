@@ -5,6 +5,7 @@ import * as Yup from "yup";
 import { useEffect, useState } from "react";
 import { IntersectionConfigItem } from "@/app/dashboard/devices/[deviceId]/page";
 import { useRouter, usePathname, useParams } from "next/navigation";
+import { useRealParams } from "@/hooks/useRealParams";
 import IntersectionConfigurationItem from "./IntersectionConfigurationItem";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import {
@@ -47,7 +48,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const params = useParams();
+  const params = useRealParams(useParams() as Record<string, string>);
   const email = GetItemFromLocalStorage("user")?.email;
 
   const [showManualMoreConfig, setShowManualMoreConfig] = useState<boolean>(
