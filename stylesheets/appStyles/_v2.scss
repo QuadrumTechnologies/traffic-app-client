@@ -1046,3 +1046,34 @@ body {
 [hidden] {
   display: none !important;
 }
+
+.qtConfirm__list {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.45;
+}
+.qtConfirm__check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid $qt-line;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+  cursor: pointer;
+  input {
+    margin-top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+  }
+}
+
+.qtNotice--info {
+  border-color: rgba($qt-accent, 0.35);
+  background: rgba($qt-accent, 0.06);
+  color: darken($qt-accent, 12%);
+}
