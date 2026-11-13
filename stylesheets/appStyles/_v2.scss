@@ -1041,3 +1041,8 @@ body {
   display: flex;
   justify-content: center;
 }
+
+// Author display rules beat the hidden attribute; keep hidden things hidden.
+[hidden] {
+  display: none !important;
+}
