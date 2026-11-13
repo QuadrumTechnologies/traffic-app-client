@@ -65,39 +65,6 @@ const SignalLight = styled.div<{
   border-radius: 50%;
   cursor: ${({ $editable, $manualMode }) =>
     $editable || $manualMode ? "pointer" : "default"};
-  @media screen and (max-width: 1300px) {
-    margin: 1.5px;
-  }
-  @media screen and (max-width: 1100px) {
-    margin: 1.5px;
-    width: 1.6rem;
-    height: 1.6rem;
-  }
-  @media screen and (max-width: 900px) {
-    margin: 1.1px;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  @media screen and (max-width: 600px) {
-    margin: 1.3px;
-    width: 1.3rem;
-    height: 1.3rem;
-  }
-  @media screen and (max-width: 500px) {
-    margin: 1.2px;
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-  @media screen and (max-width: 400px) {
-    margin: 1.6px;
-    width: 1.2rem;
-    height: 1.2rem;
-  }
-  @media screen and (max-width: 300px) {
-    margin: 0.8px;
-    width: 1.2rem;
-    height: 1.2rem;
-  }
 `;
 
 const PedestrianSignalLight = styled.div<{
@@ -119,27 +86,6 @@ const PedestrianSignalLight = styled.div<{
   cursor: ${({ $editable, $manualMode }) =>
     $editable || $manualMode ? "pointer" : "default"};
 
-  @media screen and (max-width: 1100px) {
-    width: 1.2rem;
-    height: 1.2rem;
-  }
-  @media screen and (max-width: 900px) {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-  @media screen and (max-width: 700px) {
-    width: 0.85rem;
-    height: 0.85rem;
-  }
-  @media screen and (max-width: 500px) {
-    width: 0.8rem;
-    height: 0.8rem;
-  }
-  @media screen and (max-width: 400px) {
-    width: 0.7rem;
-    height: 0.7rem;
-    font-size: 0.8rem;
-  }
 `;
 
 const SignalGroup = styled.div<{ orientation: "horizontal" | "vertical" }>`

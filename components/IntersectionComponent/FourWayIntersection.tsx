@@ -161,20 +161,15 @@ const breakpoints = [
   1600, 1500, 1400, 1300, 1200, 1100, 1000, 900, 800, 700, 600, 500, 400, 300,
 ];
 
+// The drawing is always laid out at its desktop size (550 x 500) and scaled
+// to fit its column (see Intersection.tsx), so one set of positions is right
+// at every screen width. The per-width tables below are kept for reference.
+const DRAWING_BREAKPOINT = 1400;
 const getResponsiveValue = (
   direction: "N" | "E" | "S" | "W",
   values: any,
-  screenWidth: number | undefined
-) => {
-  if (!screenWidth) {
-    return values[direction][1400];
-  }
-  const closestBreakpoint =
-    breakpoints.find(
-      (bp) => screenWidth >= bp - 100 && screenWidth <= bp + 100
-    ) || breakpoints[breakpoints.length - 1];
-  return values[direction][closestBreakpoint];
-};
+  _screenWidth: number | undefined
+) => values[direction][DRAWING_BREAKPOINT];
 
 const getOrientation = (
   direction: "N" | "E" | "S" | "W"
