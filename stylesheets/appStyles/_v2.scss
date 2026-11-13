@@ -637,3 +637,393 @@ body {
     white-space: nowrap;
   }
 }
+
+// ---------- Shared controls ----------
+.qtButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.8rem;
+  padding: 0 1.6rem;
+  border-radius: 0.8rem;
+  border: 1px solid $qt-accent;
+  background: $qt-accent;
+  color: #fff;
+  font: 600 1.4rem/1 $qt-font;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background: darken($qt-accent, 6%);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  &--quiet {
+    background: $qt-surface;
+    color: $qt-ink;
+    border-color: $qt-line;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: #f0f2ee;
+    }
+  }
+
+  &--danger {
+    background: $qt-surface;
+    color: #a1281d;
+    border-color: rgba($qt-red, 0.5);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: rgba($qt-red, 0.08);
+    }
+  }
+}
+
+.qtInput {
+  width: 100%;
+  min-height: 4rem;
+  padding: 0 1.2rem;
+  border: 1px solid $qt-line;
+  border-radius: 0.8rem;
+  background: $qt-surface;
+  font: 400 1.5rem/1 $qt-font;
+  color: $qt-ink;
+
+  &:focus {
+    outline: 2px solid rgba($qt-accent, 0.35);
+    border-color: $qt-accent;
+  }
+}
+
+// ---------- Users (admin) ----------
+.qtUsers {
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.6rem;
+    margin-bottom: 2rem;
+  }
+
+  &__intro {
+    margin-top: 0.8rem;
+    font-size: 1.45rem;
+    color: $qt-muted;
+    max-width: 60ch;
+  }
+
+  &__tools {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+    max-width: 56rem;
+  }
+
+  &__subhead {
+    margin: 3.2rem 0 1.2rem;
+    font: 600 1.3rem/1 $qt-mono;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $qt-muted;
+  }
+}
+
+.qtPeople {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+  gap: 1.4rem;
+}
+
+.qtPerson {
+  background: $qt-surface;
+  border: 1px solid $qt-line;
+  border-radius: 1.2rem;
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+
+  &--paused {
+    background: #f7f7f5;
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  &__avatar {
+    flex: none;
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba($qt-accent, 0.12);
+    color: $qt-accent;
+    font: 800 1.5rem/1 $qt-font;
+  }
+
+  &__who {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__name {
+    font: 600 1.6rem/1.2 $qt-font;
+    color: $qt-ink;
+  }
+
+  &__you {
+    font-weight: 400;
+    color: $qt-muted;
+  }
+
+  &__email {
+    margin-top: 0.3rem;
+    font-size: 1.35rem;
+    color: $qt-muted;
+    overflow-wrap: anywhere;
+  }
+
+  &__facts {
+    display: flex;
+    gap: 2.4rem;
+
+    dt {
+      font: 600 1.1rem/1 $qt-mono;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: $qt-muted;
+    }
+
+    dd {
+      margin-top: 0.5rem;
+      font-size: 1.45rem;
+      color: $qt-ink;
+    }
+  }
+
+  &__role {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.4rem;
+    color: $qt-muted;
+
+    select {
+      flex: 1;
+      min-height: 3.6rem;
+      padding: 0 0.8rem;
+      border: 1px solid $qt-line;
+      border-radius: 0.8rem;
+      background: $qt-surface;
+      font: 600 1.45rem/1 $qt-font;
+      color: $qt-ink;
+    }
+  }
+
+  &__roleDetail,
+  &__note {
+    font-size: 1.3rem;
+    line-height: 1.45;
+    color: $qt-muted;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: auto;
+  }
+}
+
+.qtStatus {
+  flex: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 99rem;
+  font: 600 1.2rem/1.2 $qt-font;
+  background: rgba($qt-green, 0.12);
+  color: #176f40;
+
+  &--invited {
+    background: rgba($qt-amber, 0.16);
+    color: #7a5400;
+  }
+
+  &--paused {
+    background: rgba($qt-red, 0.1);
+    color: #a1281d;
+  }
+
+  &--admin {
+    background: rgba($qt-accent, 0.12);
+    color: $qt-accent;
+  }
+}
+
+.qtConfirm,
+.qtInvite {
+  max-width: 48rem;
+  padding: 2.4rem;
+  background: $qt-surface;
+  border-radius: 1.2rem;
+
+  h3 {
+    font: 800 2rem/1.2 $qt-font;
+    color: $qt-ink;
+  }
+
+  > p {
+    margin-top: 1rem;
+    font-size: 1.45rem;
+    line-height: 1.5;
+    color: $qt-muted;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+}
+
+.qtInvite {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  label {
+    margin-top: 1rem;
+    font: 600 1.35rem/1 $qt-font;
+    color: $qt-ink;
+  }
+
+  &__roles {
+    margin-top: 1.4rem;
+    border: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.8rem;
+
+    legend {
+      font: 600 1.35rem/1 $qt-font;
+      color: $qt-ink;
+      margin-bottom: 0.8rem;
+    }
+  }
+
+  &__role {
+    display: flex !important;
+    gap: 1rem;
+    align-items: flex-start;
+    margin: 0 !important;
+    padding: 1rem 1.2rem;
+    border: 1px solid $qt-line;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    font-weight: 400 !important;
+
+    &.is-chosen {
+      border-color: $qt-accent;
+      background: rgba($qt-accent, 0.06);
+    }
+
+    input {
+      margin-top: 0.3rem;
+    }
+
+    strong {
+      display: block;
+      font: 600 1.45rem/1.2 $qt-font;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 1.3rem;
+      line-height: 1.4;
+      color: $qt-muted;
+    }
+  }
+}
+
+// ---------- Account ----------
+.qtAccount {
+  max-width: 64rem;
+
+  &__card {
+    margin-top: 1.6rem;
+
+    dl {
+      display: grid;
+      gap: 1.4rem;
+    }
+
+    dt {
+      font: 600 1.1rem/1 $qt-mono;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: $qt-muted;
+    }
+
+    dd {
+      margin-top: 0.5rem;
+      font-size: 1.55rem;
+      line-height: 1.45;
+      color: $qt-ink;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  &__note {
+    margin-top: 1.4rem;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    color: $qt-muted;
+  }
+}
+
+// ---------- Plain notice pages ----------
+.qtPlainPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2.4rem;
+  background: #f3f3f1;
+
+  &__card {
+    max-width: 48rem;
+
+    h1 {
+      font: 800 2.4rem/1.2 $qt-font;
+      color: $qt-ink;
+    }
+
+    p {
+      margin: 1.2rem 0 2rem;
+      font-size: 1.5rem;
+      line-height: 1.55;
+      color: $qt-muted;
+    }
+  }
+}

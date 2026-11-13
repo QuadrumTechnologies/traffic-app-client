@@ -280,7 +280,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
   const lastSeen = (deviceStatus as any)?.lastSeen;
   const lastSeenText = lastSeen
     ? dayjs(lastSeen).format("ddd D MMM YYYY, HH:mm")
-    : "not since this page opened";
+    : null;
 
   return (
     <>
@@ -291,7 +291,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
       </div>
       <span className={`qtBadge ${isOnline ? "qtBadge--online" : "qtBadge--offline"}`}>
         <i aria-hidden="true" />
-        {isOnline ? "Online, live" : `Offline, last heard ${lastSeenText}`}
+        {isOnline ? "Online, live" : lastSeenText ? `Offline, last heard ${lastSeenText}` : "Offline"}
       </span>
     </header>
     {!isOnline ? (
