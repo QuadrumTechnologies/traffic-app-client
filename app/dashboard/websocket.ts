@@ -1,6 +1,7 @@
 // websocket.ts
 import { emitToastMessage } from "@/utils/toastFunc";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
+import { getItemFromCookie } from "@/utils/cookiesFunc";
 
 interface User {
   email?: string;
@@ -13,6 +14,9 @@ interface IdentifyMessage {
   clientType: "web_app";
   userEmail: string | null;
   isAdmin: boolean;
+  // The sign-in token. The server identifies the dashboard from it and
+  // no longer trusts the email or admin flag on their own.
+  token: string | null;
 }
 
 // Singleton WebSocket instance and retry state
@@ -46,6 +50,7 @@ export const sendIdentify = () => {
     clientType: "web_app",
     userEmail: loggedInUser.email || null,
     isAdmin,
+    token: getItemFromCookie(isAdmin ? "adminToken" : "token"),
   };
   ws_socket.send(JSON.stringify(identifyMessage));
 };
