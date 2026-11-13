@@ -14,17 +14,17 @@ const LogoutModal: React.FC<LogoutModalProps> = ({ onClose }) => {
 
   return (
     <div className="logout">
-      <p className="logout-text">Are you sure you want to logout?</p>
+      <p className="logout-text">Sign out of the Traffic Monitoring System?</p>
 
       <div className="logout-buttons">
         <button
           onClick={() => logout(pathToNavigateTo)}
           className="logout-buttons__button1"
         >
-          Yes
+          Sign out
         </button>
         <button onClick={onClose} className="logout-buttons__button2">
-          No
+          Cancel
         </button>
       </div>
     </div>

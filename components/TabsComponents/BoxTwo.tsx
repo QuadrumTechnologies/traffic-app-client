@@ -33,6 +33,7 @@ import {
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { IoDuplicate } from "react-icons/io5";
 import { useParams, useSearchParams } from "next/navigation";
+import { useRealParams } from "@/hooks/useRealParams";
 
 interface BoxTwoProps {}
 
@@ -44,7 +45,7 @@ const BoxTwo: React.FC<BoxTwoProps> = () => {
   const searchParams = useSearchParams();
   const isTabTwo = searchParams.get("tab") === "2";
   const email = GetItemFromLocalStorage("user")?.email;
-  const params = useParams<{ deviceId: string }>();
+  const params = useRealParams(useParams<{ deviceId: string }>());
   const dispatch = useAppDispatch();
   const { phases, patterns, configuredPhases } = useAppSelector(
     (state) => state.userDevice

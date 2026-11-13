@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import DeviceConfiguration from "@/components/Device/DeviceConfiguration";
 import IntersectionConfiguration from "@/components/Device/IntersectionConfiguration";
 import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
@@ -51,7 +52,8 @@ function formatUnixTimestamp(unixTimestamp: number): string {
   return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
 }
 
-const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
+const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
   const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
     useAppSelector((state) => state.userDevice);
   const [showAutoMode, setShowAutoMode] = useState<boolean>(

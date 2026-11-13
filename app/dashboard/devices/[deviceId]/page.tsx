@@ -1,5 +1,6 @@
 "use client";
 
+import { useRealParams } from "@/hooks/useRealParams";
 import DeviceConfiguration from "@/components/Device/DeviceConfiguration";
 import IntersectionConfiguration from "@/components/Device/IntersectionConfiguration";
 import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
@@ -27,7 +28,8 @@ import {
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
 import { getWebSocket } from "@/app/dashboard/websocket";
-import { totalmem } from "os";
+import PatternTiming from "@/components/Signal/PatternTiming";
+import dayjs from "dayjs";
 
 interface DeviceDetailsProps {
   params: { deviceId: string };
@@ -44,9 +46,14 @@ export interface IntersectionConfigItem {
   value: string;
 }
 
-const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
-  const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
-    useAppSelector((state) => state.userDevice);
+const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) => {
+  const params = useRealParams(routeParams);
+  const {
+    deviceStatuses,
+    currentDeviceInfoData,
+    deviceActiveStateData,
+    devices,
+  } = useAppSelector((state) => state.userDevice);
 
   const { isIntersectionConfigurable } = useAppSelector(
     (state) => state.signalConfig
@@ -277,11 +284,40 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
 
   const directions = ["North", "East", "West", "South"] as const;
 
+  const isOnline = Boolean(deviceStatus?.status);
+  const lastSeen =
+    deviceStatus?.lastSeen ||
+    (devices || []).find((d: any) => d?.deviceId === deviceId)?.lastSeen;
+  const lastSeenText = lastSeen
+    ? dayjs(lastSeen).format("ddd D MMM YYYY, HH:mm")
+    : "never";
+
   return (
+    <>
+    <header className="qtJunctionHead">
+      <div>
+        <h1>{currentDeviceInfoData?.JunctionId || "Junction"}</h1>
+        <p className="qtJunctionHead__id">QT-TSLC controller {deviceId}</p>
+      </div>
+      <span className={`qtBadge ${isOnline ? "qtBadge--online" : "qtBadge--offline"}`}>
+        <i aria-hidden="true" />
+        {isOnline ? "Online, live" : `Offline, last heard ${lastSeenText}`}
+      </span>
+    </header>
+    {!isOnline ? (
+      <p className="qtNotice" role="status">
+        This controller is offline. The readings below are from its last
+        report ({lastSeenText}), and commands are off until it reconnects.
+      </p>
+    ) : null}
     <section className="device">
       <div className="device__left">
         <FourWayIntersection editable={isIntersectionConfigurable} />
-        <div className="intersectionConfiguration__commands">
+        <div
+          className={`intersectionConfiguration__commands ${isOnline ? "" : "qtCommandsOff"}`}
+          aria-disabled={!isOnline}
+          title={isOnline ? undefined : "Commands are off while the controller is offline"}
+        >
           <IntersectionConfiguration
             intersectionConfigItems={intersectionConfigItems}
             deviceId={deviceId}
@@ -345,6 +381,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params }) => {
         </div>
       </div>
     </section>
+    <PatternTiming
+      deviceId={deviceId}
+      isOnline={isOnline}
+      activePlan={currentDeviceInfoData?.Plan}
+    />
+    </>
   );
 };
 

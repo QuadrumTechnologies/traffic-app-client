@@ -37,12 +37,13 @@ export const formatRtcDate = (rtc: string | undefined) => {
 
   if (isNaN(date.getTime())) return "Nill";
 
-  return date.toLocaleDateString("en-US", {
+  // Day and month spelled out: 5/11/2025 reads as 5 November in Nigeria.
+  return date.toLocaleDateString("en-GB", {
     timeZone,
-    year: "numeric",
-    month: "numeric",
+    weekday: "short",
     day: "numeric",
-    weekday: "long",
+    month: "short",
+    year: "numeric",
   });
 };
 

@@ -1,0 +1,639 @@
+// Quadrum v2 look: the company site's teal and Overpass type, a dark frame
+// like SmartSAV, and red/amber/green only where they mean a signal state.
+
+body {
+  background: $qt-bg;
+  color: $qt-ink;
+  font-family: $qt-font;
+}
+
+// ---------- Frame: top bar and side bar ----------
+.navigation {
+  background: $qt-night;
+  border-bottom: 1px solid $qt-night-line;
+  padding: 1rem 3rem;
+  min-height: 6.4rem;
+
+
+  &-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: auto;
+    height: 4rem;
+    padding: 0 1.4rem;
+    border-radius: 0.8rem;
+    background: transparent;
+    border: 1px solid $qt-night-line;
+    color: #eef2f5;
+    font: inherit;
+    font-size: 1.4rem;
+    font-weight: 600;
+
+    &:hover,
+    &:focus-visible {
+      background: $qt-accent;
+      border-color: $qt-accent;
+    }
+
+    & .icon {
+      position: static;
+      transform: none;
+      height: 1.8rem;
+      width: 1.8rem;
+    }
+
+    @media screen and (max-width: 700px) {
+      width: 4rem;
+      padding: 0;
+      justify-content: center;
+
+      &__label {
+        display: none;
+      }
+    }
+  }
+}
+
+.qtBrand {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  color: #eef2f5;
+  font-weight: 800;
+  font-size: 1.7rem;
+  letter-spacing: 0.01em;
+
+  small {
+    display: block;
+    font: 600 1.15rem/1.2 $qt-mono;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a3abb5;
+  }
+}
+
+.dashboard {
+  background: $qt-bg;
+  min-height: calc(100vh - 6.4rem);
+
+  &-left {
+    flex-basis: 22rem;
+    flex-shrink: 0;
+    background: $qt-night-2;
+    border-right: 1px solid $qt-night-line;
+    min-height: calc(100vh - 6.4rem);
+  }
+
+  &-right {
+    flex: 1;
+    min-width: 0;
+    padding: 3.2rem;
+  }
+
+  &-back__button {
+    border: 1px solid $qt-line;
+    border-radius: 0.6rem;
+    color: $qt-ink;
+    background: $qt-surface;
+
+    &:hover {
+      background: $qt-accent;
+      border-color: $qt-accent;
+      color: #fff;
+    }
+  }
+}
+
+.sidebar {
+  padding: 2.4rem 1.2rem;
+
+  &-item,
+  &-item__active {
+    margin: 0.4rem 0;
+    padding: 1.2rem 1.4rem;
+    border-radius: 0.6rem;
+    font-size: 1.45rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-weight: 600;
+  }
+
+  &-item {
+    color: #a3abb5;
+
+    &:hover {
+      color: #eef2f5;
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  &-item__active {
+    color: #fff;
+    background: rgba($qt-accent-bright, 0.14);
+    box-shadow: inset 3px 0 0 $qt-accent-bright;
+  }
+
+  &-icon {
+    color: #a3abb5;
+    font-size: 2.2rem;
+
+    &__active {
+      color: $qt-accent-bright;
+      font-size: 2.2rem;
+    }
+  }
+}
+
+// ---------- Login ----------
+.loginScreen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(36rem, 1fr);
+  background: $qt-night;
+
+  @media screen and (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3.2rem;
+    padding: 4rem 4.8rem;
+    color: #eef2f5;
+    background: linear-gradient(
+        180deg,
+        rgba(8, 10, 14, 0.62) 0%,
+        rgba(8, 10, 14, 0.78) 55%,
+        rgba(8, 10, 14, 0.94) 100%
+      ),
+      url("/images/tra.avif") center / cover no-repeat;
+
+    @media screen and (max-width: 900px) {
+      padding: 3rem 2.4rem;
+      min-height: 52vh;
+    }
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-weight: 800;
+    font-size: 1.8rem;
+
+    img {
+      object-fit: contain;
+    }
+  }
+
+  &__copy {
+    max-width: 56rem;
+
+    h1 {
+      font: 800 clamp(3.2rem, 4.4vw, 5.2rem) / 1.08 $qt-font;
+      margin: 0.8rem 0 1.4rem;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      font-size: 1.8rem;
+      line-height: 1.55;
+      color: rgba(238, 242, 245, 0.82);
+    }
+  }
+
+  &__eyebrow {
+    font: 600 1.25rem/1 $qt-mono !important;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $qt-accent-bright !important;
+  }
+
+  &__timeline {
+    background: rgba(16, 19, 23, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.2rem;
+    padding: 1.6rem 1.8rem 1rem;
+    backdrop-filter: blur(4px);
+  }
+
+  &__panel {
+    background: $qt-bg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2.4rem;
+  }
+
+  &__form {
+    width: min(44rem, 100%);
+    background: $qt-surface;
+    border: 1px solid $qt-line;
+    border-radius: 1.2rem;
+    padding: 3.6rem 3.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    box-shadow: 0 1.6rem 4rem rgba(18, 24, 33, 0.08);
+
+    h2 {
+      font: 800 2.8rem/1.1 $qt-font;
+      color: $qt-ink;
+    }
+
+    label {
+      margin-top: 1.2rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: $qt-ink;
+    }
+
+    input {
+      width: 100%;
+      font: 400 1.6rem/1.4 $qt-font;
+      padding: 1.1rem 1.2rem 0.9rem;
+      border: 1px solid $qt-line;
+      border-radius: 0.6rem;
+      background: #fff;
+      color: $qt-ink;
+
+      &:focus {
+        outline: 3px solid rgba($qt-accent, 0.25);
+        border-color: $qt-accent;
+      }
+    }
+  }
+
+  &__hint {
+    font-size: 1.45rem;
+    color: $qt-muted;
+  }
+
+  &__password {
+    display: flex;
+    gap: 0.6rem;
+
+    button {
+      flex-shrink: 0;
+      font: 600 1.35rem/1 $qt-font;
+      padding: 0 1.2rem;
+      border: 1px solid $qt-line;
+      border-radius: 0.6rem;
+      background: $qt-bg;
+      color: $qt-ink;
+      cursor: pointer;
+
+      &:hover {
+        border-color: $qt-accent;
+      }
+    }
+  }
+
+  &__error {
+    margin-top: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 0.6rem;
+    background: rgba($qt-red, 0.08);
+    color: #a1281d;
+    font-size: 1.45rem;
+  }
+
+  &__notice {
+    margin-top: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 0.6rem;
+    background: rgba(#08707d, 0.08);
+    color: #08535c;
+    font-size: 1.45rem;
+  }
+
+  &__submit {
+    margin-top: 1.8rem;
+    font: 800 1.6rem/1 $qt-font;
+    padding: 1.4rem 1.6rem 1.2rem;
+    border: none;
+    border-radius: 0.6rem;
+    background: $qt-accent;
+    color: #fff;
+    cursor: pointer;
+
+    &:hover {
+      background: darken($qt-accent, 5%);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: progress;
+    }
+
+    &:focus-visible {
+      outline: 3px solid $qt-amber;
+      outline-offset: 2px;
+    }
+  }
+
+  &__links {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.4rem;
+
+    a {
+      font-size: 1.4rem;
+      color: $qt-accent;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &__note {
+    margin-top: 1.6rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid $qt-line;
+    font-size: 1.35rem;
+    color: $qt-muted;
+
+    a {
+      color: $qt-accent;
+    }
+  }
+}
+
+// ---------- Timing diagram ----------
+.signalTimeline {
+  margin: 0;
+
+  &__title {
+    font: 600 1.2rem/1 $qt-mono;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    color: inherit;
+    opacity: 0.75;
+  }
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+// ---------- Overview tiles ----------
+.qtTiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.2rem;
+  margin: 0 0 2.4rem;
+}
+
+.qtTile {
+  background: $qt-surface;
+  border: 1px solid $qt-line;
+  border-radius: 1rem;
+  padding: 1.6rem 1.8rem;
+
+  &__label {
+    font: 600 1.15rem/1 $qt-mono;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $qt-muted;
+  }
+
+  &__value {
+    margin-top: 1rem;
+    font: 800 3.2rem/1 $qt-font;
+    color: $qt-ink;
+  }
+
+  &__sub {
+    margin-top: 0.6rem;
+    font-size: 1.3rem;
+    color: $qt-muted;
+  }
+
+  &--online &__value {
+    color: $qt-green;
+  }
+
+  &--offline &__value {
+    color: $qt-red;
+  }
+}
+
+// ---------- Junction page ----------
+.qtJunctionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+
+  h1 {
+    font: 800 2.6rem/1.1 $qt-font;
+    color: $qt-ink;
+  }
+
+  &__id {
+    font: 600 1.3rem/1 $qt-mono;
+    color: $qt-muted;
+    margin-top: 0.6rem;
+  }
+}
+
+.qtBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 99rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+  border: 1px solid $qt-line;
+  background: $qt-surface;
+  color: $qt-ink;
+
+  i {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    background: $qt-muted;
+  }
+
+  &--online i {
+    background: $qt-green;
+    box-shadow: 0 0 0 0.3rem rgba($qt-green, 0.18);
+  }
+
+  &--offline i {
+    background: $qt-red;
+  }
+}
+
+.qtNotice {
+  margin-bottom: 2rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba($qt-amber, 0.5);
+  background: rgba($qt-amber, 0.08);
+  font-size: 1.45rem;
+  color: #5c4300;
+}
+
+.qtCard {
+  background: $qt-surface;
+  border: 1px solid $qt-line;
+  border-radius: 1.2rem;
+  padding: 2rem 2.2rem;
+  margin-top: 2.4rem;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    margin-bottom: 1.4rem;
+
+    h2 {
+      font: 800 2rem/1.2 $qt-font;
+      color: $qt-ink;
+    }
+
+    p {
+      font-size: 1.4rem;
+      color: $qt-muted;
+      margin-top: 0.4rem;
+    }
+  }
+
+  select {
+    font: 600 1.4rem/1.2 $qt-font;
+    padding: 0.8rem 1rem;
+    border: 1px solid $qt-line;
+    border-radius: 0.6rem;
+    background: #fff;
+    color: $qt-ink;
+  }
+}
+
+.qtLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem;
+  margin-top: 1.2rem;
+  font-size: 1.3rem;
+  color: $qt-muted;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  i {
+    width: 1.6rem;
+    height: 0.9rem;
+    border-radius: 0.2rem;
+  }
+}
+
+// Commands are off while the controller is offline.
+.qtCommandsOff {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.6);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// The junction header shows the status now; drop the old floating dot.
+.deviceLayout__status {
+  display: none;
+}
+
+// Phones: the sign-in form first, the timeline below it.
+@media screen and (max-width: 900px) {
+  .loginScreen__panel {
+    order: -1;
+    padding-top: 3rem;
+  }
+}
+
+// ---------- Collapsible side menu ----------
+.dashboard-left {
+  transition: flex-basis 0.2s ease;
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  margin: 0 0 1.2rem 0.4rem;
+  border: 1px solid $qt-night-line;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: #a3abb5;
+  font-size: 1.9rem;
+  cursor: pointer;
+
+  &:hover {
+    color: #eef2f5;
+    border-color: $qt-accent-bright;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $qt-amber;
+    outline-offset: 2px;
+  }
+
+  @media screen and (max-width: 900px) {
+    display: none;
+  }
+}
+
+.dashboard-left--collapsed {
+  flex-basis: 7.2rem;
+
+  .sidebar {
+    padding: 2.4rem 0.8rem;
+  }
+
+  .sidebar-toggle {
+    margin: 0 auto 1.2rem;
+    display: flex;
+  }
+
+  .sidebar-item,
+  .sidebar-item__active {
+    justify-content: center;
+    padding: 1.2rem 0;
+  }
+
+  .sidebar-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

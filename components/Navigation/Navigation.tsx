@@ -3,14 +3,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import OverlayModal from "../Modals/OverlayModal";
 import LogoutModal from "../Modals/LogoutModal";
-import { GiExitDoor } from "react-icons/gi";
+import { FiLogOut } from "react-icons/fi";
 import { getItemFromCookie } from "@/utils/cookiesFunc";
 
 const Navigation = () => {
   const router = useRouter();
   const [showLogoutVerificationModal, setShowLogoutVerificationModal] =
     useState<boolean>(false);
-  const [showLogoutText, setShowLogoutText] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -37,21 +36,30 @@ const Navigation = () => {
 
   return (
     <nav className="navigation">
-      <figure
-        style={{
-          overflow: "hidden",
-          cursor: "pointer",
-        }}
-        onClick={() => router.push("/dashboard")}
+      <div
+        className="qtBrand"
+        style={{ cursor: "pointer" }}
+        onClick={() =>
+          router.push(
+            typeof window !== "undefined" &&
+              window.location.pathname.startsWith("/admin")
+              ? "/admin/dashboard/devices"
+              : "/dashboard/devices"
+          )
+        }
       >
         <Image
-          src="/images/logo.png"
-          alt="Logo"
-          width={isSmallScreen ? 40 : 60}
-          height={isSmallScreen ? 40 : 60}
-          style={{ objectFit: "cover" }}
+          src="/images/logo-light.png"
+          alt=""
+          width={isSmallScreen ? 36 : 44}
+          height={isSmallScreen ? 34 : 41}
+          style={{ objectFit: "contain" }}
         />
-      </figure>
+        <span>
+          Traffic Monitoring System
+          {!isSmallScreen && <small>Quadrum Technologies</small>}
+        </span>
+      </div>
 
       {isLoggedIn && (
         <div>
@@ -59,11 +67,10 @@ const Navigation = () => {
             type="button"
             className="navigation-logout"
             onClick={() => setShowLogoutVerificationModal(true)}
-            onMouseEnter={() => setShowLogoutText(true)}
-            onMouseLeave={() => setShowLogoutText(false)}
+            aria-label="Sign out"
           >
-            <GiExitDoor className="icon" />
-            {showLogoutText && <p className="navigation-title">Logout</p>}
+            <FiLogOut className="icon" aria-hidden="true" />
+            <span className="navigation-logout__label">Sign out</span>
           </button>
         </div>
       )}

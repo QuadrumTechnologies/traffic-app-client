@@ -1,4 +1,5 @@
 "use client";
+import { useRealParams } from "@/hooks/useRealParams";
 
 import NormalInput from "@/components/UI/Input/NormalInput";
 import LoadingSpinner from "@/components/UI/LoadingSpinner/LoadingSpinner";
@@ -26,16 +27,18 @@ import {
 } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { usePathname } from "next/navigation";
+import { realPathname } from "@/hooks/useRealParams";
 
 interface DeviceConfigurationPageProps {
   params: { deviceId: string };
 }
 
 const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
-  params,
+  params: routeParams,
 }) => {
+  const params = useRealParams(routeParams);
   const dispatch = useAppDispatch();
-  const pathname = usePathname();
+  const pathname = realPathname(usePathname());
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showIntersectionPassword, setShowIntersectionPassword] =
     useState<boolean>(false);

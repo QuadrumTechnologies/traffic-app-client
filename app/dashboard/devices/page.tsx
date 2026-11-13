@@ -29,10 +29,62 @@ export interface DeviceStatus {
   lastSeen: string | null;
 }
 
-const UserDevices = () => {
-  const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
-    (state) => state.userDevice
+// Fleet summary, like the SmartSAV overview: how many junctions, how many are
+// reporting now, and when the quietest one was last heard from.
+function OverviewTiles({
+  devices,
+  deviceStatuses,
+}: {
+  devices: any[];
+  deviceStatuses: DeviceStatus[];
+}) {
+  const total = devices.length;
+  const online = devices.filter(
+    (device) => getDeviceStatus(deviceStatuses, device.deviceId)?.status
+  ).length;
+  const offline = total - online;
+  const lastSeenTimes = devices
+    .filter((device) => !getDeviceStatus(deviceStatuses, device.deviceId)?.status)
+    .map((device) => {
+      const status = getDeviceStatus(deviceStatuses, device.deviceId);
+      return status?.lastSeen || device?.lastSeen || null;
+    })
+    .filter(Boolean)
+    .map((time) => dayjs(time as string));
+  const oldest = lastSeenTimes.length
+    ? lastSeenTimes.reduce((a, b) => (a.isBefore(b) ? a : b))
+    : null;
+
+  return (
+    <div className="qtTiles" aria-label="Junction summary">
+      <div className="qtTile">
+        <p className="qtTile__label">Junctions</p>
+        <p className="qtTile__value">{total}</p>
+        <p className="qtTile__sub">Controllers on this account</p>
+      </div>
+      <div className="qtTile qtTile--online">
+        <p className="qtTile__label">Online</p>
+        <p className="qtTile__value">{online}</p>
+        <p className="qtTile__sub">Reporting live now</p>
+      </div>
+      <div className="qtTile qtTile--offline">
+        <p className="qtTile__label">Offline</p>
+        <p className="qtTile__value">{offline}</p>
+        <p className="qtTile__sub">
+          {oldest
+            ? `Longest silent since ${oldest.format("D MMM YYYY")}`
+            : offline
+            ? "Never connected"
+            : "None"}
+        </p>
+      </div>
+    </div>
   );
+}
+
+const UserDevices = () => {
+  const { devices, isFetchingDevices, devicesLoadFailed, deviceStatuses } =
+    useAppSelector((state) => state.userDevice);
   const dispatch = useAppDispatch();
   useDeviceStatus();
   const pathname = usePathname();
@@ -52,7 +104,7 @@ const UserDevices = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSpinner(false);
-    }, 5000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -100,7 +152,7 @@ const UserDevices = () => {
   return (
     <aside className="devices">
       <div className="devices-header">
-        <h2 className="page-header">My Devices</h2>
+        <h2 className="page-header">Junctions</h2>
         <button onClick={() => setShowAddDeviceModal(true)}>
           <FaPlus /> Add New
         </button>
@@ -110,17 +162,30 @@ const UserDevices = () => {
           </OverlayModal>
         )}
       </div>
-      {devices?.length === 0 && (
+      <OverviewTiles devices={devices || []} deviceStatuses={deviceStatuses} />
+      {devices?.length === 0 && devicesLoadFailed && (
+        <div className="devices-nodevice" role="alert">
+          <p>
+            Your junctions couldn&rsquo;t be loaded. Check your connection and
+            try again.
+          </p>
+          <button
+            className="devices-button"
+            onClick={() => dispatch(getUserDevice())}
+          >
+            Try again
+          </button>
+        </div>
+      )}
+      {devices?.length === 0 && !devicesLoadFailed && (
         <div className="devices-nodevice">
           <RiCreativeCommonsZeroFill />
-          <p>
-            You haven't created any device yet, kindly add a device to continue.
-          </p>
+          <p>No junctions on this account yet. Add one to start monitoring it.</p>
           <button
             className="devices-button"
             onClick={() => setShowAddDeviceModal(true)}
           >
-            Add Device
+            Add a junction
           </button>
         </div>
       )}

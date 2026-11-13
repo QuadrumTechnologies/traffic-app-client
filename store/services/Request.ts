@@ -1,4 +1,5 @@
 import { getItemFromCookie } from "@/utils/cookiesFunc";
+import { endSession, isEndedSession } from "@/utils/session";
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -37,6 +38,31 @@ instance.interceptors.request.use(
     return config;
   },
   function (error) {
+    return Promise.reject(error);
+  }
+);
+
+// When the API no longer accepts the stored sign-in, send the person to the
+// sign-in page instead of letting every panel show its own error. The pending
+// promise keeps callers from reporting the failure while the page is replaced.
+instance.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<any>) => {
+    const headers: any = error.config?.headers;
+    const sentToken = Boolean(
+      headers &&
+        (typeof headers.get === "function"
+          ? headers.get("Authorization")
+          : headers.Authorization)
+    );
+    if (
+      isBrowser &&
+      sentToken &&
+      isEndedSession(error.response?.status, error.response?.data?.message)
+    ) {
+      endSession();
+      return new Promise(() => {});
+    }
     return Promise.reject(error);
   }
 );

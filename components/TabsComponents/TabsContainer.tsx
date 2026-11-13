@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { realPathname } from "@/hooks/useRealParams";
 import Tabs from "./Tabs";
 import TabBox from "./TabBox";
 
 const TabsContainer = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = realPathname(usePathname());
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   // Initialize currentStep

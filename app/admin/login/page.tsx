@@ -1,14 +1,8 @@
 "use client";
 
-import AdminLoginForm from "@/components/AuthComponents/AdminLoginForm";
-import Navigation from "@/components/Navigation/Navigation";
+import LoginScreen from "@/components/AuthComponents/LoginScreen";
 
-const Login = () => {
-  return (
-    <>
-      <Navigation />
-      <AdminLoginForm />
-    </>
-  );
-};
-export default Login;
+// One sign-in page for users and admins (see LoginScreen).
+export default function LoginPage() {
+  return <LoginScreen />;
+}
