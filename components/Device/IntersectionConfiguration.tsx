@@ -17,7 +17,7 @@ import {
   setSignalStringToAllBlank,
   setSignalState,
 } from "@/store/signals/SignalConfigSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import HttpRequest from "@/store/services/HttpRequest";
 import {
   GetItemFromLocalStorage,
@@ -123,7 +123,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
     } else {
-      socket.onopen = () => sendMessage();
+      onSocketOpen(socket, () => sendMessage());
     }
 
     SetItemToLocalStorage("isPasswordVerified", {
@@ -251,7 +251,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
         if (socket.readyState === WebSocket.OPEN) {
           sendMessage();
         } else {
-          socket.onopen = () => sendMessage();
+          onSocketOpen(socket, () => sendMessage());
         }
         setInitialSignalStrings(encodedSignals);
         dispatch(getUserDeviceStateData(deviceId));

@@ -27,7 +27,7 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import PatternTiming from "@/components/Signal/PatternTiming";
 import dayjs from "dayjs";
 
@@ -237,7 +237,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     if (socket.readyState === WebSocket.OPEN) {
       sendRequests();
     } else {
-      socket.onopen = () => sendRequests();
+      onSocketOpen(socket, () => sendRequests());
     }
 
     return () => {

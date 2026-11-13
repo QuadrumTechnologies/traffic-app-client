@@ -20,7 +20,7 @@ import {
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import { toast } from "react-toastify";
 
 interface Option {
@@ -633,7 +633,7 @@ const ScheduleTemplate: React.FC<ScheduleTemplateProps> = ({ params: routeParams
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
     } else {
-      socket.onopen = () => sendMessage();
+      onSocketOpen(socket, () => sendMessage());
     }
   };
 
