@@ -34,16 +34,24 @@
     margin: 2rem 0 1.4rem;
   }
 
+  &-hint {
+    font-size: 1.4rem;
+    line-height: 1.5;
+    color: #5b6472;
+    margin: -0.6rem 0 1.6rem;
+  }
+
   &__device--options {
     list-style: none;
     display: flex;
     justify-content: space-between;
+    gap: 0.3rem;
     background-color: rgba($color-black, 0.3);
     padding: 0.3rem;
 
     li {
       padding: 1rem 0;
-      flex-basis: 27%;
+      flex: 1 1 0;
       letter-spacing: 0.1rem;
       font-size: 1.6rem;
       text-align: center;
@@ -94,5 +102,18 @@
     display: flex;
     justify-content: space-between;
     gap: 2rem;
+  }
+}
+
+// Inside the shared modal box (.overlay is 600px with its own padding and
+// background), the dialog fills the box instead of spilling past it.
+.overlay .addDeviceOverlay {
+  width: auto;
+  padding: 1rem 0 0;
+  background-color: transparent;
+
+  .addDeviceOverlay-icon {
+    top: -2rem;
+    right: -2rem;
   }
 }

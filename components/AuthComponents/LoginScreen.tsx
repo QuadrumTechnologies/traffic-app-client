@@ -181,7 +181,7 @@ export default function LoginScreen() {
 
           <p className="loginScreen__note">
             No account? <Link href="/signup">Create one</Link> and add your
-            junctions yourself, <Link href="/request-access">ask Quadrum to
+            controllers yourself, <Link href="/request-access">ask Quadrum to
             help</Link>, or <Link href="/request-access?purpose=demo">try the
             demo</Link>.
           </p>

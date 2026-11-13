@@ -52,7 +52,7 @@ interface AdminAccount {
 const ROLE_TEXT: Record<Role, { label: string; detail: string }> = {
   admin: {
     label: "Client admin",
-    detail: "Adds junctions to the account and shares them, plus everything an operator can do.",
+    detail: "Adds controllers to the account and shares their junctions, plus everything an operator can do.",
   },
   operator: {
     label: "Operator",
@@ -667,7 +667,7 @@ function RemoveDetails({
             onChange={(e) => onReturnToStock(e.target.checked)}
           />
           <span>
-            Put the junctions bought under this email back in stock as available:{" "}
+            Put the controllers bought under this email back in stock as available:{" "}
             {purchases.join(", ")}. Leave unticked to keep the sale on record.
           </span>
         </label>

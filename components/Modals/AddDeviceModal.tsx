@@ -41,12 +41,11 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
       const response = await HttpRequest.get(
         `/devices/${deviceId}/${user.email}`
       );
-      if (!response.data.device) {
-        setDeviceToBeAddedDetails(null);
-        return;
-      }
-      setDeviceToBeAddedDetails(response.data.device);
+      // The API answers { data: { type, id, department } }; older builds sent { device }.
+      const found = response.data?.data || response.data?.device;
+      setDeviceToBeAddedDetails(found?.type ? found : null);
       setIsFetchingDeviceToBeAddedDetails(false);
+      if (!found?.type) emitToastMessage("That device ID couldn't be checked. Try again.", "error");
     } catch (error: any) {
       setDeviceToBeAddedDetails(null);
       setIsFetchingDeviceToBeAddedDetails(false);
@@ -67,9 +66,10 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
     validateOnBlur: true,
     validateOnMount: true,
     onSubmit: async (values) => {
-      const { deviceId } = values;
+      const deviceId = values.deviceId.trim();
       if (!deviceToBeAddedDetails?.type) {
-        emitToastMessage("Please enter a valid Device ID", "error");
+        // Enter before Verify: check the ID first; Add is the next step.
+        getDeviceToBeAddedDetail(deviceId);
         return;
       }
       try {
@@ -90,14 +90,16 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
     },
   });
 
-  const addingDeviceOptions = ["With ID", "QR", "Buy"];
+  // QR scanning returns as a tab once it exists.
+  const addingDeviceOptions = ["With ID", "Buy"];
 
   const renderForm = () => {
     switch (selectedOption) {
       case "With ID":
         return (
           <>
-            <h2 className="addDeviceOverlay-text">Add Device With ID</h2>
+            <h2 className="addDeviceOverlay-text">Add a controller</h2>
+            <p className="addDeviceOverlay-hint">Type the device ID from the controller&rsquo;s label. It must be recorded to your email when you bought it.</p>
             <form onSubmit={formik.handleSubmit}>
               <div className="addDeviceOverlay__firstrow">
                 <InformationInput
@@ -105,27 +107,25 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
                   type="text"
                   name="deviceId"
                   value={formik.values.deviceId}
-                  onChange={formik.handleChange}
-                  onBlur={(e) => {
-                    formik.handleBlur(e);
-                    if (!formik.errors.deviceId && formik.touched.deviceId) {
-                      getDeviceToBeAddedDetail(formik.values.deviceId);
-                    }
+                  onChange={(e) => {
+                    formik.handleChange(e);
+                    // A new ID needs checking again before it can be added.
+                    setDeviceToBeAddedDetails(null);
                   }}
+                  onBlur={formik.handleBlur}
                   inputErrorMessage={formik.errors.deviceId}
                   invalid={!!formik.errors.deviceId && formik.touched.deviceId}
-                  placeholder="Enter the Device ID"
+                  placeholder="Device ID from the label"
                 />
                 <button
                   className="addDeviceOverlay__verify"
                   disabled={
                     isFetchingDeviceToBeAddedDetails ||
-                    !!formik.errors.deviceId ||
-                    !formik.touched.deviceId
+                    !formik.values.deviceId.trim()
                   }
                   type="button"
                   onClick={() =>
-                    getDeviceToBeAddedDetail(formik.values.deviceId)
+                    getDeviceToBeAddedDetail(formik.values.deviceId.trim())
                   }
                 >
                   {isFetchingDeviceToBeAddedDetails
@@ -162,20 +162,14 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ closeModal }) => {
             </form>
           </>
         );
-      case "QR":
-        return (
-          <>
-            <h2 className="addDeviceOverlay-text">
-              Add Device By Scanning QR Code
-            </h2>
-            <p>QR Code Scanning coming soon!</p>
-          </>
-        );
       case "Buy":
         return (
           <>
-            <h2 className="addDeviceOverlay-text">Purchase Device Right Now</h2>
-            <p>Purchase options coming soon!</p>
+            <h2 className="addDeviceOverlay-text">Buy a controller</h2>
+            <p>
+              Controllers are quoted per junction.{" "}
+              <a href="/request-access?purpose=buy">Ask Quadrum for a quote</a>.
+            </p>
           </>
         );
       default:

@@ -101,7 +101,7 @@ export default function DeviceSettings({
       {userType === "user" && link?.secretKey ? (
         <div className="qtSettings__card">
           <h2>Device key</h2>
-          <p>The controller signs in to the platform with this key. Quadrum sets it when the junction is commissioned; you don&rsquo;t need it day to day.</p>
+          <p>The controller signs in to the platform with this key. Quadrum sets it when the controller is commissioned; you don&rsquo;t need it day to day.</p>
           <p className="qtSettings__key">
             <code>{showKey ? link.secretKey : "•".repeat(Math.min(24, String(link.secretKey).length))}</code>
             <button type="button" className="qtButton qtButton--quiet" onClick={() => setShowKey((v) => !v)}>

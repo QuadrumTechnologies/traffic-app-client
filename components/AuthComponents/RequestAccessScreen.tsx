@@ -13,7 +13,7 @@ type Purpose = "demo" | "access" | "buy" | "partner";
 
 const PURPOSES: { value: Purpose; label: string; detail: string }[] = [
   { value: "demo", label: "Try the demo", detail: "See the platform without touching a live junction." },
-  { value: "access", label: "Help setting up my account", detail: "We'll set it up with you and connect the junctions you bought." },
+  { value: "access", label: "Help setting up my account", detail: "We'll set it up with you and add the controllers you bought." },
   { value: "buy", label: "Buy or get a quote", detail: "Controllers, cards, installation partners, support." },
   { value: "partner", label: "Partner or integration", detail: "Agencies and systems that need data or an API." },
 ];
@@ -82,8 +82,8 @@ export default function RequestAccessScreen() {
           <h1>Get started.</h1>
           <p>
             You don&rsquo;t need us to open your account. Bought a controller?
-            Create your account with the email you bought it with and add
-            your junction from its label; it takes a few minutes. Prefer a
+            Create your account with the email you bought it with, then add
+            the controller using the device ID on its label; it takes a few minutes. Prefer a
             hand? Ask here and Quadrum will set it up with you.
           </p>
         </div>
@@ -157,7 +157,7 @@ export default function RequestAccessScreen() {
             {purpose === "access" || purpose === "buy" ? (
               <>
                 <label htmlFor="ra-devices">
-                  {purpose === "access" ? "Junctions you bought" : "What you need (optional)"}
+                  {purpose === "access" ? "Controllers you bought" : "What you need (optional)"}
                 </label>
                 <input
                   id="ra-devices"

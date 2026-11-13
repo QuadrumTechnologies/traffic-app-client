@@ -154,7 +154,7 @@ const UserDevices = () => {
       <div className="devices-header">
         <h2 className="page-header">Junctions</h2>
         <button onClick={() => setShowAddDeviceModal(true)}>
-          <FaPlus /> Add New
+          <FaPlus /> Add controller
         </button>
         {showAddDeviceModal && (
           <OverlayModal onClose={() => setShowAddDeviceModal(false)}>
@@ -180,12 +180,12 @@ const UserDevices = () => {
       {devices?.length === 0 && !devicesLoadFailed && (
         <div className="devices-nodevice">
           <RiCreativeCommonsZeroFill />
-          <p>No junctions on this account yet. Add one to start monitoring it.</p>
+          <p>No junctions on this account yet. Add your controller with the device ID on its label and its junction shows here.</p>
           <button
             className="devices-button"
             onClick={() => setShowAddDeviceModal(true)}
           >
-            Add a junction
+            Add a controller
           </button>
         </div>
       )}
