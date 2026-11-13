@@ -1536,3 +1536,78 @@ body {
     font-weight: 600;
   }
 }
+
+// ---- Way home on the sign-in pages ----
+.loginScreen__brand {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover span {
+    text-decoration: underline;
+  }
+}
+
+.loginScreen__panel {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2rem;
+
+  > .loginScreen__form {
+    margin: auto 0;
+  }
+}
+
+.loginScreen__bar {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.6rem;
+  font-size: 1.45rem;
+
+  a {
+    color: $qt-ink;
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+      color: $qt-accent;
+      text-decoration: underline;
+    }
+  }
+}
+
+.loginScreen__barBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+
+  img {
+    display: none;
+    object-fit: contain;
+  }
+}
+
+.loginScreen__barName {
+  display: none;
+  font-weight: 800;
+}
+
+.loginScreen__barLink {
+  padding: 0.7rem 1.2rem;
+  border: 1px solid $qt-line;
+  border-radius: 0.6rem;
+  background: $qt-surface;
+}
+
+// Phones: the photo panel is below the form, so the bar shows the logo.
+@media screen and (max-width: 900px) {
+  .loginScreen__barBrand img,
+  .loginScreen__barName {
+    display: inline;
+  }
+
+  .loginScreen__barHome {
+    display: none;
+  }
+}

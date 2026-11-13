@@ -6,6 +6,7 @@ import HttpRequest from "@/store/services/HttpRequest";
 import { getItemFromCookie, setItemToCookie } from "@/utils/cookiesFunc";
 import { SetItemToLocalStorage } from "@/utils/localStorageFunc";
 import SignalTimeline from "@/components/Signal/SignalTimeline";
+import AuthTopBar, { HOME_URL } from "./AuthTopBar";
 
 // One sign-in page for users and admins: the account decides where it goes.
 // The user sign-in is tried first; if the API doesn't know the address or
@@ -99,11 +100,11 @@ export default function LoginScreen() {
   return (
     <main className="loginScreen">
       <section className="loginScreen__hero" aria-label="Quadrum Technologies">
-        <div className="loginScreen__brand">
+        <a className="loginScreen__brand" href={HOME_URL} aria-label="Quadrum Technologies home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/logo-light.png" alt="" width={47} height={44} />
           <span>Quadrum Technologies</span>
-        </div>
+        </a>
         <div className="loginScreen__copy">
           <p className="loginScreen__eyebrow">Traffic Control and Monitoring System</p>
           <h1>Every junction, one screen.</h1>
@@ -118,6 +119,7 @@ export default function LoginScreen() {
       </section>
 
       <section className="loginScreen__panel">
+        <AuthTopBar link={{ href: "/signup", label: "Create account" }} />
         <form className="loginScreen__form" onSubmit={onSubmit} noValidate>
           <h2>Sign in</h2>
           <p className="loginScreen__hint">
