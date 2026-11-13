@@ -50,11 +50,11 @@ const Navigation = () => {
         }
       >
         <Image
-          src="/images/logo.png"
+          src="/images/logo-light.png"
           alt=""
-          width={isSmallScreen ? 34 : 40}
-          height={isSmallScreen ? 34 : 40}
-          style={{ objectFit: "cover", borderRadius: 8, background: "#fff" }}
+          width={isSmallScreen ? 36 : 44}
+          height={isSmallScreen ? 34 : 41}
+          style={{ objectFit: "contain" }}
         />
         <span>
           Traffic Monitoring System

@@ -8,6 +8,7 @@ import { closePreviewCreatedPatternPhase } from "@/store/signals/SignalConfigSli
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import { useRealParams } from "@/hooks/useRealParams";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdUpload } from "react-icons/md";
@@ -29,7 +30,7 @@ interface BoxThreeProps {}
 
 const BoxThree: React.FC<BoxThreeProps> = () => {
   const router = useRouter();
-  const params = useParams<{ deviceId: string }>();
+  const params = useRealParams(useParams<{ deviceId: string }>());
   const pathname = usePathname();
   const newPathname =
     pathname.slice(0, pathname.lastIndexOf("/")) + "/schedule";

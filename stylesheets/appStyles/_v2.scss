@@ -14,9 +14,6 @@ body {
   padding: 1rem 3rem;
   min-height: 6.4rem;
 
-  figure img {
-    border-radius: 0.8rem;
-  }
 
   &-logout {
     background: transparent;
@@ -168,8 +165,7 @@ body {
     font-size: 1.8rem;
 
     img {
-      border-radius: 0.8rem;
-      background: #fff;
+      object-fit: contain;
     }
   }
 
@@ -547,5 +543,67 @@ body {
   .loginScreen__panel {
     order: -1;
     padding-top: 3rem;
+  }
+}
+
+// ---------- Collapsible side menu ----------
+.dashboard-left {
+  transition: flex-basis 0.2s ease;
+}
+
+.sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  margin: 0 0 1.2rem 0.4rem;
+  border: 1px solid $qt-night-line;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: #a3abb5;
+  font-size: 1.9rem;
+  cursor: pointer;
+
+  &:hover {
+    color: #eef2f5;
+    border-color: $qt-accent-bright;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $qt-amber;
+    outline-offset: 2px;
+  }
+
+  @media screen and (max-width: 900px) {
+    display: none;
+  }
+}
+
+.dashboard-left--collapsed {
+  flex-basis: 7.2rem;
+
+  .sidebar {
+    padding: 2.4rem 0.8rem;
+  }
+
+  .sidebar-toggle {
+    margin: 0 auto 1.2rem;
+    display: flex;
+  }
+
+  .sidebar-item,
+  .sidebar-item__active {
+    justify-content: center;
+    padding: 1.2rem 0;
+  }
+
+  .sidebar-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }

@@ -23,6 +23,7 @@ import {
 import HttpRequest from "@/store/services/HttpRequest";
 import { getUserPhase } from "@/store/devices/UserDeviceSlice";
 import { useParams } from "next/navigation";
+import { useRealParams } from "@/hooks/useRealParams";
 import { AiOutlineClose } from "react-icons/ai";
 
 // Styled components for phase creation and edit modal
@@ -138,7 +139,7 @@ interface BoxOneProps {}
 const BoxOne: React.FC<BoxOneProps> = () => {
   const { openInputModal } = useAppSelector((state) => state.signalConfig);
   const email = GetItemFromLocalStorage("user")?.email;
-  const params = useParams<{ deviceId: string }>();
+  const params = useRealParams(useParams<{ deviceId: string }>());
   const dispatch = useAppDispatch();
   const [checked, setChecked] = useState<number>(1);
   const { phases } = useAppSelector((state) => state.userDevice);
@@ -170,7 +171,10 @@ const BoxOne: React.FC<BoxOneProps> = () => {
     );
     setSearchedResult(matchedPhases);
   };
-  const phasesToShow = showSearchedResult ? searchedResult : phases;
+  // Only this junction's phases (phases are saved per device).
+  const phasesToShow = (showSearchedResult ? searchedResult : phases).filter(
+    (phase: any) => !phase?.deviceId || phase.deviceId === params.deviceId
+  );
 
   const encodeSignals = (signals: typeof landingPageSignals) => {
     const getAdjacentPedestrianSignal = (

@@ -16,6 +16,7 @@ import {
   SignalState,
 } from "@/store/signals/SignalConfigSlice";
 import { useParams } from "next/navigation";
+import { useRealParams } from "@/hooks/useRealParams";
 
 export interface Signal extends SignalState {
   direction: "N" | "E" | "S" | "W";
@@ -189,7 +190,7 @@ const IntersectionDisplay: React.FC<IntersectionDisplayProps> = ({
 
   const [signals, setSignals] = useState<Signal[]>(initialSignals);
   const dispatch = useAppDispatch();
-  const params = useParams<{ deviceId: string }>();
+  const params = useRealParams(useParams<{ deviceId: string }>());
 
   useEffect(() => {
     setSignals(initialSignals);

@@ -23,8 +23,6 @@ function signedInDestination(): string | null {
 }
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +32,14 @@ export default function LoginScreen() {
     if (destination) window.location.replace(destination);
   }, []);
 
-  async function onSubmit(event: FormEvent) {
+  // The fields are read from the form itself, not from React state, so what
+  // is sent is exactly what is on screen, including browser autofill.
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    const address = email.trim().toLowerCase();
+    const form = new FormData(event.currentTarget);
+    const address = String(form.get("email") || "").trim().toLowerCase();
+    const password = String(form.get("password") || "");
     if (!/^\S+@\S+\.\S+$/.test(address) || !password) {
       setError("Enter your email address and password.");
       return;
@@ -89,7 +91,7 @@ export default function LoginScreen() {
       <section className="loginScreen__hero" aria-label="Quadrum Technologies">
         <div className="loginScreen__brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.png" alt="" width={44} height={44} />
+          <img src="/images/logo-light.png" alt="" width={47} height={44} />
           <span>Quadrum Technologies</span>
         </div>
         <div className="loginScreen__copy">
@@ -115,10 +117,13 @@ export default function LoginScreen() {
           <label htmlFor="email">Email</label>
           <input
             id="email"
+            name="email"
             type="email"
+            inputMode="email"
             autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             required
           />
 
@@ -126,10 +131,12 @@ export default function LoginScreen() {
           <div className="loginScreen__password">
             <input
               id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               required
             />
             <button

@@ -3,6 +3,7 @@
 import { DeviceConfigItem } from "@/app/dashboard/devices/[deviceId]/page";
 import DeviceConfigurationItem from "./DeviceConfigurationItem";
 import { usePathname, useRouter } from "next/navigation";
+import { realPathname } from "@/hooks/useRealParams";
 import { useAppSelector } from "@/hooks/reduxHook";
 import { emitToastMessage } from "@/utils/toastFunc";
 
@@ -19,7 +20,7 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
     usePathname().includes("admin") ? state.adminDevice : state.userDevice
   );
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = realPathname(usePathname());
 
   const handleRedirectionToDevicePage = () => {
     const device = devices.find((device) => device.deviceId === deviceId);

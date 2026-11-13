@@ -43,3 +43,21 @@ export function useRealParams<T extends Record<string, any>>(params: T): T {
   }
   return resolved as T;
 }
+
+// The current path with a "_" placeholder swapped for the real id, for
+// building links such as `${path}/intersection_configuration`.
+export function realPathname(pathname: string): string {
+  if (!pathname || typeof window === "undefined") return pathname;
+  const parts = pathname.split("/");
+  if (!parts.includes(ID_PLACEHOLDER)) return pathname;
+  return parts
+    .map((segment, i) => {
+      if (segment !== ID_PLACEHOLDER) return segment;
+      const before = parts[i - 1];
+      const name = Object.keys(SEGMENT_BEFORE).find(
+        (key) => SEGMENT_BEFORE[key] === before
+      );
+      return name ? realParam(name, ID_PLACEHOLDER) : segment;
+    })
+    .join("/");
+}
