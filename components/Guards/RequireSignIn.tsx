@@ -17,7 +17,7 @@ export default function RequireSignIn({
   useEffect(() => {
     const token = getItemFromCookie(role === "admin" ? "adminToken" : "token");
     if (!token || token === "undefined") {
-      window.location.replace("/login");
+      window.location.replace(role === "admin" ? "/admin/login" : "/login");
       return;
     }
     setAllowed(true);

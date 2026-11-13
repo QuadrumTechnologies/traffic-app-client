@@ -13,6 +13,7 @@ import {
   setSignalString,
 } from "@/store/signals/SignalConfigSlice";
 import { useEffect, useState } from "react";
+import HttpRequest from "@/store/services/HttpRequest";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import {
@@ -46,6 +47,24 @@ export interface IntersectionConfigItem {
   value: string;
 }
 
+interface PoolLibrary {
+  phases: { name: string }[];
+  patterns: { name: string }[];
+  plans: { name: string }[];
+}
+
+// "2 phases, 2 patterns, 1 plan", or "" when the pool holds nothing for it.
+function describePool(pool: PoolLibrary | null): string {
+  if (!pool) return "";
+  const parts = [
+    [pool.phases.length, "phase"],
+    [pool.patterns.length, "pattern"],
+    [pool.plans.length, "plan"],
+  ] as const;
+  if (parts.every(([n]) => n === 0)) return "";
+  return parts.map(([n, word]) => `${n} ${word}${n === 1 ? "" : "s"}`).join(", ");
+}
+
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) => {
   const params = useRealParams(routeParams);
   const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
@@ -59,6 +78,21 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     (state) => state.signalConfig
   );
   const deviceId = params.deviceId;
+  const [pool, setPool] = useState<PoolLibrary | null>(null);
+  useEffect(() => {
+    if (!deviceId) return;
+    let cancelled = false;
+    HttpRequest.get(`/admin/devices/${deviceId}/library`)
+      .then(({ data }) => {
+        if (!cancelled) setPool(data?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setPool(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId]);
   const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
   const icon = deviceStatus?.status ? "ON" : "OFF";
 
@@ -270,6 +304,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
   const directions = ["North", "East", "West", "South"] as const;
 
   const isOnline = Boolean(deviceStatus?.status);
+  const poolTiming = describePool(pool);
   const lastSeen = (deviceStatus as any)?.lastSeen;
   const lastSeenText = lastSeen
     ? dayjs(lastSeen).format("ddd D MMM YYYY, HH:mm")
@@ -291,6 +326,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
       <p className="qtNotice" role="status">
         This controller is offline. The readings below are from its last
         report, and commands are off until it reconnects.
+      </p>
+    ) : null}
+    {poolTiming ? (
+      <p className="qtNotice qtNotice--info" role="status">
+        Saved timing kept with this junction in Quadrum&rsquo;s pool:{" "}
+        {poolTiming}. It came from an account that was removed.
       </p>
     ) : null}
     <section className="device">

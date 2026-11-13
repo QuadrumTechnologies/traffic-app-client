@@ -27,6 +27,17 @@ interface Person {
   pausedAt: string | null;
   pausedBy: string | null;
   junctions: number;
+  held?: HeldJunction[];
+  purchases?: string[];
+  library?: { phases: number; patterns: number; plans: number };
+}
+
+// A junction on its way out of someone's account: in trash (30 days) or
+// recalled by Quadrum (7 days). The nightly job releases it after that.
+interface HeldJunction {
+  deviceId: string;
+  reason: "trash" | "recalled";
+  releaseAt: string | null;
 }
 
 interface AdminAccount {
@@ -85,6 +96,7 @@ export default function UsersPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [returnToStock, setReturnToStock] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,10 +145,12 @@ export default function UsersPage() {
     }
   };
 
-  const remove = async (person: Person) => {
+  const remove = async (person: Person, returnToStock: boolean) => {
     setBusyId(person.id);
     try {
-      const { data } = await HttpRequest.delete(`/admin/users/${person.id}`);
+      const { data } = await HttpRequest.delete(`/admin/users/${person.id}`, {
+        data: { returnToStock },
+      });
       setPeople((list) => list.filter((p) => p.id !== person.id));
       emitToastMessage(data?.message || "Removed.", "success");
     } catch (error) {
@@ -268,6 +282,19 @@ export default function UsersPage() {
                   <dd>{person.junctions}</dd>
                 </div>
               </dl>
+              {(person.held || []).length > 0 ? (
+                <p className="qtPerson__note">
+                  {(person.held || [])
+                    .map(
+                      (h) =>
+                        `${h.deviceId} ${h.reason === "recalled" ? "recalled" : "in trash"}, released ${
+                          h.releaseAt ? dayjs(h.releaseAt).format("D MMM") : "soon"
+                        }`
+                    )
+                    .join("; ")}
+                  . Removing the account releases {(person.held || []).length === 1 ? "it" : "them"} now.
+                </p>
+              ) : null}
 
               <label className="qtPerson__role">
                 <span>Role</span>
@@ -317,7 +344,10 @@ export default function UsersPage() {
                     type="button"
                     className="qtButton qtButton--danger"
                     disabled={busy}
-                    onClick={() => setConfirm({ kind: "remove", person })}
+                    onClick={() => {
+                      setReturnToStock(false);
+                      setConfirm({ kind: "remove", person });
+                    }}
                   >
                     Remove
                   </button>
@@ -380,13 +410,11 @@ export default function UsersPage() {
                 </p>
               </>
             ) : (
-              <>
-                <h3>Remove {confirm.person.name}?</h3>
-                <p>
-                  The account and its saved phases, patterns and plans are
-                  deleted. This can&rsquo;t be undone.
-                </p>
-              </>
+              <RemoveDetails
+                person={confirm.person}
+                returnToStock={returnToStock}
+                onReturnToStock={setReturnToStock}
+              />
             )}
             <div className="qtConfirm__actions">
               <button type="button" className="qtButton qtButton--quiet" onClick={() => setConfirm(null)}>
@@ -399,7 +427,7 @@ export default function UsersPage() {
                   const { kind, person } = confirm;
                   setConfirm(null);
                   if (kind === "pause") update(person, { active: false });
-                  else remove(person);
+                  else remove(person, returnToStock);
                 }}
               >
                 {confirm.kind === "pause" ? "Pause account" : "Remove account"}
@@ -409,6 +437,61 @@ export default function UsersPage() {
         </OverlayModal>
       ) : null}
     </section>
+  );
+}
+
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+// What removing an account does, spelled out before the click.
+function RemoveDetails({
+  person,
+  returnToStock,
+  onReturnToStock,
+}: {
+  person: Person;
+  returnToStock: boolean;
+  onReturnToStock: (value: boolean) => void;
+}) {
+  const held = person.held || [];
+  const purchases = person.purchases || [];
+  const lib = person.library || { phases: 0, patterns: 0, plans: 0 };
+  const hasTiming = lib.phases + lib.patterns + lib.plans > 0;
+  return (
+    <>
+      <h3>Remove {person.name}?</h3>
+      <ul className="qtConfirm__list">
+        <li>Their sign-in is deleted. This can&rsquo;t be undone.</li>
+        {held.length > 0 ? (
+          <li>
+            {held.map((h) => h.deviceId).join(", ")} {held.length === 1 ? "leaves" : "leave"} the
+            account now, without waiting for the{" "}
+            {held.some((h) => h.reason === "recalled") ? "recall" : "trash"} period.
+          </li>
+        ) : null}
+        {hasTiming ? (
+          <li>
+            Their saved timing ({plural(lib.phases, "phase")}, {plural(lib.patterns, "pattern")},{" "}
+            {plural(lib.plans, "plan")}) isn&rsquo;t deleted. It stays with the junctions in
+            Quadrum&rsquo;s pool.
+          </li>
+        ) : null}
+      </ul>
+      {purchases.length > 0 ? (
+        <label className="qtConfirm__check">
+          <input
+            type="checkbox"
+            checked={returnToStock}
+            onChange={(e) => onReturnToStock(e.target.checked)}
+          />
+          <span>
+            Put the junctions bought under this email back in stock as available:{" "}
+            {purchases.join(", ")}. Leave unticked to keep the sale on record.
+          </span>
+        </label>
+      ) : null}
+    </>
   );
 }
 
