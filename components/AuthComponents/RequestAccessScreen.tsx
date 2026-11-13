@@ -12,7 +12,7 @@ type Purpose = "demo" | "access" | "buy" | "partner";
 
 const PURPOSES: { value: Purpose; label: string; detail: string }[] = [
   { value: "demo", label: "Try the demo", detail: "See the platform without touching a live junction." },
-  { value: "access", label: "Access for junctions we bought", detail: "Set up your account and connect your controllers." },
+  { value: "access", label: "Help setting up my account", detail: "We'll set it up with you and connect the junctions you bought." },
   { value: "buy", label: "Buy or get a quote", detail: "Controllers, cards, installation partners, support." },
   { value: "partner", label: "Partner or integration", detail: "Agencies and systems that need data or an API." },
 ];
@@ -78,11 +78,12 @@ export default function RequestAccessScreen() {
         </div>
         <div className="loginScreen__copy">
           <p className="loginScreen__eyebrow">Traffic Control and Monitoring System</p>
-          <h1>Ask for access.</h1>
+          <h1>Get started.</h1>
           <p>
-            Tell us who you are and what you need. Quadrum sets up accounts
-            for the junctions you bought, and a demo shows you the platform
-            without touching a live junction.
+            You don&rsquo;t need us to open your account. Bought a controller?
+            Create your account with the email you bought it with and add
+            your junction from its label; it takes a few minutes. Prefer a
+            hand? Ask here and Quadrum will set it up with you.
           </p>
         </div>
         <div className="loginScreen__timeline">
@@ -101,9 +102,10 @@ export default function RequestAccessScreen() {
           </div>
         ) : (
           <form className="loginScreen__form qtRequest" onSubmit={onSubmit} noValidate>
-            <h2>Request access</h2>
+            <h2>Ask Quadrum</h2>
             <p className="loginScreen__hint">
-              Already have an account? <Link href="/login">Sign in</Link>
+              Setting up yourself? <Link href="/signup">Create your account</Link>.
+              Already have one? <Link href="/login">Sign in</Link>.
             </p>
 
             <fieldset className="qtRequest__purposes">

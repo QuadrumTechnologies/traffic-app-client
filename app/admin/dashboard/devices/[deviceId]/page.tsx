@@ -3,6 +3,9 @@
 import { useRealParams } from "@/hooks/useRealParams";
 import DeviceConfiguration from "@/components/Device/DeviceConfiguration";
 import IntersectionConfiguration from "@/components/Device/IntersectionConfiguration";
+import JunctionControl from "@/components/Device/JunctionControl";
+import JunctionActivity from "@/components/Device/JunctionActivity";
+import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import {
@@ -337,18 +340,13 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     <section className="device">
       <div className="device__left">
         <FourWayIntersection editable={isIntersectionConfigurable} />
-        <div
-          className={`intersectionConfiguration__commands ${isOnline ? "" : "qtCommandsOff"}`}
-          aria-disabled={!isOnline}
-          title={isOnline ? undefined : "Commands are off while the controller is offline"}
-        >
-          <IntersectionConfiguration
-            intersectionConfigItems={intersectionConfigItems}
-            deviceId={deviceId}
-            showCommandsOnly={true}
-            userType="admin"
-          />
-        </div>
+        <JunctionControl
+          deviceId={deviceId}
+          isOnline={isOnline}
+          role="quadrum"
+          myEmail={GetItemFromLocalStorage("adminUser")?.email || ""}
+        />
+        <JunctionActivity deviceId={deviceId} />
       </div>
       <div className="device__right">
         <div className="device__right--top">
@@ -402,7 +400,6 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
             intersectionConfigItems={intersectionConfigItems}
             deviceId={deviceId}
             userType="admin"
-            showCommandsOnly={false}
           />
         </div>
       </div>
