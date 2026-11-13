@@ -12,7 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AddressBarFix from "@/components/Guards/AddressBarFix";
 
 export const metadata: Metadata = {
-  title: "Traffic Monitoring System · Quadrum Technologies",
+  title: "Traffic Control and Monitoring System · Quadrum Technologies",
   description:
     "Remote configuration and monitoring of Quadrum traffic signal controllers.",
 };

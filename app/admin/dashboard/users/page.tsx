@@ -87,6 +87,22 @@ type Confirm =
   | { kind: "pause" | "remove"; person: Person }
   | null;
 
+// Someone without an account asking for access (Request access page).
+interface AccessRequestItem {
+  id: string;
+  purpose: "demo" | "access" | "buy" | "partner";
+  purposeLabel: string;
+  company: string;
+  name: string;
+  email: string;
+  phone: string;
+  devices: string;
+  deviceIds: string[];
+  message: string;
+  status: "new" | "approved" | "declined";
+  createdAt: string;
+}
+
 export default function UsersPage() {
   const [people, setPeople] = useState<Person[]>([]);
   const [admins, setAdmins] = useState<AdminAccount[]>([]);
@@ -97,6 +113,39 @@ export default function UsersPage() {
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [returnToStock, setReturnToStock] = useState(false);
+  const [requests, setRequests] = useState<AccessRequestItem[]>([]);
+  const [declining, setDeclining] = useState<AccessRequestItem | null>(null);
+  const [declineNote, setDeclineNote] = useState("");
+
+  const loadRequests = useCallback(async () => {
+    try {
+      const { data } = await HttpRequest.get("/admin/access-requests?status=new");
+      setRequests(data?.data?.requests || []);
+    } catch {
+      // The people list still works without the requests.
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
+  const answer = async (
+    request: AccessRequestItem,
+    change: { action: "approve"; role: Role } | { action: "decline"; note: string }
+  ) => {
+    setBusyId(request.id);
+    try {
+      const { data } = await HttpRequest.patch(`/admin/access-requests/${request.id}`, change);
+      setRequests((list) => list.filter((r) => r.id !== request.id));
+      if (data?.data?.user) setPeople((list) => [data.data.user, ...list]);
+      emitToastMessage(data?.message || "Done.", "success");
+    } catch (error) {
+      emitToastMessage(messageOf(error, "That request couldn't be updated."), "error");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,6 +270,28 @@ export default function UsersPage() {
         </div>
       </div>
 
+      {requests.length > 0 ? (
+        <section className="qtRequests" aria-label="Access requests">
+          <h3 className="qtUsers__subhead">
+            Requests <span className="qtMuted">({requests.length} new)</span>
+          </h3>
+          <ul className="qtRequests__list">
+            {requests.map((r) => (
+              <RequestCard
+                key={r.id}
+                request={r}
+                busy={busyId === r.id}
+                onApprove={(role) => answer(r, { action: "approve", role })}
+                onDecline={() => {
+                  setDeclineNote("");
+                  setDeclining(r);
+                }}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <div className="qtUsers__tools">
         <label className="visually-hidden" htmlFor="people-search">
           Find a person
@@ -233,7 +304,15 @@ export default function UsersPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button type="button" className="qtButton qtButton--quiet" onClick={load} disabled={loading}>
+        <button
+          type="button"
+          className="qtButton qtButton--quiet"
+          onClick={() => {
+            load();
+            loadRequests();
+          }}
+          disabled={loading}
+        >
           {loading ? "Loading…" : "Refresh"}
         </button>
       </div>
@@ -397,6 +476,45 @@ export default function UsersPage() {
         </OverlayModal>
       ) : null}
 
+      {declining ? (
+        <OverlayModal onClose={() => setDeclining(null)}>
+          <div className="qtConfirm">
+            <h3>Decline {declining.company || declining.name || declining.email || declining.phone}?</h3>
+            <p>
+              {declining.email
+                ? "If you add a note, it's emailed to them. Leave it empty to decline quietly."
+                : "They gave no email address, so nothing is sent."}
+            </p>
+            {declining.email ? (
+              <textarea
+                className="qtInput"
+                rows={3}
+                maxLength={500}
+                placeholder="For example: we don't offer integrations yet."
+                value={declineNote}
+                onChange={(e) => setDeclineNote(e.target.value)}
+              />
+            ) : null}
+            <div className="qtConfirm__actions">
+              <button type="button" className="qtButton qtButton--quiet" onClick={() => setDeclining(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="qtButton qtButton--danger"
+                onClick={() => {
+                  const r = declining;
+                  setDeclining(null);
+                  answer(r, { action: "decline", note: declineNote.trim() });
+                }}
+              >
+                Decline request
+              </button>
+            </div>
+          </div>
+        </OverlayModal>
+      ) : null}
+
       {confirm ? (
         <OverlayModal onClose={() => setConfirm(null)}>
           <div className="qtConfirm">
@@ -437,6 +555,69 @@ export default function UsersPage() {
         </OverlayModal>
       ) : null}
     </section>
+  );
+}
+
+function RequestCard({
+  request,
+  busy,
+  onApprove,
+  onDecline,
+}: {
+  request: AccessRequestItem;
+  busy: boolean;
+  onApprove: (role: Role) => void;
+  onDecline: () => void;
+}) {
+  const [role, setRole] = useState<Role>("admin");
+  const contact = [request.email, request.phone].filter(Boolean).join(" · ");
+  return (
+    <li className="qtRequests__item">
+      <span className="qtRequests__purpose">{request.purposeLabel}</span>
+      <p className="qtRequests__who">
+        {request.company || request.name || contact}
+        {request.company && request.name ? <span className="qtMuted"> · {request.name}</span> : null}
+      </p>
+      <p className="qtRequests__meta">
+        {contact} · {dayjs(request.createdAt).fromNow()}
+      </p>
+      {request.devices ? (
+        <p className="qtRequests__meta">
+          Junctions: {request.devices}
+          {request.deviceIds.length ? ` (IDs: ${request.deviceIds.join(", ")})` : ""}
+        </p>
+      ) : null}
+      {request.message ? <p className="qtRequests__msg">{request.message}</p> : null}
+      <div className="qtRequests__actions">
+        {request.email ? (
+          <>
+            <label className="visually-hidden" htmlFor={`req-role-${request.id}`}>
+              Role for {request.email}
+            </label>
+            <select
+              id={`req-role-${request.id}`}
+              value={role}
+              disabled={busy}
+              onChange={(e) => setRole(e.target.value as Role)}
+            >
+              {(Object.keys(ROLE_TEXT) as Role[]).map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_TEXT[r].label}
+                </option>
+              ))}
+            </select>
+            <button type="button" className="qtButton" disabled={busy} onClick={() => onApprove(role)}>
+              Approve and invite
+            </button>
+          </>
+        ) : (
+          <span className="qtMuted">No email: call them, then invite.</span>
+        )}
+        <button type="button" className="qtButton qtButton--quiet" disabled={busy} onClick={onDecline}>
+          Decline
+        </button>
+      </div>
+    </li>
   );
 }
 

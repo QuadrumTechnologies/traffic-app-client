@@ -105,7 +105,7 @@ export default function LoginScreen() {
           <span>Quadrum Technologies</span>
         </div>
         <div className="loginScreen__copy">
-          <p className="loginScreen__eyebrow">Traffic Monitoring System</p>
+          <p className="loginScreen__eyebrow">Traffic Control and Monitoring System</p>
           <h1>Every junction, one screen.</h1>
           <p>
             Watch your controllers live, plan signal timing and keep a record
@@ -178,8 +178,9 @@ export default function LoginScreen() {
           </div>
 
           <p className="loginScreen__note">
-            Accounts are set up by your organisation&rsquo;s admin. Need one?{" "}
-            <a href="mailto:hello@quadrumtechnologies.com">hello@quadrumtechnologies.com</a>
+            No account? <Link href="/request-access">Request access</Link> or{" "}
+            <Link href="/request-access?purpose=demo">try the demo</Link>. Accounts
+            are set up by Quadrum or by your organisation&rsquo;s admin.
           </p>
         </form>
       </section>
