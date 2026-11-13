@@ -1275,3 +1275,264 @@ body {
     }
   }
 }
+
+// ---- Junction control and activity (stage 1) ----
+.qtControl,
+.qtActivity {
+  margin-top: 1.6rem;
+  background: $qt-surface;
+  border: 1px solid $qt-line;
+  border-radius: 1rem;
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-size: 1.45rem;
+  color: $qt-ink;
+
+  h2 {
+    font: 800 1.8rem/1.2 $qt-font;
+    margin: 0;
+  }
+}
+
+.qtControl__head,
+.qtActivity__head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin-right: auto;
+  }
+}
+
+.qtMode {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 99rem;
+  font: 700 1.25rem/1.2 $qt-font;
+  border: 1px solid $qt-line;
+
+  &--plan {
+    background: rgba($qt-green, 0.12);
+    border-color: rgba($qt-green, 0.4);
+    color: darken($qt-green, 12%);
+  }
+  &--manual {
+    background: rgba($qt-amber, 0.16);
+    border-color: rgba($qt-amber, 0.5);
+    color: #5c4300;
+  }
+  &--off {
+    background: rgba($qt-red, 0.1);
+    border-color: rgba($qt-red, 0.35);
+    color: #a1281d;
+  }
+  &--unknown {
+    color: $qt-muted;
+  }
+}
+
+.qtControl__lease {
+  padding: 1rem 1.2rem;
+  border-radius: 0.8rem;
+  background: rgba($qt-amber, 0.08);
+  border: 1px solid rgba($qt-amber, 0.35);
+  line-height: 1.45;
+}
+
+.qtControl__note {
+  color: $qt-muted;
+  line-height: 1.45;
+}
+
+.qtControl__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.qtControl__hint {
+  font-size: 1.3rem;
+  line-height: 1.45;
+}
+
+.qtControl__status {
+  font-size: 1.35rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.6rem;
+  background: $qt-bg;
+
+  &--confirmed {
+    background: rgba($qt-green, 0.1);
+    color: darken($qt-green, 14%);
+  }
+  &--no_reply,
+  &--refused {
+    background: rgba($qt-red, 0.08);
+    color: #a1281d;
+  }
+}
+
+.qtControl__maint {
+  border-top: 1px solid $qt-line;
+  padding-top: 1rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 700;
+  }
+
+  > p {
+    margin: 0.6rem 0;
+  }
+}
+
+.qtField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+
+  textarea,
+  select,
+  input {
+    font: 400 1.5rem/1.4 $qt-font;
+  }
+}
+
+.qtActivity__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+
+  li {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 1rem;
+    line-height: 1.4;
+
+    &.is-failed span {
+      color: #a1281d;
+    }
+  }
+
+  time {
+    font: 400 1.25rem/1.6 $qt-mono;
+    color: $qt-muted;
+  }
+}
+
+// ---- Device settings ----
+.qtSettings {
+  max-width: 82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  font-size: 1.5rem;
+  color: $qt-ink;
+
+  h1 {
+    font: 800 2.8rem/1.15 $qt-font;
+  }
+
+  a {
+    color: $qt-accent;
+    font-weight: 600;
+  }
+
+  &__card {
+    background: $qt-surface;
+    border: 1px solid $qt-line;
+    border-radius: 1rem;
+    padding: 1.8rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    line-height: 1.5;
+
+    h2 {
+      font: 800 1.8rem/1.2 $qt-font;
+    }
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    gap: 1rem 2rem;
+    margin: 0;
+
+    dt {
+      font: 600 1.15rem/1.4 $qt-mono;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: $qt-muted;
+    }
+
+    dd {
+      margin: 0.2rem 0 0;
+      font-weight: 600;
+    }
+  }
+
+  &__key {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    code {
+      font: 400 1.4rem/1.4 $qt-mono;
+      background: $qt-bg;
+      padding: 0.6rem 0.9rem;
+      border-radius: 0.6rem;
+      word-break: break-all;
+    }
+  }
+}
+
+// ---- Sign-up ----
+.qtRules {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 1.3rem;
+  color: $qt-muted;
+
+  li::before {
+    content: "○ ";
+  }
+
+  li.is-ok {
+    color: darken($qt-green, 12%);
+
+    &::before {
+      content: "● ";
+    }
+  }
+}
+
+.qtSteps {
+  margin: 0;
+  padding-left: 2rem;
+  display: grid;
+  gap: 0.6rem;
+  font-size: 1.5rem;
+  line-height: 1.5;
+  color: $qt-ink;
+
+  a {
+    color: $qt-accent;
+    font-weight: 600;
+  }
+}

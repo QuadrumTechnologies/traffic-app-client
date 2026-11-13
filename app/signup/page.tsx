@@ -1,14 +1,8 @@
 "use client";
 
-import SignUpForm from "@/components/AuthComponents/SignupForm";
-import Navigation from "@/components/Navigation/Navigation";
+import SignupScreen from "@/components/AuthComponents/SignupScreen";
 
-const Signup = () => {
-  return (
-    <>
-      <Navigation />
-      <SignUpForm />
-    </>
-  );
-};
-export default Signup;
+// Self-service sign-up (see SignupScreen).
+export default function Signup() {
+  return <SignupScreen />;
+}

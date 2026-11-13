@@ -231,8 +231,14 @@ const UserDeviceSlice = createSlice({
     addCurrentDeviceSignalData: (state, action) => {
       state.activePhaseSignal = action.payload;
     },
+    // Controllers report flags as "true"/"false" strings; the REST API gives
+    // booleans. Store booleans either way, or "false" would read as true.
     addCurrentDeviceStateData: (state, action) => {
-      state.deviceActiveStateData = action.payload;
+      const next: any = { ...(action.payload || {}) };
+      ["Auto", "Power", "Next", "Hold", "Reset", "Reboot", "Restart", "ErrorFlash"].forEach((key) => {
+        if (typeof next[key] === "string") next[key] = next[key] === "true";
+      });
+      state.deviceActiveStateData = next;
     },
     updateDeviceStatus: (state, action: { payload: DeviceStatus }) => {
       const { id, status, lastSeen } = action.payload;

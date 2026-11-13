@@ -178,9 +178,10 @@ export default function LoginScreen() {
           </div>
 
           <p className="loginScreen__note">
-            No account? <Link href="/request-access">Request access</Link> or{" "}
-            <Link href="/request-access?purpose=demo">try the demo</Link>. Accounts
-            are set up by Quadrum or by your organisation&rsquo;s admin.
+            No account? <Link href="/signup">Create one</Link> and add your
+            junctions yourself, <Link href="/request-access">ask Quadrum to
+            help</Link>, or <Link href="/request-access?purpose=demo">try the
+            demo</Link>.
           </p>
         </form>
       </section>
