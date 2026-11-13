@@ -140,9 +140,13 @@ export const emitToastMessage = (
 
   const selectedColor = colors[type];
 
+  // The same message showing more than once at a time (several panels
+  // failing together) is shown once.
+  const toastId = options?.toastId ?? `${type}:${message}`;
+
   const toastOptions = {
     ...commonStyles,
-    toastId: options?.toastId,
+    toastId,
     autoClose: options?.duration ?? commonStyles.autoClose,
     style: {
       ...commonStyles.style,
@@ -151,14 +155,17 @@ export const emitToastMessage = (
     },
   };
 
-  if (options?.toastId && toast.isActive(options.toastId)) {
-    // Update existing toast
-    toast.update(options.toastId, {
-      render: message,
-      type,
-      ...toastOptions,
-    });
-    return options.toastId;
+  if (toast.isActive(toastId)) {
+    // Update an existing toast that was given an id; otherwise the identical
+    // message is already on screen.
+    if (options?.toastId) {
+      toast.update(toastId, {
+        render: message,
+        type,
+        ...toastOptions,
+      });
+    }
+    return toastId;
   } else {
     // Create new toast
     return toast[type](message, toastOptions) as string;

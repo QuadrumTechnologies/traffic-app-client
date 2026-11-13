@@ -49,7 +49,7 @@ const ChangePasswordPage = () => {
       const { confirmNewPassword, newPassword, oldPassword } = values;
       try {
         const response = await HttpRequest.patch("/auth/updatePassword", {
-          email: GetItemFromLocalStorage("user").email,
+          email: GetItemFromLocalStorage("user")?.email,
           confirmNewPassword,
           newPassword,
           oldPassword,
@@ -66,7 +66,9 @@ const ChangePasswordPage = () => {
       } catch (error: any) {
         setShowError(() => ({
           hasError: true,
-          message: `${error?.response?.data.message} Try again later.`,
+          message:
+            error?.response?.data?.message ||
+            "Your password couldn't be changed. Check your connection and try again.",
         }));
       } finally {
         actions.setSubmitting(false);

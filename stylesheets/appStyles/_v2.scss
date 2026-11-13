@@ -16,20 +16,41 @@ body {
 
 
   &-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: auto;
+    height: 4rem;
+    padding: 0 1.4rem;
+    border-radius: 0.8rem;
     background: transparent;
     border: 1px solid $qt-night-line;
-    width: 4.4rem;
-    height: 4.4rem;
     color: #eef2f5;
+    font: inherit;
+    font-size: 1.4rem;
+    font-weight: 600;
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: $qt-accent;
       border-color: $qt-accent;
     }
 
     & .icon {
-      height: 2.2rem;
-      width: 2.2rem;
+      position: static;
+      transform: none;
+      height: 1.8rem;
+      width: 1.8rem;
+    }
+
+    @media screen and (max-width: 700px) {
+      width: 4rem;
+      padding: 0;
+      justify-content: center;
+
+      &__label {
+        display: none;
+      }
     }
   }
 }
@@ -278,6 +299,15 @@ body {
     border-radius: 0.6rem;
     background: rgba($qt-red, 0.08);
     color: #a1281d;
+    font-size: 1.45rem;
+  }
+
+  &__notice {
+    margin-top: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 0.6rem;
+    background: rgba(#08707d, 0.08);
+    color: #08535c;
     font-size: 1.45rem;
   }
 

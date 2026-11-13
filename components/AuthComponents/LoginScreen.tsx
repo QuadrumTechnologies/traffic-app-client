@@ -26,10 +26,20 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const destination = signedInDestination();
-    if (destination) window.location.replace(destination);
+    if (destination) {
+      window.location.replace(destination);
+      return;
+    }
+    // Arriving from endSession(): say why, then tidy the address.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("session") === "ended") {
+      setNotice("Your sign-in has ended. Please sign in again.");
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
   // The fields are read from the form itself, not from React state, so what
@@ -151,6 +161,10 @@ export default function LoginScreen() {
           {error ? (
             <p className="loginScreen__error" role="alert">
               {error}
+            </p>
+          ) : notice ? (
+            <p className="loginScreen__notice" role="status">
+              {notice}
             </p>
           ) : null}
 

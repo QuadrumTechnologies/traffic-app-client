@@ -83,9 +83,8 @@ function OverviewTiles({
 }
 
 const UserDevices = () => {
-  const { devices, isFetchingDevices, deviceStatuses } = useAppSelector(
-    (state) => state.userDevice
-  );
+  const { devices, isFetchingDevices, devicesLoadFailed, deviceStatuses } =
+    useAppSelector((state) => state.userDevice);
   const dispatch = useAppDispatch();
   useDeviceStatus();
   const pathname = usePathname();
@@ -164,17 +163,29 @@ const UserDevices = () => {
         )}
       </div>
       <OverviewTiles devices={devices || []} deviceStatuses={deviceStatuses} />
-      {devices?.length === 0 && (
+      {devices?.length === 0 && devicesLoadFailed && (
+        <div className="devices-nodevice" role="alert">
+          <p>
+            Your junctions couldn&rsquo;t be loaded. Check your connection and
+            try again.
+          </p>
+          <button
+            className="devices-button"
+            onClick={() => dispatch(getUserDevice())}
+          >
+            Try again
+          </button>
+        </div>
+      )}
+      {devices?.length === 0 && !devicesLoadFailed && (
         <div className="devices-nodevice">
           <RiCreativeCommonsZeroFill />
-          <p>
-            You haven't created any device yet, kindly add a device to continue.
-          </p>
+          <p>No junctions on this account yet. Add one to start monitoring it.</p>
           <button
             className="devices-button"
             onClick={() => setShowAddDeviceModal(true)}
           >
-            Add Device
+            Add a junction
           </button>
         </div>
       )}

@@ -19,6 +19,7 @@ interface InitialStateTypes {
   configuredPatterns: any[];
   configuredPhases: any[];
   isFetchingDevices: boolean;
+  devicesLoadFailed: boolean;
   isFetchingPhases: boolean;
   isFetchingPatterns: boolean;
   isFetchingPlans: boolean;
@@ -66,6 +67,7 @@ const initialState: InitialStateTypes = {
   configuredPatterns: [],
   configuredPhases: [],
   isFetchingDevices: false,
+  devicesLoadFailed: false,
   isFetchingPhases: false,
   isFetchingPatterns: false,
   isFetchingPlans: false,
@@ -260,9 +262,11 @@ const UserDeviceSlice = createSlice({
       .addCase(getUserDevice.fulfilled, (state, action) => {
         state.devices = action.payload?.data?.devices || [];
         state.isFetchingDevices = false;
+        state.devicesLoadFailed = false;
       })
       .addCase(getUserDevice.rejected, (state, action) => {
         state.isFetchingDevices = false;
+        state.devicesLoadFailed = true;
         emitToastMessage(action.payload as string, "error");
       })
       .addCase(getUserPhase.pending, (state) => {
