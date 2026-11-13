@@ -63,11 +63,7 @@ export const initializeWebSocket = (): WebSocket => {
       return ws_socket;
     }
     if (ws_socket.readyState === WebSocket.CONNECTING) {
-      const prevOnOpen = ws_socket.onopen;
-      ws_socket.onopen = (event) => {
-        if (prevOnOpen && ws_socket) prevOnOpen.call(ws_socket, event);
-        sendIdentify();
-      };
+      // Identify is already queued for "open" (see below).
       return ws_socket;
     }
   }
@@ -89,12 +85,14 @@ export const initializeWebSocket = (): WebSocket => {
       }
     }, 5000);
 
-    ws_socket.onopen = () => {
+    // Registered before any page adds its own listener, so the identify
+    // message is always the first thing sent on a new connection.
+    ws_socket.addEventListener("open", () => {
       clearTimeout(openTimeout);
 
       retryCount = 0;
       sendIdentify();
-    };
+    });
 
     ws_socket.onclose = (event: CloseEvent) => {
       ws_socket = null;
@@ -128,6 +126,16 @@ export const initializeWebSocket = (): WebSocket => {
     ws_socket = null;
     emitToastMessage("Failed to create WebSocket connection.", "error");
     throw new Error(`Failed to create WebSocket: ${error}`);
+  }
+};
+
+// Run fn once the socket is open (now, if it already is). Use this instead
+// of assigning socket.onopen, which would replace other open handlers.
+export const onSocketOpen = (socket: WebSocket, fn: () => void): void => {
+  if (socket.readyState === WebSocket.OPEN) {
+    fn();
+  } else {
+    socket.addEventListener("open", () => fn(), { once: true });
   }
 };
 

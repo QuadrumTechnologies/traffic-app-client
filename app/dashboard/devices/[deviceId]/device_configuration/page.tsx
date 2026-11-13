@@ -20,7 +20,7 @@ import {
   getUserDevice,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import {
   GetItemFromLocalStorage,
   SetItemToLocalStorage,
@@ -137,7 +137,7 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
     if (socket.readyState === WebSocket.OPEN) {
       sendMessage();
     } else {
-      socket.onopen = () => sendMessage();
+      onSocketOpen(socket, () => sendMessage());
     }
   };
 

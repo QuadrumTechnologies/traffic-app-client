@@ -89,7 +89,7 @@ export default function LoginScreen() {
       const message: string = adminError?.response?.data?.message || "";
       setError(
         /incorrect email or password/i.test(message) || !message
-          ? "That email and password don't match an account, or the account is deactivated."
+          ? "That email and password don't match an account."
           : message
       );
       setBusy(false);

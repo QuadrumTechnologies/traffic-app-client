@@ -13,6 +13,7 @@ import {
   setSignalString,
 } from "@/store/signals/SignalConfigSlice";
 import { useEffect, useState } from "react";
+import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 import { emitToastMessage } from "@/utils/toastFunc";
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import {
@@ -27,7 +28,7 @@ import {
   addCurrentDeviceStateData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import PatternTiming from "@/components/Signal/PatternTiming";
 import dayjs from "dayjs";
 
@@ -64,6 +65,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
 
   const dispatch = useAppDispatch();
   useDeviceStatus();
+
+  // The signed-in account's role (accounts from before roles count as admin).
+  const [signedInRole, setSignedInRole] = useState<string>("admin");
+  useEffect(() => {
+    setSignedInRole(GetItemFromLocalStorage("user")?.role || "admin");
+  }, []);
   const deviceId = params.deviceId;
 
   const deviceStatus = deviceStatuses.find((status) => status.id === deviceId);
@@ -237,7 +244,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     if (socket.readyState === WebSocket.OPEN) {
       sendRequests();
     } else {
-      socket.onopen = () => sendRequests();
+      onSocketOpen(socket, () => sendRequests());
     }
 
     return () => {
@@ -285,6 +292,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
   const directions = ["North", "East", "West", "South"] as const;
 
   const isOnline = Boolean(deviceStatus?.status);
+  const isViewer = signedInRole === "viewer";
   const lastSeen =
     deviceStatus?.lastSeen ||
     (devices || []).find((d: any) => d?.deviceId === deviceId)?.lastSeen;
@@ -313,6 +321,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     <section className="device">
       <div className="device__left">
         <FourWayIntersection editable={isIntersectionConfigurable} />
+        {isViewer ? (
+          <p className="qtNotice" role="status">
+            View-only access: you can watch this junction live, but commands
+            and timing changes need an operator or client admin.
+          </p>
+        ) : (
         <div
           className={`intersectionConfiguration__commands ${isOnline ? "" : "qtCommandsOff"}`}
           aria-disabled={!isOnline}
@@ -324,6 +338,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
             showCommandsOnly={true}
           />
         </div>
+        )}
       </div>
       <div className="device__right">
         <div className="device__right--top">

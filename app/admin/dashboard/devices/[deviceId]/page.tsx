@@ -23,7 +23,8 @@ import {
   getUserDeviceInfoData,
   getUserDeviceStateData,
 } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
+import dayjs from "dayjs";
 
 interface DeviceDetailsProps {
   params: { deviceId: string };
@@ -241,7 +242,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     if (socket.readyState === WebSocket.OPEN) {
       sendRequests();
     } else {
-      socket.onopen = () => sendRequests();
+      onSocketOpen(socket, () => sendRequests());
     }
 
     return () => {
@@ -275,11 +276,38 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
 
   const directions = ["North", "East", "West", "South"] as const;
 
+  const isOnline = Boolean(deviceStatus?.status);
+  const lastSeen = (deviceStatus as any)?.lastSeen;
+  const lastSeenText = lastSeen
+    ? dayjs(lastSeen).format("ddd D MMM YYYY, HH:mm")
+    : null;
+
   return (
+    <>
+    <header className="qtJunctionHead">
+      <div>
+        <h1>{currentDeviceInfoData?.JunctionId || "Junction"}</h1>
+        <p className="qtJunctionHead__id">QT-TSLC controller {deviceId}</p>
+      </div>
+      <span className={`qtBadge ${isOnline ? "qtBadge--online" : "qtBadge--offline"}`}>
+        <i aria-hidden="true" />
+        {isOnline ? "Online, live" : lastSeenText ? `Offline, last heard ${lastSeenText}` : "Offline"}
+      </span>
+    </header>
+    {!isOnline ? (
+      <p className="qtNotice" role="status">
+        This controller is offline. The readings below are from its last
+        report, and commands are off until it reconnects.
+      </p>
+    ) : null}
     <section className="device">
       <div className="device__left">
         <FourWayIntersection editable={isIntersectionConfigurable} />
-        <div className="intersectionConfiguration__commands">
+        <div
+          className={`intersectionConfiguration__commands ${isOnline ? "" : "qtCommandsOff"}`}
+          aria-disabled={!isOnline}
+          title={isOnline ? undefined : "Commands are off while the controller is offline"}
+        >
           <IntersectionConfiguration
             intersectionConfigItems={intersectionConfigItems}
             deviceId={deviceId}
@@ -345,6 +373,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
         </div>
       </div>
     </section>
+    </>
   );
 };
 

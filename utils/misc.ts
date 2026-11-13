@@ -24,7 +24,7 @@ export function generatePhaseString(phaseData: PhaseData): string {
 }
 
 export const formatRtcDate = (rtc: string | undefined) => {
-  if (!rtc || rtc === "Nill") return "Nill";
+  if (!rtc || rtc === "Nill") return "No reading yet";
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -48,7 +48,7 @@ export const formatRtcDate = (rtc: string | undefined) => {
 };
 
 export const formatRtcTime = (rtc: string | undefined): string => {
-  if (!rtc || rtc === "Nill") return "Nill";
+  if (!rtc || rtc === "Nill") return "—";
 
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [day, month, yearTime] = rtc.split("-");
@@ -80,7 +80,10 @@ export const getDeviceStatus = (
 export const formatUnixTimestamp = (
   unixTimestamp: number | undefined
 ): string => {
-  if (!unixTimestamp || isNaN(unixTimestamp)) return "Nill";
+  // A controller whose clock was never set reports a time near 1970;
+  // anything before 2020 is treated as no reading.
+  if (!unixTimestamp || isNaN(unixTimestamp) || unixTimestamp < 1577836800)
+    return "Nill";
 
   const date = new Date(unixTimestamp * 1000);
 

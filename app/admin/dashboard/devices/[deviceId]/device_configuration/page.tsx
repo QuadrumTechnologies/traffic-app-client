@@ -17,7 +17,7 @@ import {
   formatUnixTimestamp,
 } from "@/utils/misc";
 import { getUserDeviceStateData } from "@/store/devices/UserDeviceSlice";
-import { getWebSocket } from "@/app/dashboard/websocket";
+import { getWebSocket, onSocketOpen } from "@/app/dashboard/websocket";
 import SelectField, { Option } from "@/components/UI/SelectField/SelectField";
 import {
   GetItemFromLocalStorage,
@@ -136,13 +136,13 @@ const DeviceConfigurationPage: React.FC<DeviceConfigurationPageProps> = ({
       sendMessage();
       setTimeout(() => dispatch(getUserDeviceStateData(params.deviceId)), 500);
     } else {
-      socket.onopen = () => {
+      onSocketOpen(socket, () => {
         sendMessage();
         setTimeout(
           () => dispatch(getUserDeviceStateData(params.deviceId)),
           500
         );
-      };
+      });
     }
   };
 

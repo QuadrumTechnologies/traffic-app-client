@@ -8,7 +8,8 @@ import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 
 const sideBarLinks = [
   { name: "Devices", link: "/admin/dashboard/devices", iconUrl: "devices" },
-  { name: "Settings", link: "/admin/dashboard/settings", iconUrl: "settings" },
+  { name: "Users", link: "/admin/dashboard/users", iconUrl: "users" },
+  { name: "Account", link: "/admin/dashboard/settings", iconUrl: "settings" },
 ];
 
 export default function HostLayout({

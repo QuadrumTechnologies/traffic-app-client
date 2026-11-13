@@ -1,7 +1,7 @@
 import Link from "next/link";
 import React from "react";
 import { MdOutlineTraffic } from "react-icons/md";
-import { FiUser } from "react-icons/fi";
+import { FiUser, FiUsers } from "react-icons/fi";
 
 interface SideBarNavigationItemProps {
   href: string;
@@ -13,6 +13,7 @@ interface SideBarNavigationItemProps {
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   devices: MdOutlineTraffic,
   settings: FiUser,
+  users: FiUsers,
 };
 
 const SideBarNavigationItem: React.FC<SideBarNavigationItemProps> = ({
