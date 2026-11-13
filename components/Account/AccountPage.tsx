@@ -8,7 +8,7 @@ import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
 // a Quadrum admin from the Users page, not by their owners.
 
 const ROLE_LABEL: Record<string, string> = {
-  admin: "Client admin: adds junctions to the account and shares them, plus commands and timing.",
+  admin: "Client admin: adds controllers to the account and shares their junctions, plus commands and timing.",
   operator: "Operator: sends commands and changes signal timing.",
   viewer: "Viewer: watches junctions live; can't send commands or change timing.",
 };

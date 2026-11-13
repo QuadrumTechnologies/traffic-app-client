@@ -12,7 +12,7 @@ import OverlayModal from "@/components/Modals/OverlayModal";
 // - Manual control is taken with a reason and ends by itself after a spell
 //   without action (15 min by default), at 2 hours, or when the holder leaves.
 // - Maintenance (restart, lamps, settings reset) is for client admins and
-//   Quadrum, with the junction ID typed to confirm. No password prompts.
+//   Quadrum, with the device ID typed to confirm. No password prompts.
 
 export type ControlRole = "viewer" | "operator" | "admin" | "quadrum";
 

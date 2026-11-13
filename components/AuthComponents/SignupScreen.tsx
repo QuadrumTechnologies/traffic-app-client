@@ -7,8 +7,8 @@ import SignalTimeline from "@/components/Signal/SignalTimeline";
 import AuthTopBar, { HOME_URL } from "./AuthTopBar";
 
 // Self-service sign-up: buyers open their own account, verify their email,
-// then add their junction from its label (it must be recorded to the same
-// email at purchase; claim codes replace that step with the next batch).
+// then add their controller with the device ID on its label (the sale must be
+// recorded to the same email; claim codes replace that step with the next batch).
 
 const RULES: [string, (p: string) => boolean][] = [
   ["8 characters or more", (p) => p.length >= 8],
@@ -58,9 +58,9 @@ export default function SignupScreen() {
           <p className="loginScreen__eyebrow">Traffic Control and Monitoring System</p>
           <h1>Commission it yourself.</h1>
           <p>
-            Create your account, verify your email, then add your junction
+            Create your account, verify your email, then add your controller
             with the device ID on its label. Use the email you bought it with,
-            so the junction can be matched to you.
+            so the controller can be matched to you.
           </p>
         </div>
         <div className="loginScreen__timeline">
@@ -76,8 +76,8 @@ export default function SignupScreen() {
             <p>We sent a link to <b>{done}</b>. Open it to verify your address, then:</p>
             <ol className="qtSteps">
               <li>Sign in.</li>
-              <li>Choose <b>Add a junction</b> and type the device ID from the controller&rsquo;s label.</li>
-              <li>If it says the junction isn&rsquo;t assigned to you yet, <Link href="/request-access">send us your order number</Link> and we&rsquo;ll match it.</li>
+              <li>On <b>Junctions</b>, choose <b>Add a controller</b> and type the device ID from its label.</li>
+              <li>If it says the controller isn&rsquo;t assigned to you yet, <Link href="/request-access">send us your order number</Link> and we&rsquo;ll match it.</li>
             </ol>
             <Link className="loginScreen__submit qtRequest__back" href="/login">
               Go to sign in
