@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import HttpRequest from "@/store/services/HttpRequest";
 import SignalTimeline from "@/components/Signal/SignalTimeline";
+import AuthTopBar, { HOME_URL } from "./AuthTopBar";
 
 // Self-service sign-up: buyers open their own account, verify their email,
 // then add their junction from its label (it must be recorded to the same
@@ -48,11 +49,11 @@ export default function SignupScreen() {
   return (
     <main className="loginScreen">
       <section className="loginScreen__hero" aria-label="Quadrum Technologies">
-        <div className="loginScreen__brand">
+        <a className="loginScreen__brand" href={HOME_URL} aria-label="Quadrum Technologies home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/logo-light.png" alt="" width={47} height={44} />
           <span>Quadrum Technologies</span>
-        </div>
+        </a>
         <div className="loginScreen__copy">
           <p className="loginScreen__eyebrow">Traffic Control and Monitoring System</p>
           <h1>Commission it yourself.</h1>
@@ -68,6 +69,7 @@ export default function SignupScreen() {
       </section>
 
       <section className="loginScreen__panel">
+        <AuthTopBar link={{ href: "/login", label: "Sign in" }} />
         {done ? (
           <div className="loginScreen__form qtRequest__done" role="status">
             <h2>Check your email</h2>
