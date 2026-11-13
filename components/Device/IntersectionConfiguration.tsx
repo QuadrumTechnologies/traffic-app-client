@@ -41,8 +41,15 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   userType,
   showCommandsOnly = false,
 }) => {
-  const { devices, deviceActiveStateData, currentDeviceInfoData } =
-    useAppSelector((state) => state.userDevice);
+  const {
+    devices: userDevices,
+    deviceActiveStateData,
+    currentDeviceInfoData,
+  } = useAppSelector((state) => state.userDevice);
+  // On admin pages the junction is in the admin list (with its owner's
+  // userDevice record); looking it up in the user list said "Device not found".
+  const adminDevices = useAppSelector((state) => state.adminDevice.devices);
+  const devices = userType === "admin" ? adminDevices : userDevices;
 
   const { landingPageSignals } = useAppSelector((state) => state.signalConfig);
   const dispatch = useAppDispatch();
@@ -51,6 +58,8 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   const params = useRealParams(useParams() as Record<string, string>);
   const email = GetItemFromLocalStorage("user")?.email;
 
+  // The stored state belongs to this junction only once it has loaded.
+  const stateKnown = deviceActiveStateData?.DeviceID === deviceId;
   const [showManualMoreConfig, setShowManualMoreConfig] = useState<boolean>(
     !deviceActiveStateData?.Auto
   );
@@ -328,7 +337,10 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
       >
         <div>
           <h2>Commands Control</h2>
-          <div className="intersectionConfiguration__commands">
+          {!stateKnown ? (
+            <p className="qtMuted">Reading the controller&rsquo;s mode&hellip;</p>
+          ) : null}
+          <div className="intersectionConfiguration__commands" hidden={!stateKnown}>
             <button
               onClick={() => {
                 const action = deviceActiveStateData?.Auto ? "Manual" : "Auto";
@@ -344,7 +356,7 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
             <button onClick={() => handleRequest("Reboot")}>Reboot</button>
           </div>
 
-          {!deviceActiveStateData?.Auto && showManualMoreConfig && (
+          {stateKnown && !deviceActiveStateData?.Auto && showManualMoreConfig && (
             <>
               <div className="phases__buttonBox">
                 <button

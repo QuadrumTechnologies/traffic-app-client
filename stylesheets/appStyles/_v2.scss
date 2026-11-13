@@ -1027,3 +1027,17 @@ body {
     }
   }
 }
+
+.qtMuted {
+  font-size: 1.35rem;
+  color: $qt-muted;
+  margin: 0.6rem 0 1rem;
+}
+
+// The junction drawing keeps one geometry and is scaled to its column.
+.qtDrawingFit {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
