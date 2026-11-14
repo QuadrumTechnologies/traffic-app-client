@@ -6,6 +6,7 @@ import IntersectionConfiguration from "@/components/Device/IntersectionConfigura
 import JunctionControl, { ControlRole } from "@/components/Device/JunctionControl";
 import JunctionActivity from "@/components/Device/JunctionActivity";
 import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
+import LiveJunction from "@/components/Junction/LiveJunction";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import {
   closePreviewCreatedPatternPhase,
@@ -58,6 +59,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     currentDeviceInfoData,
     deviceActiveStateData,
     devices,
+    activePhaseSignal,
   } = useAppSelector((state) => state.userDevice);
 
   const { isIntersectionConfigurable } = useAppSelector(
@@ -332,7 +334,17 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     ) : null}
     <section className="device">
       <div className="device__left">
-        <FourWayIntersection editable={isIntersectionConfigurable} />
+        {demo ? (
+          <LiveJunction
+            signalString={activePhaseSignal?.Phase}
+            countdown={activePhaseSignal?.Countdown}
+            online={isOnline}
+            simulate
+            title="Demo junction, live"
+          />
+        ) : (
+          <FourWayIntersection editable={isIntersectionConfigurable} />
+        )}
         <JunctionControl
           deviceId={deviceId}
           isOnline={isOnline}
