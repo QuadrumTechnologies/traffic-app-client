@@ -125,7 +125,8 @@ export default function SignalTimeline({
   // controller's, ignoring the leading/trailing markers.
   const livePhaseIndex = useMemo(() => {
     if (!liveSignalString) return -1;
-    const strip = (s: string) => String(s).replace(/^\*/, "").replace(/#$/, "");
+    // Amber is the end of the stage it belongs to: compare with A read as G.
+    const strip = (s: string) => String(s).replace(/^\*/, "").replace(/#$/, "").replace(/A/g, "G");
     const live = strip(liveSignalString);
     return pattern.findIndex((phase) => strip(phase.signalString) === live);
   }, [liveSignalString, pattern]);

@@ -10,11 +10,13 @@ import { emitToastMessage } from "@/utils/toastFunc";
 interface DeviceConfigurationProps {
   deviceConfigItems: DeviceConfigItem[];
   deviceId: string;
+  canConfigure?: boolean;
 }
 
 const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
   deviceConfigItems,
   deviceId,
+  canConfigure = true,
 }) => {
   const { devices } = useAppSelector((state) =>
     usePathname().includes("admin") ? state.adminDevice : state.userDevice
@@ -42,9 +44,11 @@ const DeviceConfiguration: React.FC<DeviceConfigurationProps> = ({
     <section className="deviceConfiguration">
       <div className="deviceConfiguration__header">
         <h2>Device Configuration</h2>
-        <button type="button" onClick={handleRedirectionToDevicePage}>
-          Configure
-        </button>
+        {canConfigure ? (
+          <button type="button" onClick={handleRedirectionToDevicePage}>
+            Configure
+          </button>
+        ) : null}
       </div>
       <ul className="deviceConfiguration__list">
         {deviceConfigItems.map((item: DeviceConfigItem, index: number) => (

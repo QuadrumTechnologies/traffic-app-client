@@ -36,7 +36,23 @@ export function endSession(): void {
   if (typeof window === "undefined" || ending) return;
   ending = true;
   const role = roleForPath(window.location.pathname);
+  const wasDemo = role === "user" && isDemoSession();
   clearSession(role);
+  if (wasDemo) {
+    window.location.replace("/request-access?purpose=demo&instant=1&session=ended");
+    return;
+  }
   const signIn = role === "admin" ? "/admin/login" : "/login";
   window.location.replace(`${signIn}?session=ended`);
+}
+
+// The demo (Try the demo) signs in as a 24-hour demo session.
+export function isDemoSession(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const user = JSON.parse(window.localStorage.getItem("user") || "null");
+    return Boolean(user && user.isDemo);
+  } catch (e) {
+    return false;
+  }
 }

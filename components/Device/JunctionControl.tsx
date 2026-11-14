@@ -93,11 +93,14 @@ export default function JunctionControl({
   isOnline,
   role,
   myEmail,
+  demo = false,
 }: {
   deviceId: string;
   isOnline: boolean;
   role: ControlRole;
   myEmail: string;
+  // The shared demo junction: manual control lasts 2 minutes without action.
+  demo?: boolean;
 }) {
   const { deviceActiveStateData } = useAppSelector((state) => state.userDevice);
   const stateKnown = deviceActiveStateData?.DeviceID === deviceId;
@@ -286,6 +289,7 @@ export default function JunctionControl({
           <TakeControlForm
             takeover={dialog.takeover}
             holder={lease?.holderName}
+            demo={demo}
             onCancel={() => setDialog(null)}
             onSubmit={(reason, minutes) => {
               setDialog(null);
@@ -316,16 +320,18 @@ export default function JunctionControl({
 function TakeControlForm({
   takeover,
   holder,
+  demo = false,
   onCancel,
   onSubmit,
 }: {
   takeover: boolean;
   holder?: string;
+  demo?: boolean;
   onCancel: () => void;
   onSubmit: (reason: string, minutes: number) => void;
 }) {
-  const [reason, setReason] = useState("");
-  const [minutes, setMinutes] = useState(15);
+  const [reason, setReason] = useState(demo ? "Trying the demo" : "");
+  const [minutes, setMinutes] = useState(demo ? 2 : 15);
   const [error, setError] = useState<string | null>(null);
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -338,25 +344,34 @@ function TakeControlForm({
   return (
     <form className="qtConfirm" onSubmit={submit}>
       <h3>{takeover ? `Take over from ${holder}?` : "Take manual control?"}</h3>
-      <p>
-        The junction holds its current stage until you act. It goes back to its plan after the time below without
-        action, after 2 hours at most, or about a minute after you close this page.
-        {takeover ? ` ${holder} is told that you took over.` : ""}
-      </p>
+      {demo ? (
+        <p>
+          The junction holds its current stage until you act. In the demo it goes back to its plan after 2 minutes
+          without action, or about a minute after you close this page. Other visitors see that you have control.
+        </p>
+      ) : (
+        <p>
+          The junction holds its current stage until you act. It goes back to its plan after the time below without
+          action, after 2 hours at most, or about a minute after you close this page.
+          {takeover ? ` ${holder} is told that you took over.` : ""}
+        </p>
+      )}
       <label className="qtField">
         <span>Why</span>
         <textarea className="qtInput" rows={2} maxLength={200} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
       </label>
-      <label className="qtField">
-        <span>Back to the plan after no action for</span>
-        <select className="qtInput" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
-          {[5, 15, 30, 60].map((m) => (
-            <option key={m} value={m}>
-              {m} minutes
-            </option>
-          ))}
-        </select>
-      </label>
+      {demo ? null : (
+        <label className="qtField">
+          <span>Back to the plan after no action for</span>
+          <select className="qtInput" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+            {[5, 15, 30, 60].map((m) => (
+              <option key={m} value={m}>
+                {m} minutes
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {error ? <p className="loginScreen__error" role="alert">{error}</p> : null}
       <div className="qtConfirm__actions">
         <button type="button" className="qtButton qtButton--quiet" onClick={onCancel}>
