@@ -15,12 +15,14 @@ interface DeviceConfigurationProps {
   intersectionConfigItems: IntersectionConfigItem[];
   deviceId: string;
   userType?: string;
+  canConfigure?: boolean;
 }
 
 const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
   intersectionConfigItems,
   deviceId,
   userType,
+  canConfigure = true,
 }) => {
   const { devices: userDevices } = useAppSelector((state) => state.userDevice);
   // On admin pages the junction is in the admin list (with its owner's
@@ -56,9 +58,11 @@ const IntersectionConfiguration: React.FC<DeviceConfigurationProps> = ({
     <section className="intersectionConfiguration">
       <div className="intersectionConfiguration__header">
         <h2>Intersection Configuration</h2>
-        <button type="button" onClick={handleRedirectionToDevicePage}>
-          Configure
-        </button>
+        {canConfigure ? (
+          <button type="button" onClick={handleRedirectionToDevicePage}>
+            Configure
+          </button>
+        ) : null}
       </div>
       <ul className="intersectionConfiguration__list">
         {intersectionConfigItems.map(

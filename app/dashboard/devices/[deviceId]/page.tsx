@@ -23,7 +23,9 @@ import {
   formatRtcTime,
   formatUnixTimestamp,
 } from "@/utils/misc";
+import { isDemoSession } from "@/utils/session";
 import {
+  getUserDevice,
   addCurrentDeviceInfoData,
   addCurrentDeviceSignalData,
   getUserDeviceInfoData,
@@ -66,6 +68,14 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
   );
 
   const dispatch = useAppDispatch();
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemoSession()), []);
+  // Opened from a link, the junction list isn't loaded yet; online status
+  // updates are only taken for junctions on it.
+  useEffect(() => {
+    if (!devices || devices.length === 0) dispatch(getUserDevice());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useDeviceStatus();
 
   // The signed-in account's role (accounts from before roles count as admin).
@@ -328,6 +338,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
           isOnline={isOnline}
           role={(signedInRole === "viewer" || signedInRole === "operator" ? signedInRole : "admin") as ControlRole}
           myEmail={GetItemFromLocalStorage("user")?.email || ""}
+          demo={demo}
         />
         <JunctionActivity deviceId={deviceId} />
       </div>
@@ -336,6 +347,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
           <DeviceConfiguration
             deviceConfigItems={deviceConfigItems}
             deviceId={deviceId}
+            canConfigure={!demo}
           />
           <div className="device-table">
             <table>
@@ -382,6 +394,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
           <IntersectionConfiguration
             intersectionConfigItems={intersectionConfigItems}
             deviceId={deviceId}
+            canConfigure={!demo}
           />
         </div>
       </div>

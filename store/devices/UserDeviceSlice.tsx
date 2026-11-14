@@ -267,6 +267,12 @@ const UserDeviceSlice = createSlice({
       })
       .addCase(getUserDevice.fulfilled, (state, action) => {
         state.devices = action.payload?.data?.devices || [];
+        // The API says which junctions are online now; live updates take over.
+        state.devices.forEach((device: any) => {
+          if (typeof device?.online !== "boolean") return;
+          if (state.deviceStatuses.some((s) => s.id === device.deviceId)) return;
+          state.deviceStatuses.push({ id: device.deviceId, status: device.online, lastSeen: device.lastSeen || null });
+        });
         state.isFetchingDevices = false;
         state.devicesLoadFailed = false;
       })

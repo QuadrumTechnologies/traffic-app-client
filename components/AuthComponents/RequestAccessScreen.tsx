@@ -3,11 +3,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import HttpRequest from "@/store/services/HttpRequest";
+import { setItemToCookie } from "@/utils/cookiesFunc";
+import { SetItemToLocalStorage } from "@/utils/localStorageFunc";
 import SignalTimeline from "@/components/Signal/SignalTimeline";
 import AuthTopBar, { HOME_URL } from "./AuthTopBar";
 
-// Public page: ask for access, a demo, a quote or a partnership. Quadrum
-// approves requests on the Users page. A demo needs only an email or phone.
+// Public page: ask for access, a quote or a partnership (Quadrum approves
+// requests on the Users page), or start the demo straight away: an email or
+// phone is enough, and the visitor lands on the shared simulated junction.
 
 type Purpose = "demo" | "access" | "buy" | "partner";
 
@@ -27,13 +30,22 @@ export default function RequestAccessScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [demoEnded, setDemoEnded] = useState(false);
+  // The instant demo (straight onto the simulated junction) is opened with
+  // ?purpose=demo&instant=1 while Philip tries it; until it becomes the
+  // default, "Try the demo" without it still sends a request to Quadrum.
+  const [instant, setInstant] = useState(false);
 
   useEffect(() => {
-    const asked = new URLSearchParams(window.location.search).get("purpose");
+    const query = new URLSearchParams(window.location.search);
+    const asked = query.get("purpose");
     if (isPurpose(asked)) setPurpose(asked);
+    if (query.get("instant") === "1") setInstant(true);
+    if (asked === "demo" && query.get("session") === "ended") setDemoEnded(true);
   }, []);
 
   const isDemo = purpose === "demo";
+  const instantDemo = isDemo && instant;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +64,30 @@ export default function RequestAccessScreen() {
     };
     if (isDemo && !body.email && !body.phone) {
       setError("Enter your email address or phone number.");
+      return;
+    }
+    if (instantDemo) {
+      setBusy(true);
+      try {
+        const { data } = await HttpRequest.post("/demo/start", {
+          contact: body.email || body.phone,
+          name: body.name,
+          company: body.company,
+          website: body.website,
+        });
+        const { user, token, tokenExpiresIn, deviceId } = data?.data || {};
+        if (!token) {
+          setError("The demo couldn't start. Please try again.");
+          setBusy(false);
+          return;
+        }
+        setItemToCookie("token", token, +tokenExpiresIn / 24);
+        SetItemToLocalStorage("user", user);
+        window.location.assign(`/dashboard/devices/${encodeURIComponent(deviceId)}`);
+      } catch (err: any) {
+        setError(err?.response?.data?.message || "The demo couldn't start. Please try again.");
+        setBusy(false);
+      }
       return;
     }
     if (!isDemo && (!body.company || !body.name || !body.email)) {
@@ -129,7 +165,14 @@ export default function RequestAccessScreen() {
               ))}
             </fieldset>
 
-            {isDemo ? (
+            {instantDemo && demoEnded ? (
+              <p className="qtNotice qtNotice--info" role="status">Your demo session ended. Start it again below.</p>
+            ) : null}
+            {instantDemo ? (
+              <p className="qtRequest__lead">
+                Your email address or phone number is enough. You go straight to a simulated junction for 24 hours.
+              </p>
+            ) : isDemo ? (
               <p className="qtRequest__lead">Your email address or phone number is enough for a demo.</p>
             ) : null}
 
@@ -167,8 +210,12 @@ export default function RequestAccessScreen() {
               </>
             ) : null}
 
-            <label htmlFor="ra-message">Message (optional)</label>
-            <textarea id="ra-message" name="message" rows={3} maxLength={1000} />
+            {instantDemo ? null : (
+              <>
+                <label htmlFor="ra-message">Message (optional)</label>
+                <textarea id="ra-message" name="message" rows={3} maxLength={1000} />
+              </>
+            )}
 
             {/* People never see this field; automated spam fills it in. */}
             <div className="qtRequest__trap" aria-hidden="true">
@@ -183,13 +230,21 @@ export default function RequestAccessScreen() {
             ) : null}
 
             <button className="loginScreen__submit" type="submit" disabled={busy}>
-              {busy ? "Sending…" : isDemo ? "Ask for the demo" : "Send request"}
+              {busy ? (instantDemo ? "Starting…" : "Sending…") : instantDemo ? "Start the demo" : isDemo ? "Ask for the demo" : "Send request"}
             </button>
 
-            <p className="loginScreen__note">
-              We reply within one working day. You can also write to{" "}
-              <a href="mailto:hello@quadrumtechnologies.com">hello@quadrumtechnologies.com</a>.
-            </p>
+            {instantDemo ? (
+              <p className="loginScreen__note">
+                The demo junction is simulated: nothing you do reaches a real junction. Other visitors may be
+                trying it at the same time. Prefer a guided demo? Write to{" "}
+                <a href="mailto:hello@quadrumtechnologies.com">hello@quadrumtechnologies.com</a>.
+              </p>
+            ) : (
+              <p className="loginScreen__note">
+                We reply within one working day. You can also write to{" "}
+                <a href="mailto:hello@quadrumtechnologies.com">hello@quadrumtechnologies.com</a>.
+              </p>
+            )}
           </form>
         )}
       </section>

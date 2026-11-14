@@ -1611,3 +1611,44 @@ body {
     display: none;
   }
 }
+
+// Demo session banner (Try the demo).
+.qtDemoBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin: 0 0 2rem;
+  padding: 1.2rem 1.6rem;
+  border-radius: 1rem;
+  background: rgba($qt-accent, 0.1);
+  border: 1px solid rgba($qt-accent, 0.35);
+  font-size: 1.45rem;
+  line-height: 1.5;
+
+  p {
+    margin: 0;
+    flex: 1 1 32rem;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem 1.6rem;
+    align-items: center;
+
+    a,
+    button {
+      font: inherit;
+      font-weight: 600;
+      color: $qt-accent;
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+}

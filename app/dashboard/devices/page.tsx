@@ -5,6 +5,7 @@ import OverlayModal from "@/components/Modals/OverlayModal";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { FaPlus } from "react-icons/fa";
+import { isDemoSession } from "@/utils/session";
 import { BsDeviceSsd } from "react-icons/bs";
 import { RiCreativeCommonsZeroFill } from "react-icons/ri";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
@@ -91,6 +92,8 @@ const UserDevices = () => {
   const router = useRouter();
   const [showAddDeviceModal, setShowAddDeviceModal] = useState<boolean>(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemoSession()), []);
   const [showOptions, setShowOptions] = useState(false);
   const [showSpinner, setShowSpinner] = useState(true);
 
@@ -153,9 +156,11 @@ const UserDevices = () => {
     <aside className="devices">
       <div className="devices-header">
         <h2 className="page-header">Junctions</h2>
-        <button onClick={() => setShowAddDeviceModal(true)}>
-          <FaPlus /> Add controller
-        </button>
+        {demo ? null : (
+          <button onClick={() => setShowAddDeviceModal(true)}>
+            <FaPlus /> Add controller
+          </button>
+        )}
         {showAddDeviceModal && (
           <OverlayModal onClose={() => setShowAddDeviceModal(false)}>
             <AddDeviceModal closeModal={() => setShowAddDeviceModal(false)} />
@@ -254,7 +259,7 @@ const UserDevices = () => {
                   </div>
                 )}
               </div>
-              <div className="deviceConfigPage__menu">
+              {device?.demo ? null : <div className="deviceConfigPage__menu">
                 <CiMenuKebab
                   size={24}
                   className="deviceConfigPage__menu-icon"
@@ -277,7 +282,7 @@ const UserDevices = () => {
                     </button>
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
           );
         })}
