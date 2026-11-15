@@ -570,7 +570,28 @@ export default function LiveJunction({ signalString, countdown, simulate = false
     };
   }, [simulate]);
 
-  const seconds = Number(countdown);
+  // A controller reports a stage's time left when the stage starts (the demo
+  // also refreshes it every 2 s). Count down locally between reports.
+  const report = useRef({ key: "", at: 0 });
+  const reportKey = `${signalString ?? ""}|${countdown ?? ""}`;
+  if (report.current.key !== reportKey) report.current = { key: reportKey, at: Date.now() };
+  const reported = Number(countdown);
+  const counting = hasSignal && online && Number.isFinite(reported) && reported > 0;
+  const [, redraw] = useState(0);
+  useEffect(() => {
+    if (!counting) return;
+    const at = report.current.at;
+    let shown = -1;
+    const id = window.setInterval(() => {
+      const left = Math.max(0, reported - Math.floor((Date.now() - at) / 1000));
+      if (left !== shown) {
+        shown = left;
+        redraw((n) => n + 1);
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [counting, reported, reportKey]);
+  const seconds = counting ? Math.max(0, reported - Math.floor((Date.now() - report.current.at) / 1000)) : reported;
   const countdownText =
     !hasSignal || !online
       ? "–"
