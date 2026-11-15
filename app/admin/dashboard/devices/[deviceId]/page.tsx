@@ -6,7 +6,7 @@ import IntersectionConfiguration from "@/components/Device/IntersectionConfigura
 import JunctionControl from "@/components/Device/JunctionControl";
 import JunctionActivity from "@/components/Device/JunctionActivity";
 import { GetItemFromLocalStorage } from "@/utils/localStorageFunc";
-import FourWayIntersection from "@/components/IntersectionComponent/FourWayIntersection";
+import LiveJunction from "@/components/Junction/LiveJunction";
 import { useAppDispatch, useAppSelector } from "@/hooks/reduxHook";
 import {
   closePreviewCreatedPatternPhase,
@@ -70,16 +70,17 @@ function describePool(pool: PoolLibrary | null): string {
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) => {
   const params = useRealParams(routeParams);
-  const { deviceStatuses, currentDeviceInfoData, deviceActiveStateData } =
-    useAppSelector((state) => state.userDevice);
+  const {
+    deviceStatuses,
+    currentDeviceInfoData,
+    deviceActiveStateData,
+    activePhaseSignal,
+  } = useAppSelector((state) => state.userDevice);
   const [showAutoMode, setShowAutoMode] = useState<boolean>(
     deviceActiveStateData?.Auto ?? false
   );
   const dispatch = useAppDispatch();
   const statuses = useDeviceStatus();
-  const { isIntersectionConfigurable } = useAppSelector(
-    (state) => state.signalConfig
-  );
   const deviceId = params.deviceId;
   const [pool, setPool] = useState<PoolLibrary | null>(null);
   useEffect(() => {
@@ -194,7 +195,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
           break;
 
         case "sign_feedback":
-          if (!showAutoMode) return;
+          // Show the lamps the controller reports in every mode.
           if (countdownInterval) {
             clearInterval(countdownInterval);
             countdownInterval = null;
@@ -307,6 +308,9 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
   const directions = ["North", "East", "West", "South"] as const;
 
   const isOnline = Boolean(deviceStatus?.status);
+  // The store keeps the previous junction's lamps until this one reports.
+  const livePhase =
+    activePhaseSignal?.DeviceID === deviceId ? activePhaseSignal : undefined;
   const poolTiming = describePool(pool);
   const lastSeen = (deviceStatus as any)?.lastSeen;
   const lastSeenText = lastSeen
@@ -339,7 +343,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ params: routeParams }) =>
     ) : null}
     <section className="device">
       <div className="device__left">
-        <FourWayIntersection editable={isIntersectionConfigurable} />
+        <LiveJunction
+          signalString={livePhase?.Phase}
+          countdown={livePhase?.Countdown}
+          online={isOnline}
+          title="Live junction view"
+        />
         <JunctionControl
           deviceId={deviceId}
           isOnline={isOnline}
